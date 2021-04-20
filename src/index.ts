@@ -1,40 +1,24 @@
-import { GameTreeNode } from "./interactions/GameTreeNode";
-import { mainInteraction } from "./interactions/scenario";
+import { Player } from "./actors/Player";
+import { Rat } from "./actors/Rat";
+import { AbstractInteraction } from "./interactions/AbstractInteraction";
+import { battleInteractionBuilder, initializeInteractions } from "./interactions/scenario";
 import { AbstractUI } from "./ui/AbstractUI";
 import { NodeUI } from "./ui/NodeUI";
 
-const waitCorrectAnswer = async (ui: AbstractUI, nodeList: GameTreeNode[]): Promise<GameTreeNode> => {
-  let nextNode = null;
-  while (nextNode == null) {
-    try {
-      const userChoise = await ui.waitInteraction();
-      nextNode = nodeList[userChoise - 1];
-    } catch (error) {
-      // pass
-    }
-  }
-  return nextNode;
-}
-
-const treeTraversal = async (ui: AbstractUI, node: GameTreeNode): Promise<void> => {
-  const childNodeList = Array.from(node.actions.values());
-  let nextNode = null;
-  try {
-    const userChoise = await ui.interactWithUser(
-      [node.message],
-      Array.from(node.actions.keys()),
-    );
-    nextNode = childNodeList[userChoise - 1];
-    if (nextNode == null) throw new Error('Answer is incorrect');
-  } catch (error) {
-    nextNode = await waitCorrectAnswer(ui, childNodeList);
-  }
-  setTimeout(treeTraversal, 16, ui, nextNode);
+const treeTraversal = async (ui: AbstractUI, interaction: AbstractInteraction): Promise<void> => {
+  const nextInteractions: AbstractInteraction[] = await interaction.activate();
+  // что делать с остальными интеракциями в массиве?
+  setTimeout(treeTraversal, 16, ui, nextInteractions[0]);
 }
 
 const main = async () => {
   const ui = new NodeUI();
-  await treeTraversal(ui, mainInteraction);
+  // const interactions = initializeInteractions(ui);
+  const player = new Player();
+  const rat1 = new Rat();
+  const rat2 = new Rat();
+  const interactions = battleInteractionBuilder(ui, player, rat1, rat2);
+  await treeTraversal(ui, interactions.mainInteraction);
 }
 
 main();

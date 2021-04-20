@@ -15,7 +15,7 @@ export class NodeUI extends AbstractUI {
     tabSize: 2,
   });
 
-  private sendToUser(message: string): void {
+  public sendToUser(message: string): void {
     // this.internalInterface.write(outputMessage);
     this.output.cork();
     this.output.write(message);
