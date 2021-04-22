@@ -31,7 +31,7 @@ export class Player extends AbstractActor {
     this.accuracy = .8;
   }
 
-  public getTypeByDeclensionOfNoun(declension: DeclensionOfNouns): string {
+  public getTypeByDeclensionOfNoun(declension: DeclensionOfNouns, plural: boolean = false): string {
     return PlayerDeclensionOfNouns[declension];
   }
 

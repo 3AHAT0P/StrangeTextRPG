@@ -3,11 +3,20 @@ import { AbstractActor, DeclensionOfNouns } from "./AbstractActor";
 
 export const RatDeclensionOfNouns = {
   nominative: 'крыса',
-  genitive: 'крысу',
+  genitive: 'крысы',
   dative: 'крысе',
   accusative: 'крысу',
   ablative: 'крысой',
   prepositional: 'о крысе',
+};
+
+export const RatDeclensionOfNounsPlural = {
+  nominative: 'крысы',
+  genitive: 'крыс',
+  dative: 'крысам',
+  accusative: 'крыс',
+  ablative: 'крысами',
+  prepositional: 'о крысах',
 };
 
 export class Rat extends AbstractActor {
@@ -23,13 +32,14 @@ export class Rat extends AbstractActor {
     super();
 
     this.healthPoints = 5;
-    this.armor = 0.4;
-    this.attackDamage = 1;
-    this.criticalChance = .05;
+    this.armor = 0.1;
+    this.attackDamage = .4;
+    this.criticalChance = .4;
     this.accuracy = .6;
   }
 
-  public getTypeByDeclensionOfNoun(declension: DeclensionOfNouns): string {
+  public getTypeByDeclensionOfNoun(declension: DeclensionOfNouns, plural: boolean = false): string {
+    if (plural) return RatDeclensionOfNounsPlural[declension];
     return RatDeclensionOfNouns[declension];
   }
 

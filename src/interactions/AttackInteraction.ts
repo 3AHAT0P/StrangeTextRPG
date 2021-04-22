@@ -1,5 +1,5 @@
 import { AbstractActor, AttackResult } from "../actors/AbstractActor";
-import { AbstractUI } from "../ui/AbstractUI";
+import { AbstractUI, MessageType } from "../ui/AbstractUI";
 import { capitalise } from "../utils/capitalise";
 import { AbstractInteraction } from "./AbstractInteraction";
 import { InteractionOptions, Interaction } from "./Interaction";
@@ -10,8 +10,8 @@ export interface AttackInteractionOptions extends InteractionOptions {
 }
 
 export class AttackInteraction extends Interaction {
-  public attacking: AbstractActor;
-  public attacked: AbstractActor;
+  protected attacking: AbstractActor;
+  protected attacked: AbstractActor;
 
   protected _doAttack() {
     return this.attacking.doAttack(this.attacked);
@@ -22,15 +22,14 @@ export class AttackInteraction extends Interaction {
 
     this.attacking = options.attacking;
     this.attacked = options.attacked;
+    if (options.messageType == null) this._messageType = 'damageDealt';
   }
 
   public buildMessage(attackResult: AttackResult): string {
-    if (attackResult == null)
-      return '';
+    if (attackResult == null) return '';
 
     let message = `${capitalise(this.attacking.getTypeByDeclensionOfNoun('nominative'))} нанес ${capitalise(this.attacked.getTypeByDeclensionOfNoun('dative'))} ${attackResult.damage}.`;
-    if (!attackResult.isAlive)
-      message += this.attacked.getDeathMessage();
+    if (!attackResult.isAlive) message += ` ${this.attacked.getDeathMessage()}`;
     message += '\n';
     return message;
   }
@@ -43,7 +42,7 @@ export class AttackInteraction extends Interaction {
 
     const autoInteractions = this.actions.get('auto');
     if (autoInteractions != null && autoInteractions.length > 0) {
-      this.ui.sendToUser(this.buildMessage(attackResult));
+      this.ui.sendToUser(this.buildMessage(attackResult), this._messageType);
       return autoInteractions;
     }
 

@@ -1,4 +1,4 @@
-import { AbstractUI } from "../ui/AbstractUI";
+import { AbstractUI, MessageType } from "../ui/AbstractUI";
 import { AbstractInteraction } from "./AbstractInteraction";
 
 export const isInteraction = (
@@ -7,10 +7,13 @@ export const isInteraction = (
 
 export interface InteractionOptions {
   buildMessage?(): string;
-  activate?(): Promise<AbstractInteraction[]>;
+  activate?(this: Interaction): Promise<AbstractInteraction[]>;
+  messageType?: MessageType;
 }
 
 export class Interaction extends AbstractInteraction {
+  protected _messageType: MessageType = 'default';
+
   protected _buildMessage: null | (() => string) = null;
 
   protected _activate: null | (() => Promise<AbstractInteraction[]>) = null;
@@ -19,6 +22,7 @@ export class Interaction extends AbstractInteraction {
     super(ui);
     if (options.buildMessage != null) this._buildMessage = options.buildMessage;
     if (options.activate != null) this._activate = options.activate;
+    if (options.messageType != null) this._messageType = options.messageType;
   }
 
   public buildMessage(...args: any[]): string {

@@ -2,6 +2,7 @@ import { Player } from "./actors/Player";
 import { Rat } from "./actors/Rat";
 import { AbstractInteraction } from "./interactions/AbstractInteraction";
 import { battleInteractionBuilder, initializeInteractions } from "./interactions/scenario";
+import { BattleInteraction } from "./interactions/BattleInteraction";
 import { AbstractUI } from "./ui/AbstractUI";
 import { NodeUI } from "./ui/NodeUI";
 
@@ -18,7 +19,8 @@ const main = async () => {
   const rat1 = new Rat();
   const rat2 = new Rat();
   const interactions = battleInteractionBuilder(ui, player, rat1, rat2);
-  await treeTraversal(ui, interactions.mainInteraction);
+  const battleInteraction = new BattleInteraction(ui, { player, enemies: [rat1, rat2] });
+  await treeTraversal(ui, battleInteraction);
 }
 
 main();
