@@ -28,12 +28,12 @@ export class RoundResultInteraction extends Interaction {
     return '';
   }
 
-  public async activate(): Promise<AbstractInteraction[]> {
+  public async activate(): Promise<AbstractInteraction> {
     if (this._activate !== null)
       return this._activate();
 
     const autoInteractions = this.actions.get('auto');
-    if (autoInteractions != null && autoInteractions.length > 0) {
+    if (autoInteractions != null) {
       this.buildMessage();
       return autoInteractions;
     }

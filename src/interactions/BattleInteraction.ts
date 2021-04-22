@@ -39,7 +39,7 @@ export class BattleInteraction extends AbstractInteraction {
     return message;
   }
 
-  public async activate(): Promise<AbstractInteraction[]> {
+  public async activate(): Promise<AbstractInteraction> {
 
     this.ui.sendToUser(
       `${capitalise(this._player.getTypeByDeclensionOfNoun('nominative'))}`
@@ -92,11 +92,11 @@ export class BattleInteraction extends AbstractInteraction {
     }
 
     const autoInteractions = this.actions.get('auto');
-    if (autoInteractions != null && autoInteractions.length > 0) {
+    if (autoInteractions != null) {
       return autoInteractions;
     }
 
-    return [new SimpleInteraction(this.ui, { message: 'Продолжение следует...\n' })];
+    return new SimpleInteraction(this.ui, { message: 'Продолжение следует...\n' });
   }
 
 }

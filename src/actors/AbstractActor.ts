@@ -24,7 +24,7 @@ export abstract class AbstractActor {
   public criticalDamageModifier: number = 2;
   public accuracy: number = .8;
 
-  public get isAlive() { return this.healthPoints > 0; }
+  public get isAlive(): boolean { return this.healthPoints > 0; }
 
   public abstract getTypeByDeclensionOfNoun(declension: DeclensionOfNouns, plural?: boolean): string;
   public abstract getDeathMessage(): string;

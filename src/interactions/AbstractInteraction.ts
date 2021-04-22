@@ -2,13 +2,13 @@ import { AbstractUI } from "../ui/AbstractUI";
 
 export abstract class AbstractInteraction {
   protected ui: AbstractUI;
-  protected actions: Map<string, AbstractInteraction[]> = new Map();
+  protected actions: Map<string, AbstractInteraction> = new Map();
 
   public abstract buildMessage(...args: unknown[]): string;
 
-  protected async waitCorrectAnswer(): Promise<AbstractInteraction[]> {
+  protected async waitCorrectAnswer(): Promise<AbstractInteraction> {
     const childNodeList = Array.from(this.actions.values());
-    let nextNode: AbstractInteraction[] | null = null;
+    let nextNode: AbstractInteraction | null = null;
     while (nextNode == null) {
       try {
         const userChoise = await this.ui.waitInteraction();
@@ -25,15 +25,19 @@ export abstract class AbstractInteraction {
   }
 
   public addAction(message: string, nextNode: AbstractInteraction): this {
-    const list = this.actions.get(message);
-    if (list == null) this.actions.set(message, [nextNode]);
-    else list.push(nextNode);
+    this.actions.set(message, nextNode);
     return this;
   }
 
-  public async activate(): Promise<AbstractInteraction[]> {
+  public async activate(): Promise<AbstractInteraction> {
+    const autoInteractions = this.actions.get('auto');
+    if (autoInteractions != null) {
+      this.ui.sendToUser(this.buildMessage(), 'default');
+      return autoInteractions;
+    }
+
     const childNodeList = Array.from(this.actions.values());
-    let nextNode: AbstractInteraction[] | null = null;
+    let nextNode: AbstractInteraction | null = null;
     try {
       const userChoise = await this.ui.interactWithUser(
         [this.buildMessage()],
