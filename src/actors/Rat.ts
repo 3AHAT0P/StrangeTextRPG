@@ -27,8 +27,9 @@ export class Rat extends AbstractActor {
   public criticalChance: number;
   public criticalDamageModifier: number = 2;
   public accuracy: number;
+  public nounPostfix: string;
 
-  constructor() {
+  constructor(props: { nounPostfix: string }) {
     super();
 
     this.healthPoints = 5;
@@ -36,11 +37,12 @@ export class Rat extends AbstractActor {
     this.attackDamage = .4;
     this.criticalChance = .4;
     this.accuracy = .6;
+    this.nounPostfix = props.nounPostfix;
   }
 
   public getTypeByDeclensionOfNoun(declension: DeclensionOfNouns, plural: boolean = false): string {
-    if (plural) return RatDeclensionOfNounsPlural[declension];
-    return RatDeclensionOfNouns[declension];
+    const noun = plural ? RatDeclensionOfNounsPlural[declension] : RatDeclensionOfNouns[declension];
+    return this.nounPostfix != null ? `${noun} ${this.nounPostfix}` : noun;
   }
 
   public getDeathMessage(): string {
