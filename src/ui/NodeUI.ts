@@ -52,7 +52,7 @@ export class NodeUI extends AbstractUI {
     tabSize: 2,
   });
 
-  public sendToUser(message: string, type: MessageType): void {
+  public async sendToUser(message: string, type: MessageType): Promise<void> {
     // this.internalInterface.write(outputMessage);
     this.output.cork();
     this.output.write(MessageTypes[type].join(''));

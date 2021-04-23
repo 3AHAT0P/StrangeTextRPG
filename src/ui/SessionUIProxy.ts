@@ -6,7 +6,7 @@ export class SessionUIProxy extends AbstractUI {
   constructor(private readonly _baseUI: AbstractSessionUI, private readonly _sessionId: string) {
     super();
   }
-  public sendToUser(message: string, type: MessageType): void {
+  public sendToUser(message: string, type: MessageType): Promise<void> {
     return this._baseUI.sendToUser(this._sessionId, message, type);
   }
   public waitInteraction(): Promise<string> {

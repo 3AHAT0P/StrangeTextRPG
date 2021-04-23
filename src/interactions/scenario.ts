@@ -6,6 +6,7 @@ import { Rat } from "../actors/Rat";
 import { Player } from "../actors/Player";
 import { AbstractInteraction } from "./AbstractInteraction";
 import { AbstractActor } from "../actors/AbstractActor";
+import { SessionState } from "../SessionState";
 
 export const getBaseInteractions = (ui: AbstractUI) => {
   const exitInteraction = new Interaction(ui, {
@@ -17,10 +18,10 @@ export const getBaseInteractions = (ui: AbstractUI) => {
 
   const toBeContinuedInteraction = new SimpleInteraction(ui, { message: 'Продолжение следует...\n' });
 
-  const lastInteraction = new SimpleInteraction(ui, { message: '' });
+  const lastInteraction = new SimpleInteraction(ui, { message: 'Ну и что дальше?' });
 
   toBeContinuedInteraction.addAction('auto', lastInteraction);
-  lastInteraction.addAction('ВСЕ! ХВАТИТ С МЕНЯ!\n', exitInteraction);
+  lastInteraction.addAction('ВСЕ! ХВАТИТ С МЕНЯ!', exitInteraction);
 
   return {
     toBeContinuedInteraction,
@@ -29,7 +30,7 @@ export const getBaseInteractions = (ui: AbstractUI) => {
   };
 }
 
-export const buildFirstLocation = (ui: AbstractUI, player: AbstractActor, nextLocation?: AbstractInteraction): AbstractInteraction => {
+export const buildFirstLocation = (ui: AbstractUI, state: SessionState, nextLocation?: AbstractInteraction): AbstractInteraction => {
   const baseInteractions = getBaseInteractions(ui);
 
   const mainInteraction = new SimpleInteraction(ui, { message: 'БЕРИ МЕЧ И РУБИ!\n' });
@@ -62,7 +63,7 @@ export const buildFirstLocation = (ui: AbstractUI, player: AbstractActor, nextLo
   return mainInteraction;
 };
 
-export const buildSecondLocation = (ui: AbstractUI, player: AbstractActor, nextLocation?: AbstractInteraction): AbstractInteraction => {
+export const buildSecondLocation = (ui: AbstractUI, state: SessionState, nextLocation?: AbstractInteraction): AbstractInteraction => {
   const baseInteractions = getBaseInteractions(ui);
 
   const mainInteraction = new Interaction(ui, {
