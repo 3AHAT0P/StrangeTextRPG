@@ -2,6 +2,6 @@ export type MessageType = "default" | "damageDealt" | "damageTaken" | "option" |
 
 export abstract class AbstractUI {
   public abstract sendToUser(message: string, type: MessageType): void;
-  public abstract waitInteraction(): Promise<number>;
-  public abstract interactWithUser(messages: string[], options?: string[]): Promise<number>;
+  public abstract waitInteraction(): Promise<string>;
+  public abstract interactWithUser(message: string, options: string[]): Promise<string>;
 }

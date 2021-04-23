@@ -43,21 +43,21 @@ export const buildFirstLocation = (ui: AbstractUI, player: AbstractActor, nextLo
   });
 
   mainInteraction
-    .addAction('ВЗЯТЬ МЕЧ\n', takeSwordInteraction)
-    .addAction('ПОПЫТАТЬСЯ ОСМОТРЕТЬСЯ\n', lookAroundInteraction);
+    .addAction('ВЗЯТЬ МЕЧ', takeSwordInteraction)
+    .addAction('ПОПЫТАТЬСЯ ОСМОТРЕТЬСЯ', lookAroundInteraction);
 
   takeSwordInteraction
-    .addAction('РУБИТЬ\n', attackInteraction)
-    .addAction('ПОПЫТАТЬСЯ ОСМОТРЕТЬСЯ\n', lookAroundInteraction);
+    .addAction('РУБИТЬ', attackInteraction)
+    .addAction('ПОПЫТАТЬСЯ ОСМОТРЕТЬСЯ', lookAroundInteraction);
 
   attackInteraction
-    .addAction('Дальше?\n', baseInteractions.toBeContinuedInteraction);
+    .addAction('Дальше?', baseInteractions.toBeContinuedInteraction);
 
   lookAroundInteraction.addAction('auto', baseInteractions.lastInteraction);
 
-  baseInteractions.lastInteraction.addAction('НАЧАТЬ ЗАНОВО\n', mainInteraction);
+  baseInteractions.lastInteraction.addAction('НАЧАТЬ ЗАНОВО', mainInteraction);
 
-  if (nextLocation != null) baseInteractions.lastInteraction.addAction('Перейти к демо локации #2\n', nextLocation);
+  if (nextLocation != null) baseInteractions.lastInteraction.addAction('Перейти к демо локации #2', nextLocation);
 
   return mainInteraction;
 };
@@ -70,8 +70,8 @@ export const buildSecondLocation = (ui: AbstractUI, player: AbstractActor, nextL
     async activate() {
       const player = new Player();
       const battleInteraction = new BattleInteraction(ui, { player, enemies: [new Rat(), new Rat()] });
-      baseInteractions.lastInteraction.addAction('НАЧАТЬ ЗАНОВО\n', mainInteraction)
-      if (nextLocation != null) baseInteractions.lastInteraction.addAction('Перейти к демо локации #3\n', nextLocation);
+      baseInteractions.lastInteraction.addAction('НАЧАТЬ ЗАНОВО', mainInteraction)
+      if (nextLocation != null) baseInteractions.lastInteraction.addAction('Перейти к демо локации #3', nextLocation);
       battleInteraction.addAction('auto', baseInteractions.lastInteraction);
       return battleInteraction;
     },

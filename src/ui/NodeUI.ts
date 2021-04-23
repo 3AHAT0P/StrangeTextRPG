@@ -75,19 +75,20 @@ export class NodeUI extends AbstractUI {
   /**
    * waitInteraction
    */
-  public waitInteraction(): Promise<number> {
+  public waitInteraction(): Promise<string> {
     return new Promise((resolve, reject) => {
       this.internalInterface.prompt();
       this.internalInterface.once('line', (answer: string) => {
         const optionId = Number(answer);
         if (answer === '' || Number.isNaN(optionId)) reject('Answer is incorrect');
-        resolve(optionId);
+        resolve(optionId.toString());
+        // TODO:
       });
     });
   }
 
-  public interactWithUser(messages: string[], options?: string[]): Promise<number> {
-    this.sendToUser(messages.join(''), 'default');
+  public interactWithUser(message: string, options: string[]): Promise<string> {
+    this.sendToUser(message, 'default');
     if (options != null && options.length > 0) {
       options.forEach((option: string, index: number) => this.sendToUser(`${index + 1}) ${option}`, 'option'));
     }

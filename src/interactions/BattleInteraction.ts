@@ -40,7 +40,6 @@ export class BattleInteraction extends AbstractInteraction {
   }
 
   public async activate(): Promise<AbstractInteraction> {
-
     this.ui.sendToUser(
       `${capitalise(this._player.getTypeByDeclensionOfNoun('nominative'))}`
       + ` встретил ${this._enemies.length}х ${this._enemies[0].getTypeByDeclensionOfNoun('genitive', true)}.`
@@ -49,30 +48,22 @@ export class BattleInteraction extends AbstractInteraction {
     );
 
     while (this._aliveEnemies.length > 0) {
-      this.ui.sendToUser('Что будешь делать?\n', 'default');
+      const message = 'Что будешь делать?\n';
 
-      this._aliveEnemies.forEach((enemy, index) => {
-        this.ui.sendToUser(`АТАКОВАТЬ ${enemy.getTypeByDeclensionOfNoun('accusative')} №${index + 1}\n`, 'option');
+      const options = this._aliveEnemies.map((enemy, index) => {
+        return `АТАКОВАТЬ ${enemy.getTypeByDeclensionOfNoun('accusative')} №${index + 1}`;
       });
 
-      let optionId: number | null = null;
-      while (optionId == null) {
-        try {
-          const userChoise = await this.ui.waitInteraction();
-          if (userChoise > 0 && userChoise <= this._aliveEnemies.length)
-            optionId = userChoise;
-        } catch (error) {
-          // pass
-        }
-      }
+      const option = await this.ui.interactWithUser(message, options);
+      const optionId = options.indexOf(option);
 
-      const attackedEnemy = this._aliveEnemies[optionId - 1];
+      const attackedEnemy = this._aliveEnemies[optionId];
       const attackResult = this._player.doAttack(attackedEnemy);
 
       this.ui.sendToUser(this.buildAttackMessage(this._player, attackedEnemy, attackResult), 'damageDealt');
 
       if (!attackResult.isAlive)
-        this._aliveEnemies.splice(optionId - 1, 1);
+        this._aliveEnemies.splice(optionId, 1);
 
       this._aliveEnemies.forEach((actor: AbstractActor) => {
         const attackResult = actor.doAttack(this._player);
