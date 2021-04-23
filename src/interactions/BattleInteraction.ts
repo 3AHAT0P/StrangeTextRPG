@@ -42,7 +42,7 @@ export class BattleInteraction extends AbstractInteraction {
   public async activate(): Promise<AbstractInteraction> {
     await this.ui.sendToUser(
       `${capitalise(this._player.getTypeByDeclensionOfNoun('nominative'))}`
-      + ` встретил ${this._enemies.length}х ${this._enemies[0].getTypeByDeclensionOfNoun('genitive', true)}.`
+      + ` встретил ${this._enemies.length}х ${this._enemies[0].getTypeByDeclensionOfNoun('genitive', true, false)}.`
       + ` Они все хотят кушать, а ты выглядишь очень аппетитно.\n`,
       'default'
     );
