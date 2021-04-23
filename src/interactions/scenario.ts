@@ -6,21 +6,23 @@ import { Rat } from "../actors/Rat";
 import { Player } from "../actors/Player";
 import { AbstractInteraction } from "./AbstractInteraction";
 import { AbstractActor } from "../actors/AbstractActor";
+import { SessionState } from "../SessionState";
 
-export const getBaseInteractions = (ui: AbstractUI) => {
+export const getBaseInteractions = (ui: AbstractUI, state: SessionState) => {
   const exitInteraction = new Interaction(ui, {
     buildMessage() { return 'Удачи!\n'; },
-    activate() {
-      process.exit(0);
+    async activate() {
+      state.finishSession();
+      return null;
     }
   });
 
   const toBeContinuedInteraction = new SimpleInteraction(ui, { message: 'Продолжение следует...\n' });
 
-  const lastInteraction = new SimpleInteraction(ui, { message: '' });
+  const lastInteraction = new SimpleInteraction(ui, { message: 'Ну и что дальше?' });
 
   toBeContinuedInteraction.addAction('auto', lastInteraction);
-  lastInteraction.addAction('ВСЕ! ХВАТИТ С МЕНЯ!\n', exitInteraction);
+  lastInteraction.addAction('ВСЕ! ХВАТИТ С МЕНЯ!', exitInteraction);
 
   return {
     toBeContinuedInteraction,
@@ -29,8 +31,8 @@ export const getBaseInteractions = (ui: AbstractUI) => {
   };
 }
 
-export const buildFirstLocation = (ui: AbstractUI, player: AbstractActor, nextLocation?: AbstractInteraction): AbstractInteraction => {
-  const baseInteractions = getBaseInteractions(ui);
+export const buildFirstLocation = (ui: AbstractUI, state: SessionState, nextLocation?: AbstractInteraction): AbstractInteraction => {
+  const baseInteractions = getBaseInteractions(ui, state);
 
   const mainInteraction = new SimpleInteraction(ui, { message: 'БЕРИ МЕЧ И РУБИ!\n' });
   const takeSwordInteraction = new SimpleInteraction(ui, { message: 'Ладонь сжимает рукоять меча - шершавую и тёплую.\n' });
@@ -43,35 +45,35 @@ export const buildFirstLocation = (ui: AbstractUI, player: AbstractActor, nextLo
   });
 
   mainInteraction
-    .addAction('ВЗЯТЬ МЕЧ\n', takeSwordInteraction)
-    .addAction('ПОПЫТАТЬСЯ ОСМОТРЕТЬСЯ\n', lookAroundInteraction);
+    .addAction('ВЗЯТЬ МЕЧ', takeSwordInteraction)
+    .addAction('ПОПЫТАТЬСЯ ОСМОТРЕТЬСЯ', lookAroundInteraction);
 
   takeSwordInteraction
-    .addAction('РУБИТЬ\n', attackInteraction)
-    .addAction('ПОПЫТАТЬСЯ ОСМОТРЕТЬСЯ\n', lookAroundInteraction);
+    .addAction('РУБИТЬ', attackInteraction)
+    .addAction('ПОПЫТАТЬСЯ ОСМОТРЕТЬСЯ', lookAroundInteraction);
 
   attackInteraction
-    .addAction('Дальше?\n', baseInteractions.toBeContinuedInteraction);
+    .addAction('Дальше?', baseInteractions.toBeContinuedInteraction);
 
   lookAroundInteraction.addAction('auto', baseInteractions.lastInteraction);
 
-  baseInteractions.lastInteraction.addAction('НАЧАТЬ ЗАНОВО\n', mainInteraction);
+  baseInteractions.lastInteraction.addAction('НАЧАТЬ ЗАНОВО', mainInteraction);
 
-  if (nextLocation != null) baseInteractions.lastInteraction.addAction('Перейти к демо локации #2\n', nextLocation);
+  if (nextLocation != null) baseInteractions.lastInteraction.addAction('Перейти к демо локации #2', nextLocation);
 
   return mainInteraction;
 };
 
-export const buildSecondLocation = (ui: AbstractUI, player: AbstractActor, nextLocation?: AbstractInteraction): AbstractInteraction => {
-  const baseInteractions = getBaseInteractions(ui);
+export const buildSecondLocation = (ui: AbstractUI, state: SessionState, nextLocation?: AbstractInteraction): AbstractInteraction => {
+  const baseInteractions = getBaseInteractions(ui, state);
 
   const mainInteraction = new Interaction(ui, {
     buildMessage() { return ''; },
     async activate() {
       const player = new Player();
       const battleInteraction = new BattleInteraction(ui, { player, enemies: [new Rat(), new Rat()] });
-      baseInteractions.lastInteraction.addAction('НАЧАТЬ ЗАНОВО\n', mainInteraction)
-      if (nextLocation != null) baseInteractions.lastInteraction.addAction('Перейти к демо локации #3\n', nextLocation);
+      baseInteractions.lastInteraction.addAction('НАЧАТЬ ЗАНОВО', mainInteraction)
+      if (nextLocation != null) baseInteractions.lastInteraction.addAction('Перейти к демо локации #3', nextLocation);
       battleInteraction.addAction('auto', baseInteractions.lastInteraction);
       return battleInteraction;
     },

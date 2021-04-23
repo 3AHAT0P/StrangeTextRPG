@@ -30,9 +30,9 @@ export class BattleInteraction extends AbstractInteraction {
     let message = `${capitalise(attacker.getTypeByDeclensionOfNoun('nominative'))} нанес`
       + ` ${capitalise(attacked.getTypeByDeclensionOfNoun('dative'))} ${attackResult.damage}.`;
     if (attackResult.isCritical)
-      message += ` **КРИТИЧЕСКИЙ УРОН**`;
+      message += ` ‼️КРИТ`;
     if (attackResult.isMiss)
-      message += ` Промах.`;
+      message += ` ⚠️Промах`;
     if (!attackResult.isAlive)
       message += ` ${attacked.getDeathMessage()}`;
     message += '\n';
@@ -40,8 +40,7 @@ export class BattleInteraction extends AbstractInteraction {
   }
 
   public async activate(): Promise<AbstractInteraction> {
-
-    this.ui.sendToUser(
+    await this.ui.sendToUser(
       `${capitalise(this._player.getTypeByDeclensionOfNoun('nominative'))}`
       + ` встретил ${this._enemies.length}х ${this._enemies[0].getTypeByDeclensionOfNoun('genitive', true)}.`
       + ` Они все хотят кушать, а ты выглядишь очень аппетитно.\n`,
@@ -49,44 +48,36 @@ export class BattleInteraction extends AbstractInteraction {
     );
 
     while (this._aliveEnemies.length > 0) {
-      this.ui.sendToUser('Что будешь делать?\n', 'default');
+      const message = 'Что будешь делать?\n';
 
-      this._aliveEnemies.forEach((enemy, index) => {
-        this.ui.sendToUser(`АТАКОВАТЬ ${enemy.getTypeByDeclensionOfNoun('accusative')} №${index + 1}\n`, 'option');
+      const options = this._aliveEnemies.map((enemy, index) => {
+        return `АТАКОВАТЬ ${enemy.getTypeByDeclensionOfNoun('accusative')} №${index + 1}`;
       });
 
-      let optionId: number | null = null;
-      while (optionId == null) {
-        try {
-          const userChoise = await this.ui.waitInteraction();
-          if (userChoise > 0 && userChoise <= this._aliveEnemies.length)
-            optionId = userChoise;
-        } catch (error) {
-          // pass
-        }
-      }
+      const option = await this.ui.interactWithUser(message, options);
+      const optionId = options.indexOf(option);
 
-      const attackedEnemy = this._aliveEnemies[optionId - 1];
+      const attackedEnemy = this._aliveEnemies[optionId];
       const attackResult = this._player.doAttack(attackedEnemy);
 
-      this.ui.sendToUser(this.buildAttackMessage(this._player, attackedEnemy, attackResult), 'damageDealt');
+      await this.ui.sendToUser('🗡' + this.buildAttackMessage(this._player, attackedEnemy, attackResult), 'damageDealt');
 
-      if (!attackResult.isAlive)
-        this._aliveEnemies.splice(optionId - 1, 1);
+      if (!attackResult.isAlive) this._aliveEnemies.splice(optionId, 1);
 
-      this._aliveEnemies.forEach((actor: AbstractActor) => {
-        const attackResult = actor.doAttack(this._player);
-        this.ui.sendToUser(this.buildAttackMessage(actor, this._player, attackResult), 'damageTaken');
-      });
+      const enemiesAttack = this._aliveEnemies.map((actor: AbstractActor) => {
+        return '🩸' + this.buildAttackMessage(actor, this._player, actor.doAttack(this._player));
+      }).join('');
+      if (enemiesAttack !== '') await this.ui.sendToUser(enemiesAttack, 'damageTaken');
 
-      this.ui.sendToUser('Результаты раунда:\n', 'default');
-      this.ui.sendToUser(`У ${this._player.getTypeByDeclensionOfNoun('genitive')} ${this._player.healthPoints} ОЗ;\n`, 'stats');
-      this._aliveEnemies.forEach((actor: AbstractActor) => {
-        this.ui.sendToUser(`У ${actor.getTypeByDeclensionOfNoun('genitive')} ${actor.healthPoints} ОЗ;\n`, 'stats');
-      });
+      let roundResultMessage = '⚔️Результаты раунда:\n';
+      roundResultMessage += ` - У ${this._player.getTypeByDeclensionOfNoun('genitive')} ${this._player.healthPoints} ОЗ;\n`;
+      roundResultMessage += this._aliveEnemies.map((actor: AbstractActor) => {
+        return ` - У ${actor.getTypeByDeclensionOfNoun('genitive')} ${actor.healthPoints} ОЗ;\n`;
+      }).join('');
+      await this.ui.sendToUser(roundResultMessage, 'stats');
 
       if (!this._player.isAlive) {
-        this.ui.sendToUser(`Умер. Совсем. Окончательно.\n`, 'default');
+        await this.ui.sendToUser(`Умер. Совсем. Окончательно.\n`, 'default');
         break;
       }
     }

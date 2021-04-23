@@ -6,20 +6,6 @@ export abstract class AbstractInteraction {
 
   public abstract buildMessage(...args: unknown[]): string;
 
-  protected async waitCorrectAnswer(): Promise<AbstractInteraction> {
-    const childNodeList = Array.from(this.actions.values());
-    let nextNode: AbstractInteraction | null = null;
-    while (nextNode == null) {
-      try {
-        const userChoise = await this.ui.waitInteraction();
-        nextNode = childNodeList[userChoise - 1];
-      } catch (error) {
-        // pass
-      }
-    }
-    return nextNode;
-  }
-
   constructor(ui: AbstractUI) {
     this.ui = ui;
   }
@@ -29,25 +15,19 @@ export abstract class AbstractInteraction {
     return this;
   }
 
-  public async activate(): Promise<AbstractInteraction> {
+  public async activate(): Promise<AbstractInteraction | null> {
     const autoInteractions = this.actions.get('auto');
     if (autoInteractions != null) {
       this.ui.sendToUser(this.buildMessage(), 'default');
       return autoInteractions;
     }
 
-    const childNodeList = Array.from(this.actions.values());
-    let nextNode: AbstractInteraction | null = null;
-    try {
-      const userChoise = await this.ui.interactWithUser(
-        [this.buildMessage()],
-        Array.from(this.actions.keys()),
-      );
-      nextNode = childNodeList[userChoise - 1];
-      if (nextNode == null) throw new Error('Answer is incorrect');
-    } catch (error) {
-      nextNode = await this.waitCorrectAnswer();
-    }
+    const option = await this.ui.interactWithUser(
+      this.buildMessage(),
+      Array.from(this.actions.keys()),
+    );
+    const nextNode = this.actions.get(option);
+    if (nextNode == null) throw new Error('Answer is incorrect');
     return nextNode;
   }
 }
