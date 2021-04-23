@@ -19,9 +19,21 @@ const eventEmitter = new EventEmitter();
 export class TelegramBotUi extends AbstractSessionUI {
   private bot = new Telegraf(config.TELEGRAM_BOT_TOKEN);
 
-  public async onExit(sessionIds: string[], code: string) {
-    sessionIds.map((sessionId) => this.bot.telegram.sendMessage(sessionId, 'Bot is reloading. Please use /start again.', { reply_markup: Markup.removeKeyboard().reply_markup }));
+  public async onExit(sessionIds: string[], code: string): Promise<void> {
+    sessionIds.map((sessionId) => this.bot.telegram.sendMessage(
+      sessionId,
+      'Bot is reloading. Please use /start again.',
+      { reply_markup: Markup.removeKeyboard().reply_markup },
+    ));
     this.bot.stop(code);
+  }
+
+  public async closeSession(sessionId: string): Promise<void> {
+    await this.bot.telegram.sendMessage(
+      sessionId,
+      'Удачи =)\nЕсли захочешь вернуться и начать сначала нажми /start.',
+      { reply_markup: Markup.removeKeyboard().reply_markup },
+    );
   }
 
   public init(runOnStart: (sessionId: string, ui: AbstractSessionUI) => Promise<void>): this {

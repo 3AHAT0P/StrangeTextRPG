@@ -5,6 +5,7 @@ export interface SessionState {
   sessionId: string;
   player: AbstractActor;
   currentInteraction: AbstractInteraction;
+  finishSession(): Promise<void>;
 }
 
 export {}

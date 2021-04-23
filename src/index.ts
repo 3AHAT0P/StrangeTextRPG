@@ -14,7 +14,9 @@ class App {
   private sessionStateMap: Map<string, SessionState> = new Map();
 
   private async treeTraversal(state: SessionState): Promise<void> {
-    const nextInteractions: AbstractInteraction = await state.currentInteraction.activate();
+    const nextInteractions: AbstractInteraction | null = await state.currentInteraction.activate();
+    if (nextInteractions == null) return;
+
     state.currentInteraction = nextInteractions;
     setTimeout(this.treeTraversal, 16, state);
   }
@@ -26,6 +28,10 @@ class App {
         sessionId,
         player: new Player(),
         currentInteraction: new SimpleInteraction(currentSessionUI, { message: 'Hi\n' }),
+        finishSession: async () => {
+          await ui.closeSession(sessionId);
+          this.sessionStateMap.delete(sessionId);
+        }
       };
       this.sessionStateMap.set(sessionId, state);
 
@@ -43,6 +49,9 @@ class App {
         sessionId,
         player: new Player(),
         currentInteraction: new SimpleInteraction(ui, { message: 'Hi\n' }),
+        finishSession() {
+          process.exit(0);
+        }
       };
       this.sessionStateMap.set(sessionId, state);
 

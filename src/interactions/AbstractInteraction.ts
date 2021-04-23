@@ -15,7 +15,7 @@ export abstract class AbstractInteraction {
     return this;
   }
 
-  public async activate(): Promise<AbstractInteraction> {
+  public async activate(): Promise<AbstractInteraction | null> {
     const autoInteractions = this.actions.get('auto');
     if (autoInteractions != null) {
       this.ui.sendToUser(this.buildMessage(), 'default');

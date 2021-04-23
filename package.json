@@ -4,7 +4,9 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon",
-    "prod": "pm2 start src/index.ts",
+    "prod:start": "pm2 start src/index.ts",
+    "prod:stop": "pm2 stop src/index.ts",
+    "prod:reload": "pm2 restart src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Igor Kostyakov <i.a.kostyakov@gmail.com>",

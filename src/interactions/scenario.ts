@@ -8,11 +8,12 @@ import { AbstractInteraction } from "./AbstractInteraction";
 import { AbstractActor } from "../actors/AbstractActor";
 import { SessionState } from "../SessionState";
 
-export const getBaseInteractions = (ui: AbstractUI) => {
+export const getBaseInteractions = (ui: AbstractUI, state: SessionState) => {
   const exitInteraction = new Interaction(ui, {
     buildMessage() { return 'Удачи!\n'; },
-    activate() {
-      process.exit(0);
+    async activate() {
+      state.finishSession();
+      return null;
     }
   });
 
@@ -31,7 +32,7 @@ export const getBaseInteractions = (ui: AbstractUI) => {
 }
 
 export const buildFirstLocation = (ui: AbstractUI, state: SessionState, nextLocation?: AbstractInteraction): AbstractInteraction => {
-  const baseInteractions = getBaseInteractions(ui);
+  const baseInteractions = getBaseInteractions(ui, state);
 
   const mainInteraction = new SimpleInteraction(ui, { message: 'БЕРИ МЕЧ И РУБИ!\n' });
   const takeSwordInteraction = new SimpleInteraction(ui, { message: 'Ладонь сжимает рукоять меча - шершавую и тёплую.\n' });
@@ -64,7 +65,7 @@ export const buildFirstLocation = (ui: AbstractUI, state: SessionState, nextLoca
 };
 
 export const buildSecondLocation = (ui: AbstractUI, state: SessionState, nextLocation?: AbstractInteraction): AbstractInteraction => {
-  const baseInteractions = getBaseInteractions(ui);
+  const baseInteractions = getBaseInteractions(ui, state);
 
   const mainInteraction = new Interaction(ui, {
     buildMessage() { return ''; },
