@@ -39,7 +39,7 @@ class App {
       state.currentInteraction = firstLocation;
       await this.treeTraversal(state);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
 
@@ -59,7 +59,7 @@ class App {
       state.currentInteraction = firstLocation;
       await this.treeTraversal(state);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
 
