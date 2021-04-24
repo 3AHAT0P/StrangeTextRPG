@@ -5,10 +5,15 @@ export interface AttackResult {
   isMiss: boolean;
 }
 
+export interface AbstractActorOptions {
+  typePostfix?: string;
+}
+
 export interface TypeByDeclensionOfNounOptions {
   declension: DeclensionOfNouns;
   plural?: boolean;
-  hasPostfix?: boolean;
+  withPostfix?: boolean;
+  capitalised?: boolean;
 }
 
 export type DeclensionOfNouns =
@@ -17,11 +22,14 @@ export type DeclensionOfNouns =
   'dative' |
   'accusative' |
   'ablative' |
-  'prepositional';
+  'prepositional' |
+  'possessive';
 
 export abstract class AbstractActor {
   public type: string = 'unknown';
+  public typePostfix: string = '';
 
+  public maxHealthPoints: number = 0;
   public healthPoints: number = 0;
   public armor: number = 0;
 
@@ -29,11 +37,14 @@ export abstract class AbstractActor {
   public criticalChance: number = 0;
   public criticalDamageModifier: number = 2;
   public accuracy: number = .8;
-  public nounPostfix: string = '';
 
   public get isAlive(): boolean { return this.healthPoints > 0; }
 
-  public abstract getTypeByDeclensionOfNoun(options: TypeByDeclensionOfNounOptions): string;
+  constructor(options: AbstractActorOptions = {}) {
+    if (options.typePostfix != null && options.typePostfix !== '') this.typePostfix = options.typePostfix;
+  }
+
+  public abstract getType(options: TypeByDeclensionOfNounOptions): string;
   public abstract getDeathMessage(): string;
 
   public doAttack(enemy: AbstractActor): AttackResult {

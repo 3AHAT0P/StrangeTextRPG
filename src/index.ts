@@ -1,11 +1,11 @@
 import { Player } from './actors/Player';
 import { AbstractInteraction } from './interactions/AbstractInteraction';
-import { buildFirstLocation, buildSecondLocation } from './interactions/scenario';
+import { buildFirstLocation, buildSecondLocation, buildThirdLocation, buildZeroLocation } from './interactions/scenario';
 import { SimpleInteraction } from './interactions/SimpleInteraction';
 import { SessionState } from './SessionState';
 import { SessionUIProxy } from './ui/SessionUIProxy';
 import { NodeUI } from './ui/NodeUI';
-import { TelegramBotUi } from './ui/TelegramBotUI';
+import { AdditionalSessionInfo, TelegramBotUi } from './ui/TelegramBotUI';
 import { AbstractSessionUI } from './ui/AbstractSessionUI';
 import { AbstractUI } from './ui/AbstractUI';
 
@@ -21,11 +21,16 @@ class App {
     setTimeout(this.treeTraversal, 16, state);
   }
 
-  private async runSession(sessionId: string, ui: AbstractSessionUI): Promise<void> {
+  private async runSession(
+    sessionId: string,
+    ui: AbstractSessionUI,
+    additionalInfo: AdditionalSessionInfo,
+  ): Promise<void> {
     try {
       const currentSessionUI = new SessionUIProxy(ui, sessionId);
       const state: SessionState = {
         sessionId,
+        additionalInfo,
         player: new Player(),
         currentInteraction: new SimpleInteraction(currentSessionUI, { message: 'Hi\n' }),
         finishSession: async () => {
@@ -35,18 +40,38 @@ class App {
       };
       this.sessionStateMap.set(sessionId, state);
 
-      const firstLocation = buildFirstLocation(currentSessionUI, state, buildSecondLocation(currentSessionUI, state));
-      state.currentInteraction = firstLocation;
+      // const firstLocation = buildFirstLocation(
+      //   currentSessionUI,
+      //   state,
+      //   {
+      //     actionMessage: 'Перейти к демо локации #2',
+      //     interaction: buildSecondLocation(
+      //       currentSessionUI, state, {
+      //         actionMessage: 'Перейти к демо локации #3',
+      //         interaction: buildThirdLocation(currentSessionUI, state),
+      //       }),
+      //   },
+      // );
+
+      const zeroLocation = buildZeroLocation(currentSessionUI, state);
+      state.currentInteraction = zeroLocation;
+      // const thirdLocation = buildThirdLocation(currentSessionUI, state);
+      // state.currentInteraction = thirdLocation;
       await this.treeTraversal(state);
     } catch (error) {
       console.error(error);
     }
   }
 
-  private async runSingleSession(sessionId:string, ui: AbstractUI): Promise<void> {
+  private async runSingleSession(
+    sessionId: string,
+    ui: AbstractUI,
+    additionalInfo: AdditionalSessionInfo,
+  ): Promise<void> {
     try {
       const state: SessionState = {
         sessionId,
+        additionalInfo,
         player: new Player(),
         currentInteraction: new SimpleInteraction(ui, { message: 'Hi\n' }),
         finishSession() {
@@ -55,7 +80,11 @@ class App {
       };
       this.sessionStateMap.set(sessionId, state);
 
-      const firstLocation = buildFirstLocation(ui, state, buildSecondLocation(ui, state));
+      const firstLocation = buildFirstLocation(
+        ui,
+        state,
+        { actionMessage: 'Перейти к демо локации #2', interaction: buildSecondLocation(ui, state)},
+      );
       state.currentInteraction = firstLocation;
       await this.treeTraversal(state);
     } catch (error) {
@@ -78,7 +107,7 @@ class App {
     if (type === 'TELEGRAM') this.ui = new TelegramBotUi().init(this.runSession);
     else {
       this.ui = new NodeUI();
-      this.runSingleSession('1', this.ui);
+      this.runSingleSession('1', this.ui, { playerName: 'Путник', playerId: '1' });
     }
   }
 }

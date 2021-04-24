@@ -6,6 +6,17 @@ import { AbstractSessionUI } from './AbstractSessionUI';
 
 import { MessageType } from "./AbstractUI";
 
+export interface AdditionalSessionInfo {
+  playerName: string;
+  playerId: string;
+}
+
+export type StartTheGameCallback = (
+  sessionId: string,
+  ui: AbstractSessionUI,
+  additionalSessionInfo: AdditionalSessionInfo,
+) => Promise <void>;
+
 export const MessageTypes: Record<MessageType, []> = {
   default: [],
   damageDealt: [],
@@ -36,7 +47,7 @@ export class TelegramBotUi extends AbstractSessionUI {
     );
   }
 
-  public init(runOnStart: (sessionId: string, ui: AbstractSessionUI) => Promise<void>): this {
+  public init(runOnStart: StartTheGameCallback): this {
     this.bot.command('quit', (ctx) => {
       ctx.leaveChat()
     });
@@ -44,8 +55,12 @@ export class TelegramBotUi extends AbstractSessionUI {
     this.bot.start((ctx) => {
       // const sessionId = `${ctx.message.chat.id}_${ctx.message.from.id}`;
       const sessionId = ctx.message.chat.id.toString();
+      const additionalSessionInfo: AdditionalSessionInfo = {
+        playerName: ctx.message.from.first_name,
+        playerId: ctx.message.from.id.toString(),
+      }
 
-      setTimeout(runOnStart, 16, sessionId, this);
+      setTimeout(runOnStart, 16, sessionId, this, additionalSessionInfo);
     });
 
     // this.bot.on('message', (ctx) => {

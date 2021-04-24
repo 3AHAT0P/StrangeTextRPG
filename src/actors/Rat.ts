@@ -1,6 +1,6 @@
 import { capitalise } from "../utils/capitalise";
 
-import { AbstractActor, TypeByDeclensionOfNounOptions } from "./AbstractActor";
+import { AbstractActor, AbstractActorOptions, TypeByDeclensionOfNounOptions } from "./AbstractActor";
 
 export const RatDeclensionOfNouns = {
   nominative: 'крыса',
@@ -9,6 +9,8 @@ export const RatDeclensionOfNouns = {
   accusative: 'крысу',
   ablative: 'крысой',
   prepositional: 'о крысе',
+
+  possessive: 'крысины',
 };
 
 export const RatDeclensionOfNounsPlural = {
@@ -18,9 +20,13 @@ export const RatDeclensionOfNounsPlural = {
   accusative: 'крыс',
   ablative: 'крысами',
   prepositional: 'о крысах',
+
+  possessive: 'крыс',
 };
 
 export class Rat extends AbstractActor {
+  public type = 'крыса';
+
   public healthPoints: number;
   public armor: number;
 
@@ -28,25 +34,30 @@ export class Rat extends AbstractActor {
   public criticalChance: number;
   public criticalDamageModifier: number = 2;
   public accuracy: number;
-  public nounPostfix: string;
 
-  constructor(props?: { nounPostfix: string }) {
-    super();
+  constructor(options: AbstractActorOptions = {}) {
+    super(options);
 
+    this.maxHealthPoints = 5;
     this.healthPoints = 5;
     this.armor = 0.1;
     this.attackDamage = .4;
     this.criticalChance = .4;
     this.accuracy = .6;
-    this.nounPostfix = props != null ? props.nounPostfix: '';
   }
 
-  public getTypeByDeclensionOfNoun({ declension, plural = false, hasPostfix = false }: TypeByDeclensionOfNounOptions): string {
-    const noun = plural ? RatDeclensionOfNounsPlural[declension] : RatDeclensionOfNouns[declension];
-    return this.nounPostfix && hasPostfix ? `${noun} ${this.nounPostfix}` : noun;
+  public getType(
+    { declension, plural = false, withPostfix = false, capitalised = false }: TypeByDeclensionOfNounOptions,
+  ): string {
+    let result = plural ? RatDeclensionOfNounsPlural[declension] : RatDeclensionOfNouns[declension];
+
+    if (capitalised) result = capitalise(result);
+    if (this.typePostfix !== '' && withPostfix) result = `${result} ${this.typePostfix}`
+
+    return result;
   }
 
   public getDeathMessage(): string {
-    return `${capitalise(this.getTypeByDeclensionOfNoun({ declension: 'nominative', hasPostfix: true }))} сдохла, жалобно пища!`;
+    return `${this.getType({ declension: 'nominative', withPostfix: true, capitalised: true })} сдохла, жалобно пища!`;
   }
 }
