@@ -71,7 +71,7 @@ export const buildSecondLocation = (ui: AbstractUI, state: SessionState, nextLoc
     buildMessage() { return ''; },
     async activate() {
       const player = new Player();
-      const battleInteraction = new BattleInteraction(ui, { player, enemies: [new Rat(), new Rat()] });
+      const battleInteraction = new BattleInteraction(ui, { player, enemies: [new Rat({ nounPostfix: '№1' }), new Rat({ nounPostfix: '№2' })] });
       baseInteractions.lastInteraction.addAction('НАЧАТЬ ЗАНОВО', mainInteraction)
       if (nextLocation != null) baseInteractions.lastInteraction.addAction('Перейти к демо локации #3', nextLocation);
       battleInteraction.addAction('auto', baseInteractions.lastInteraction);

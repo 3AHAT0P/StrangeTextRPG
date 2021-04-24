@@ -3,7 +3,13 @@ export interface AttackResult {
   isAlive: boolean;
   isCritical: boolean;
   isMiss: boolean;
-} 
+}
+
+export interface TypeByDeclensionOfNounOptions {
+  declension: DeclensionOfNouns;
+  plural?: boolean;
+  hasPostfix?: boolean;
+}
 
 export type DeclensionOfNouns =
   'nominative' |
@@ -23,10 +29,11 @@ export abstract class AbstractActor {
   public criticalChance: number = 0;
   public criticalDamageModifier: number = 2;
   public accuracy: number = .8;
+  public nounPostfix: string = '';
 
   public get isAlive(): boolean { return this.healthPoints > 0; }
 
-  public abstract getTypeByDeclensionOfNoun(declension: DeclensionOfNouns, plural?: boolean): string;
+  public abstract getTypeByDeclensionOfNoun(options: TypeByDeclensionOfNounOptions): string;
   public abstract getDeathMessage(): string;
 
   public doAttack(enemy: AbstractActor): AttackResult {
@@ -52,9 +59,9 @@ export abstract class AbstractActor {
     if (trueDamage > 0) this.healthPoints = Math.round((this.healthPoints - trueDamage) * 100) / 100;
     return {
       damage: trueDamage,
-      isAlive: this.healthPoints > 0, // возвращаем жив ли еще actor или нет 
+      isAlive: this.healthPoints > 0, // возвращаем жив ли еще actor или нет
       isCritical: false,
       isMiss: false,
-    }; 
+    };
   }
 }
