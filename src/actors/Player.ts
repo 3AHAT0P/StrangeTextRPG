@@ -1,5 +1,6 @@
 import { capitalise } from "../utils/capitalise";
-import { AbstractActor, DeclensionOfNouns } from "./AbstractActor";
+
+import { AbstractActor, TypeByDeclensionOfNounOptions } from "./AbstractActor";
 
 export const PlayerDeclensionOfNouns = {
   nominative: 'ты',
@@ -31,11 +32,11 @@ export class Player extends AbstractActor {
     this.accuracy = .8;
   }
 
-  public getTypeByDeclensionOfNoun(declension: DeclensionOfNouns, plural: boolean = false): string {
+  public getTypeByDeclensionOfNoun({ declension, plural = false }: TypeByDeclensionOfNounOptions): string {
     return PlayerDeclensionOfNouns[declension];
   }
 
   public getDeathMessage(): string {
-    return `${capitalise(this.getTypeByDeclensionOfNoun('nominative'))} умер!`;
+    return `${capitalise(this.getTypeByDeclensionOfNoun({ declension: 'nominative' }))} умер!`;
   }
 }

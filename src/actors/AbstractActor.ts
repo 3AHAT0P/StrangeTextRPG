@@ -5,6 +5,12 @@ export interface AttackResult {
   isMiss: boolean;
 }
 
+export interface TypeByDeclensionOfNounOptions {
+  declension: DeclensionOfNouns;
+  plural?: boolean;
+  hasPostfix?: boolean;
+}
+
 export type DeclensionOfNouns =
   'nominative' |
   'genitive' |
@@ -27,7 +33,7 @@ export abstract class AbstractActor {
 
   public get isAlive(): boolean { return this.healthPoints > 0; }
 
-  public abstract getTypeByDeclensionOfNoun(declension: DeclensionOfNouns, plural?: boolean, hasPostfix?: boolean): string;
+  public abstract getTypeByDeclensionOfNoun(options: TypeByDeclensionOfNounOptions): string;
   public abstract getDeathMessage(): string;
 
   public doAttack(enemy: AbstractActor): AttackResult {

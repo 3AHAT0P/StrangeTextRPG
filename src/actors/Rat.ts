@@ -1,5 +1,6 @@
 import { capitalise } from "../utils/capitalise";
-import { AbstractActor, DeclensionOfNouns } from "./AbstractActor";
+
+import { AbstractActor, TypeByDeclensionOfNounOptions } from "./AbstractActor";
 
 export const RatDeclensionOfNouns = {
   nominative: 'крыса',
@@ -40,12 +41,12 @@ export class Rat extends AbstractActor {
     this.nounPostfix = props != null ? props.nounPostfix: '';
   }
 
-  public getTypeByDeclensionOfNoun(declension: DeclensionOfNouns, plural: boolean = false, hasPostfix = true): string {
+  public getTypeByDeclensionOfNoun({ declension, plural = false, hasPostfix = false }: TypeByDeclensionOfNounOptions): string {
     const noun = plural ? RatDeclensionOfNounsPlural[declension] : RatDeclensionOfNouns[declension];
     return this.nounPostfix && hasPostfix ? `${noun} ${this.nounPostfix}` : noun;
   }
 
   public getDeathMessage(): string {
-    return `${capitalise(this.getTypeByDeclensionOfNoun('nominative'))} сдохла, жалобно пища!`;
+    return `${capitalise(this.getTypeByDeclensionOfNoun({ declension: 'nominative', hasPostfix: true }))} сдохла, жалобно пища!`;
   }
 }
