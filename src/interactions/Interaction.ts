@@ -7,7 +7,7 @@ export const isInteraction = (
 
 export interface InteractionOptions {
   buildMessage?(): string;
-  activate?(this: Interaction): Promise<AbstractInteraction | null>;
+  activate?(this: Interaction): Promise<AbstractInteraction | null | 'SUPER'>;
   messageType?: MessageType;
 }
 
@@ -16,7 +16,7 @@ export class Interaction extends AbstractInteraction {
 
   protected _buildMessage: null | (() => string) = null;
 
-  protected _activate: null | (() => Promise<AbstractInteraction | null>) = null;
+  protected _activate: null | (() => Promise<AbstractInteraction | null | 'SUPER'>) = null;
 
   constructor(ui: AbstractUI, options: InteractionOptions = {}) {
     super(ui);
@@ -32,7 +32,11 @@ export class Interaction extends AbstractInteraction {
   }
 
   public async activate(): Promise<AbstractInteraction | null> {
-    if (this._activate !== null) return this._activate();
+    if (this._activate !== null) {
+      const result = await this._activate();
+      if (result === 'SUPER') return super.activate();
+      return result;
+    }
 
     return super.activate();
   }

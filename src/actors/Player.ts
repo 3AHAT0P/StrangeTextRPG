@@ -1,6 +1,6 @@
 import { capitalise } from "../utils/capitalise";
 
-import { AbstractActor, TypeByDeclensionOfNounOptions } from "./AbstractActor";
+import { AbstractActor, AbstractActorOptions, TypeByDeclensionOfNounOptions } from "./AbstractActor";
 
 export const PlayerDeclensionOfNouns = {
   nominative: 'ты',
@@ -9,6 +9,8 @@ export const PlayerDeclensionOfNouns = {
   accusative: 'тебя',
   ablative: 'тобой',
   prepositional: 'о тебе',
+
+  possessive: 'твои',
 }
 
 export class Player extends AbstractActor {
@@ -22,21 +24,24 @@ export class Player extends AbstractActor {
   public criticalDamageModifier: number = 2;
   public accuracy: number;
 
-  constructor() {
-    super();
+  constructor(options: AbstractActorOptions = {}) {
+    super(options);
 
-    this.healthPoints = 10;
+    this.maxHealthPoints = 10;
+    this.healthPoints = 8;
     this.armor = 0.2;
     this.attackDamage = 1;
     this.criticalChance = .2;
     this.accuracy = .8;
   }
 
-  public getTypeByDeclensionOfNoun({ declension, plural = false }: TypeByDeclensionOfNounOptions): string {
+  public getType({ declension, capitalised = false }: TypeByDeclensionOfNounOptions): string {
+    if (capitalised) return capitalise(PlayerDeclensionOfNouns[declension]);
+
     return PlayerDeclensionOfNouns[declension];
   }
 
   public getDeathMessage(): string {
-    return `${capitalise(this.getTypeByDeclensionOfNoun({ declension: 'nominative' }))} умер!`;
+    return `${this.getType({ declension: 'nominative', capitalised: true })} умер!`;
   }
 }

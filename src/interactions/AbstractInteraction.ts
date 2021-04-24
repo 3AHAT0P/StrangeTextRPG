@@ -15,6 +15,11 @@ export abstract class AbstractInteraction {
     return this;
   }
 
+  public removeAction(message: string): this {
+    this.actions.delete(message);
+    return this;
+  }
+
   public async activate(): Promise<AbstractInteraction | null> {
     const autoInteractions = this.actions.get('auto');
     if (autoInteractions != null) {

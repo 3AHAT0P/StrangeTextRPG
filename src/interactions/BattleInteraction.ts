@@ -1,7 +1,6 @@
 import { AbstractUI } from "../ui/AbstractUI";
 import { AbstractActor, AttackResult } from "../actors/AbstractActor";
 import { SimpleInteraction } from './SimpleInteraction';
-import { capitalise } from "../utils/capitalise";
 import { AbstractInteraction } from "./AbstractInteraction";
 
 export interface BattleInteractionOptions {
@@ -27,8 +26,8 @@ export class BattleInteraction extends AbstractInteraction {
   }
 
   public buildAttackMessage(attacker: AbstractActor, attacked: AbstractActor, attackResult: AttackResult): string {
-    let message = `${capitalise(attacker.getTypeByDeclensionOfNoun({ declension: 'nominative', hasPostfix: true }))} нанес`
-      + ` ${capitalise(attacked.getTypeByDeclensionOfNoun({ declension: 'dative', hasPostfix: true }))} ${attackResult.damage}.`;
+    let message = `${attacker.getType({ declension: 'nominative', withPostfix: true, capitalised: true })} нанес`
+      + ` ${attacked.getType({ declension: 'dative', withPostfix: true, capitalised: true })} ${attackResult.damage}.`;
     if (attackResult.isCritical)
       message += ` ‼️КРИТ`;
     if (attackResult.isMiss)
@@ -41,8 +40,8 @@ export class BattleInteraction extends AbstractInteraction {
 
   public async activate(): Promise<AbstractInteraction> {
     await this.ui.sendToUser(
-      `${capitalise(this._player.getTypeByDeclensionOfNoun({ declension: 'nominative' }))}`
-      + ` встретил ${this._enemies.length}х ${this._enemies[0].getTypeByDeclensionOfNoun({ declension: 'genitive', plural: true })}.`
+      `${this._player.getType({ declension: 'nominative', capitalised: true })}`
+      + ` встретил ${this._enemies.length} ${this._enemies[0].getType({ declension: 'genitive', plural: this._enemies.length > 1 })}.`
       + ` Они все хотят кушать, а ты выглядишь очень аппетитно.\n`,
       'default'
     );
@@ -50,8 +49,8 @@ export class BattleInteraction extends AbstractInteraction {
     while (this._aliveEnemies.length > 0) {
       const message = 'Что будешь делать?\n';
 
-      const options = this._aliveEnemies.map((enemy, index) => {
-        return `АТАКОВАТЬ ${enemy.getTypeByDeclensionOfNoun({ declension: 'accusative', hasPostfix: true })}`;
+      const options = this._aliveEnemies.map((enemy) => {
+        return `АТАКОВАТЬ ${enemy.getType({ declension: 'accusative', withPostfix: true })}`;
       });
 
       const option = await this.ui.interactWithUser(message, options);
@@ -70,22 +69,25 @@ export class BattleInteraction extends AbstractInteraction {
       if (enemiesAttack !== '') await this.ui.sendToUser(enemiesAttack, 'damageTaken');
 
       let roundResultMessage = '⚔️Результаты раунда:\n';
-      roundResultMessage += ` - У ${this._player.getTypeByDeclensionOfNoun({ declension: 'genitive' })} ${this._player.healthPoints} ОЗ;\n`;
+      roundResultMessage += ` - У ${this._player.getType({ declension: 'genitive' })} ${this._player.healthPoints} ОЗ;\n`;
       roundResultMessage += this._aliveEnemies.map((actor: AbstractActor) => {
-        return ` - У ${actor.getTypeByDeclensionOfNoun({ declension: 'genitive', hasPostfix: true })} ${actor.healthPoints} ОЗ;\n`;
+        return ` - У ${actor.getType({ declension: 'genitive', withPostfix: true })} ${actor.healthPoints} ОЗ;\n`;
       }).join('');
       await this.ui.sendToUser(roundResultMessage, 'stats');
 
       if (!this._player.isAlive) {
         await this.ui.sendToUser(`Умер. Совсем. Окончательно.\n`, 'default');
+        const onDiedInteraction = this.actions.get('onDied');
+        if (onDiedInteraction != null) return onDiedInteraction;
         break;
       }
     }
 
+    const onWinInteractions = this.actions.get('onWin');
+    if (onWinInteractions != null) return onWinInteractions;
+
     const autoInteractions = this.actions.get('auto');
-    if (autoInteractions != null) {
-      return autoInteractions;
-    }
+    if (autoInteractions != null) return autoInteractions;
 
     return new SimpleInteraction(this.ui, { message: 'Продолжение следует...\n' });
   }
