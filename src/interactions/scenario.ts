@@ -208,7 +208,7 @@ export const buildThirdLocation = (ui: AbstractUI, state: SessionState, nextLoca
       let inputInteraction;
       let outputInteraction;
       if (cell === '0') {
-        inputInteraction = new SimpleInteraction(ui, { message: 'Тут ничего и никого нет.' + rowIndex + ':' + columnIndex });
+        inputInteraction = new SimpleInteraction(ui, { message: 'Тут ничего и никого нет.' });
         outputInteraction = inputInteraction;
       }
       if (cell === '1' || cell === '2' || cell === '3') {
