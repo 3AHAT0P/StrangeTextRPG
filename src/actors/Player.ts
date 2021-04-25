@@ -1,6 +1,7 @@
 import { capitalise } from "../utils/capitalise";
+import { isPresent } from "../utils/check";
 
-import { AbstractActor, AbstractActorOptions, TypeByDeclensionOfNounOptions } from "./AbstractActor";
+import { AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions } from "./AbstractActor";
 
 export const PlayerDeclensionOfNouns = {
   nominative: 'ты',
@@ -43,5 +44,9 @@ export class Player extends AbstractActor {
 
   public getDeathMessage(): string {
     return `${this.getType({ declension: 'nominative', capitalised: true })} умер!`;
+  }
+
+  public collectReward(reward: RewardBag): void {
+    if (isPresent<number>(reward.gold)) this._gold += reward.gold;
   }
 }

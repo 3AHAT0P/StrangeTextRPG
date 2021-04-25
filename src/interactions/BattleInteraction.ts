@@ -32,19 +32,19 @@ export class BattleInteraction extends AbstractInteraction {
       message += ` ‼️КРИТ`;
     if (attackResult.isMiss)
       message += ` ⚠️Промах`;
-    if (!attackResult.isAlive)
-      message += ` ${attacked.getDeathMessage()}`;
     message += '\n';
     return message;
   }
 
   public async activate(): Promise<AbstractInteraction> {
-    await this.ui.sendToUser(
-      `${this._player.getType({ declension: 'nominative', capitalised: true })}`
-      + ` встретил ${this._enemies.length} ${this._enemies[0].getType({ declension: 'genitive', plural: this._enemies.length > 1 })}.`
-      + ` Они все хотят кушать, а ты выглядишь очень аппетитно.\n`,
-      'default'
-    );
+    if (this._aliveEnemies.length > 0) {
+      await this.ui.sendToUser(
+        `${this._player.getType({ declension: 'nominative', capitalised: true })}`
+        + ` встретил ${this._enemies.length} ${this._enemies[0].getType({ declension: 'genitive', plural: this._enemies.length > 1 })}.`
+        + ` Они все хотят кушать, а ты выглядишь очень аппетитно.\n`,
+        'default'
+      );
+    }
 
     while (this._aliveEnemies.length > 0) {
       const message = 'Что будешь делать?\n';
@@ -53,15 +53,31 @@ export class BattleInteraction extends AbstractInteraction {
         return `АТАКОВАТЬ ${enemy.getType({ declension: 'accusative', withPostfix: true })}`;
       });
 
+      if (this._player.healthPoitions > 0) options.push(`Использовать зелье лечения`);
+
       const option = await this.ui.interactWithUser(message, options);
-      const optionId = options.indexOf(option);
+      if (option === 'Использовать зелье лечения') {
+        const healVolume = this._player.useHealthPoition();
+        if (healVolume) await this.ui.sendToUser('❤️' + `${this._player.getType({ declension: 'nominative' })} вылечился на ${healVolume} ОЗ. Всего у тебя ${this._player.stats.healthPoints} из ${this._player.stats.maxHealthPoints} ОЗ`, 'default');
+      } else {
+        const optionId = options.indexOf(option);
 
-      const attackedEnemy = this._aliveEnemies[optionId];
-      const attackResult = this._player.doAttack(attackedEnemy);
+        const attackedEnemy = this._aliveEnemies[optionId];
+        const attackResult = this._player.doAttack(attackedEnemy);
 
-      await this.ui.sendToUser('🗡' + this.buildAttackMessage(this._player, attackedEnemy, attackResult), 'damageDealt');
+        await this.ui.sendToUser('🗡' + this.buildAttackMessage(this._player, attackedEnemy, attackResult), 'damageDealt');
 
-      if (!attackResult.isAlive) this._aliveEnemies.splice(optionId, 1);
+        if (!attackResult.isAlive) {
+          const diedEnemy = this._aliveEnemies[optionId];
+          this._aliveEnemies.splice(optionId, 1);
+          const reward = diedEnemy.getReward();
+          this._player.collectReward(reward);
+          await this.ui.sendToUser(
+            `${diedEnemy.getDeathMessage()} ${this._player.getType({ declension: 'nominative' })} получил ${reward.gold ?? 0} золота.`,
+            'default',
+          );
+        }
+      }
 
       const enemiesAttack = this._aliveEnemies.map((actor: AbstractActor) => {
         return '🩸' + this.buildAttackMessage(actor, this._player, actor.doAttack(this._player));
@@ -69,9 +85,9 @@ export class BattleInteraction extends AbstractInteraction {
       if (enemiesAttack !== '') await this.ui.sendToUser(enemiesAttack, 'damageTaken');
 
       let roundResultMessage = '⚔️Результаты раунда:\n';
-      roundResultMessage += ` - У ${this._player.getType({ declension: 'genitive' })} ${this._player.healthPoints} ОЗ;\n`;
+      roundResultMessage += ` - У ${this._player.getType({ declension: 'genitive' })} ${this._player.stats.healthPoints} ОЗ;\n`;
       roundResultMessage += this._aliveEnemies.map((actor: AbstractActor) => {
-        return ` - У ${actor.getType({ declension: 'genitive', withPostfix: true })} ${actor.healthPoints} ОЗ;\n`;
+        return ` - У ${actor.getType({ declension: 'genitive', withPostfix: true })} ${actor.stats.healthPoints} ОЗ;\n`;
       }).join('');
       await this.ui.sendToUser(roundResultMessage, 'stats');
 

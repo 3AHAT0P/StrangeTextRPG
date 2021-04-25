@@ -1,8 +1,18 @@
+import { getRandomIntInclusive } from "../utils/getRandomIntInclusive";
+
 export interface AttackResult {
   damage: number;
   isAlive: boolean;
   isCritical: boolean;
   isMiss: boolean;
+}
+
+export interface Bag {
+  healthPoitions: number;
+}
+
+export interface RewardBag {
+  gold?: number; 
 }
 
 export interface AbstractActorOptions {
@@ -26,17 +36,41 @@ export type DeclensionOfNouns =
   'possessive';
 
 export abstract class AbstractActor {
-  public type: string = 'unknown';
-  public typePostfix: string = '';
+  protected type: string = 'unknown';
+  protected typePostfix: string = '';
 
-  public maxHealthPoints: number = 0;
-  public healthPoints: number = 0;
-  public armor: number = 0;
+  protected maxHealthPoints: number = 0;
+  protected healthPoints: number = 0;
+  protected armor: number = 0;
 
-  public attackDamage: number = 0;
-  public criticalChance: number = 0;
-  public criticalDamageModifier: number = 2;
-  public accuracy: number = .8;
+  protected attackDamage: number = 0;
+  protected criticalChance: number = 0;
+  protected criticalDamageModifier: number = 2;
+  protected accuracy: number = .8;
+
+  protected _gold: number = 0;
+
+  protected _bag: Bag = { healthPoitions: 0 };
+
+  get stats() {
+    return {
+      maxHealthPoints: this.maxHealthPoints,
+      healthPoints: this.healthPoints,
+      armor: this.armor,
+      attackDamage: this.attackDamage,
+      criticalChance: this.criticalChance,
+      criticalDamageModifier: this.criticalDamageModifier,
+      accuracy: this.accuracy,
+    };
+  }
+
+  get gold(): number {
+    return this._gold;
+  }
+
+  get healthPoitions(): number {
+    return this._bag.healthPoitions;
+  }
 
   public get isAlive(): boolean { return this.healthPoints > 0; }
 
@@ -75,4 +109,31 @@ export abstract class AbstractActor {
       isMiss: false,
     };
   }
+
+  public useHealthPoition() {
+    if (this._bag.healthPoitions === 0) return false;
+    
+    this._bag.healthPoitions -= 1;
+    const healVolume = getRandomIntInclusive(2, 5);
+    this.healthPoints += healVolume;
+
+    if (this.healthPoints > this.maxHealthPoints) this.healthPoints = this.maxHealthPoints;
+
+    return healVolume;
+  }
+
+  public exchangeGoldToItem(goldCount: number, bag: Partial<Bag>): boolean {
+    if (this._gold < goldCount) return false;
+
+    this._gold -= goldCount;
+    for (const [item, count] of Object.entries(bag) as Array<[keyof Bag, number]>) {
+      this._bag[item] += count;
+    }
+
+    return true;
+  }
+
+  public getReward(): RewardBag { return {}; }
+
+  public collectReward(reward: RewardBag): void { /* pass */ }
 }
