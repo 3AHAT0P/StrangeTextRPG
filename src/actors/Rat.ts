@@ -1,6 +1,7 @@
 import { capitalise } from "../utils/capitalise";
+import { getRandomIntInclusive } from "../utils/getRandomIntInclusive";
 
-import { AbstractActor, AbstractActorOptions, TypeByDeclensionOfNounOptions } from "./AbstractActor";
+import { AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions } from "./AbstractActor";
 
 export const RatDeclensionOfNouns = {
   nominative: 'крыса',
@@ -10,7 +11,7 @@ export const RatDeclensionOfNouns = {
   ablative: 'крысой',
   prepositional: 'о крысе',
 
-  possessive: 'крысины',
+  possessive: 'крысы',
 };
 
 export const RatDeclensionOfNounsPlural = {
@@ -54,10 +55,16 @@ export class Rat extends AbstractActor {
     if (capitalised) result = capitalise(result);
     if (this.typePostfix !== '' && withPostfix) result = `${result} ${this.typePostfix}`
 
-    return result;
+    return '🐀 ' + result;
   }
 
   public getDeathMessage(): string {
     return `${this.getType({ declension: 'nominative', withPostfix: true, capitalised: true })} сдохла, жалобно пища!`;
+  }
+
+  public getReward(): RewardBag {
+    return {
+      gold: getRandomIntInclusive(0, 10),
+    };
   }
 }

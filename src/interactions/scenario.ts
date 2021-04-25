@@ -7,6 +7,7 @@ import { Player } from "../actors/Player";
 import { AbstractInteraction } from "./AbstractInteraction";
 import { AbstractActor } from "../actors/AbstractActor";
 import { SessionState } from "../SessionState";
+import { isPresent } from "../utils/check";
 
 export interface NextLocation {
   actionMessage: string;
@@ -44,7 +45,13 @@ export const buildZeroLocation = (ui: AbstractUI, state: SessionState): Abstract
   
   const nextLocation: NextLocation = {
     actionMessage: 'Вернутся к выбору локаций',
-    interaction: introInteraction,
+    interaction: new Interaction(ui, {
+      buildMessage() { return 'Reloading...'; },
+      async activate() {
+        state.player = new Player();
+        return introInteraction;
+      }
+    }),
   };
 
   const firstLocation = buildFirstLocation(ui, state, nextLocation);
@@ -100,7 +107,7 @@ export const buildSecondLocation = (ui: AbstractUI, state: SessionState, nextLoc
     async activate() {
       const player = new Player();
       const battleInteraction = new BattleInteraction(ui, { player, enemies: [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' })] });
-      baseInteractions.lastInteraction.addAction('Перезагрузить локацию', mainInteraction)
+      baseInteractions.lastInteraction.addAction('Перезагрузить локацию', mainInteraction);
       if (nextLocation != null) baseInteractions.lastInteraction.addAction(nextLocation.actionMessage, nextLocation.interaction);
       battleInteraction.addAction('auto', baseInteractions.lastInteraction);
       return battleInteraction;
@@ -140,73 +147,199 @@ export const buildThirdLocation = (ui: AbstractUI, state: SessionState, nextLoca
 
   const seeMyselfInteraction = new Interaction(ui, {
     buildMessage() {
+      const stats = state.player.stats;
       return `${state.player.getType({ declension: 'possessive', capitalised: true })} характеристики:\n`
-        + `Очки здоровья - ${state.player.healthPoints} / ${state.player.maxHealthPoints}\n`
-        + `Защита - ${state.player.armor}\n`
-        + `Сила удара - ${state.player.attackDamage}\n`
-        + `Шанс попасть ударом - ${state.player.accuracy}\n`
-        + `Шанс попасть в уязвимое место - ${state.player.criticalChance}\n`
+        + `Очки здоровья - ${stats.healthPoints} / ${stats.maxHealthPoints}\n`
+        + `Защита - ${stats.armor}\n`
+        + `Сила удара - ${stats.attackDamage}\n`
+        + `Шанс попасть ударом - ${stats.accuracy}\n`
+        + `Шанс попасть в уязвимое место - ${stats.criticalChance}\n`
+        + `В кармане звенят ${state.player.gold} золота\n`
       ;
     },
   });
 
-  const standUpInteraction = new SimpleInteraction(ui, { message: `Перед тобой три пути. Куда пойдешь?\n` });
+  /*
+    - - недостижимое место
+    w - wall, стена, нет прохода
+    b - break, обрыв, нет прохода
+    0, 1, 2, ... - количество монстров на локации
+    m - merchant, торговец
+    p - player, игрок
+    o - out, выход
+    g - gold, немного золота (1-5)
+    G - GOLD, много золота (10-20)
+        N
+    W - X - E
+        S
+    - - w w w w b b b b b b b - - - - -
+    w w w 1 2 w 2 0 0 1 0 g w - - - - -
+    w 0 w 0 1 w 1 0 1 0 w G w - - - - -
+    w 0 0 0 w w 0 1 0 0 w 3 w - - - - -
+    w p 0 0 1 0 1 w 1 0 w m w - - - - -
+    w w w w 1 w w w 0 1 w w w w w w w w
+    - - w 0 1 0 0 0 0 0 0 m 0 0 0 0 3 o
+    - b b b b b b b w w w w w w w w w w
+    - b - - - - - b - - - - - - - - - -
+    - b b b b b b b - - - - - - - - - -
+    - - - - - - - - - - - - - - - - - -
+  */
 
-  const goForwardInteraction = new Interaction(ui, {
-    buildMessage() {
-      return `Ты идешь вперед.`;
-    },
-    async activate() {
-      if (Math.random() > 0.5) {
-        const battleInteraction = new BattleInteraction(ui, { player: state.player, enemies: [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' })] });
-        battleInteraction.addAction('onWin', standUpInteraction);
-        battleInteraction.addAction('onDied', baseInteractions.lastInteraction);
-        return battleInteraction;
+  const map = [
+    '-', '-', 'w', 'w', 'w', 'w', 'b', 'b', 'b', 'b', 'b', 'b', 'b', '-', '-', '-', '-', '-',
+    'w', 'w', 'w', '1', '2', 'w', '2', '0', '0', '1', '0', 'g', 'w', '-', '-', '-', '-', '-',
+    'w', '0', 'w', '0', '1', 'w', '1', '0', '1', '0', 'w', 'G', 'w', '-', '-', '-', '-', '-',
+    'w', '0', '0', '0', 'w', 'w', '0', '1', '0', '0', 'w', '3', 'w', '-', '-', '-', '-', '-',
+    'w', 'p', '0', '0', '1', '0', '1', 'w', '1', '0', 'w', 'm', 'w', '-', '-', '-', '-', '-',
+    'w', 'w', 'w', 'w', '1', 'w', 'w', 'w', '0', '1', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w',
+    '-', '-', 'w', '0', '1', '0', '0', '0', '0', '0', '0', 'm', '0', '0', '0', '0', '3', 'o',
+    '-', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w',
+    '-', 'b', '-', '-', '-', '-', '-', 'b', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-',
+    '-', 'b', 'b', 'b', 'b', 'b', 'b', 'b', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-',
+    '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-',
+  ];
+
+  const interactiveMap: Map<string, AbstractInteraction> = new Map();
+  let userPositionInteraction: AbstractInteraction | null = null;
+
+  for (let rowIndex = 0; rowIndex < 11; rowIndex += 1) {
+    for (let columnIndex = 0; columnIndex < 18; columnIndex += 1) {
+      const cell = map[rowIndex * 18 + columnIndex];
+      let inputInteraction;
+      let outputInteraction;
+      if (cell === '0') {
+        inputInteraction = new SimpleInteraction(ui, { message: 'Тут ничего и никого нет.' + rowIndex + ':' + columnIndex });
+        outputInteraction = inputInteraction;
       }
-      return standUpInteraction;
-    }
-  });
-  const goLeftInteraction = new Interaction(ui, {
-    buildMessage() {
-      return `Ты идешь влево.`;
-    },
-    async activate() {
-      if (Math.random() > 0.2) {
-        const battleInteraction = new BattleInteraction(ui, { player: state.player, enemies: [new Rat({ typePostfix: '№1' })] });
-        battleInteraction.addAction('onWin', standUpInteraction);
-        battleInteraction.addAction('onDied', baseInteractions.lastInteraction);
-        return battleInteraction;
+      if (cell === '1' || cell === '2' || cell === '3') {
+        outputInteraction = new SimpleInteraction(ui, { message: 'Больше тут ничего и никого нет. Куда дальше?' });
+        inputInteraction = new BattleInteraction(ui, { player: state.player, enemies: Array.from(Array(Number(cell)), (_, index) => new Rat({ typePostfix: `№${index + 1}` }))});
+        inputInteraction.addAction('onWin', outputInteraction);
+        inputInteraction.addAction('onDied', baseInteractions.lastInteraction);
       }
-      return standUpInteraction;
-    }
-  });
-  const goRightInteraction = new Interaction(ui, {
-    buildMessage() {
-      return `Ты идешь вправо.`;
-    },
-    async activate() {
-      if (Math.random() > 0.8) {
-        const battleInteraction = new BattleInteraction(ui, { player: state.player, enemies: [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' }), new Rat({ typePostfix: '№3' })] });
-        battleInteraction.addAction('onWin', standUpInteraction);
-        battleInteraction.addAction('onDied', baseInteractions.lastInteraction);
-        return battleInteraction;
+      if (cell === 'm') {
+        const talkToMerchantInteraction = new SimpleInteraction(ui, {
+          message: `Здравствуй, ${state.additionalInfo.playerName}. Извини, за столь скудный выбор.\nЧего изволишь?`,
+        });
+
+        const buyHealthPointInteraction = new Interaction(ui, {
+          buildMessage() { return 'Хороший выбор :)' },
+          async activate() {
+            const result = state.player.exchangeGoldToItem(10, { healthPoitions: 1 });
+            if (!result) ui.sendToUser(`К сожалению, у ${state.player.getType({ declension: 'genitive' })} не хватает золота.`, 'default');
+            return 'SUPER';
+          }
+        });
+
+        inputInteraction = new SimpleInteraction(ui, {
+          message: `${state.player.getType({ declension: 'nominative', capitalised: true })} видишь торговца.`,
+        });
+
+        inputInteraction.addAction('Поговорить с торговцем', talkToMerchantInteraction);
+
+        talkToMerchantInteraction.addAction('Купить 1 зелье здоровья (10 золтых)', buyHealthPointInteraction);
+        buyHealthPointInteraction.addAction('auto', inputInteraction);
+
+        outputInteraction = inputInteraction;
       }
-      return standUpInteraction;
+      if (cell === 'o') {
+        inputInteraction = new SimpleInteraction(ui, {
+          message: `${state.player.getType({ declension: 'nominative', capitalised: true })} добрался до выхода! МОЛОДЕЦ!!!`,
+        });
+
+        inputInteraction.addAction('auto', baseInteractions.lastInteraction);
+
+        outputInteraction = inputInteraction;
+      }
+      if (cell === 'p') {
+        inputInteraction = new SimpleInteraction(ui, {
+          message: `Перед ${state.player.getType({ declension: 'ablative' })} есть выбор куда идти\n`,
+        });
+
+        outputInteraction = inputInteraction;
+
+        userPositionInteraction = inputInteraction;
+      }
+
+      if (isPresent(inputInteraction) && isPresent(outputInteraction)) {
+        interactiveMap.set(`${rowIndex}:${columnIndex}`, inputInteraction);
+        interactiveMap.set(`${rowIndex}:${columnIndex}=o`, outputInteraction);
+        const NInteraction = interactiveMap.get(`${rowIndex - 1}:${columnIndex}`);
+        const NInteractionOutput = interactiveMap.get(`${rowIndex - 1}:${columnIndex}=o`);
+        if (isPresent(NInteraction)) {
+          if (isPresent(NInteractionOutput)) NInteractionOutput.addAction('Идти на ЮГ', inputInteraction);
+          else NInteraction.addAction('Идти на ЮГ', inputInteraction);
+          outputInteraction.addAction('Идти на СЕВЕР', NInteraction);
+        }
+        const WInteraction = interactiveMap.get(`${rowIndex}:${columnIndex - 1}`);
+        const WInteractionOutput = interactiveMap.get(`${rowIndex}:${columnIndex - 1}=o`);
+        if (isPresent(WInteraction)) {
+          if (isPresent(WInteractionOutput)) WInteractionOutput.addAction('Идти на ЗАПАД', inputInteraction);
+          else WInteraction.addAction('Идти на ЗАПАД', inputInteraction);
+          WInteraction.addAction('Идти на ЗАПАД', inputInteraction);
+          outputInteraction.addAction('Идти на ВОСТОК', WInteraction);
+        }
+      }
     }
-  });
+  }
+
+  // const standUpInteraction = new SimpleInteraction(ui, { message: `Перед тобой три пути. Куда пойдешь?\n` });
+
+  // const goForwardInteraction = new Interaction(ui, {
+  //   buildMessage() {
+  //     return `Ты идешь вперед.`;
+  //   },
+  //   async activate() {
+  //     if (Math.random() > 0.5) {
+  //       const battleInteraction = new BattleInteraction(ui, { player: state.player, enemies: [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' })] });
+  //       battleInteraction.addAction('onWin', standUpInteraction);
+  //       battleInteraction.addAction('onDied', baseInteractions.lastInteraction);
+  //       return battleInteraction;
+  //     }
+  //     return standUpInteraction;
+  //   }
+  // });
+  // const goLeftInteraction = new Interaction(ui, {
+  //   buildMessage() {
+  //     return `Ты идешь влево.`;
+  //   },
+  //   async activate() {
+  //     if (Math.random() > 0.2) {
+  //       const battleInteraction = new BattleInteraction(ui, { player: state.player, enemies: [new Rat({ typePostfix: '№1' })] });
+  //       battleInteraction.addAction('onWin', standUpInteraction);
+  //       battleInteraction.addAction('onDied', baseInteractions.lastInteraction);
+  //       return battleInteraction;
+  //     }
+  //     return standUpInteraction;
+  //   }
+  // });
+  // const goRightInteraction = new Interaction(ui, {
+  //   buildMessage() {
+  //     return `Ты идешь вправо.`;
+  //   },
+  //   async activate() {
+  //     if (Math.random() > 0.8) {
+  //       const battleInteraction = new BattleInteraction(ui, { player: state.player, enemies: [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' }), new Rat({ typePostfix: '№3' })] });
+  //       battleInteraction.addAction('onWin', standUpInteraction);
+  //       battleInteraction.addAction('onDied', baseInteractions.lastInteraction);
+  //       return battleInteraction;
+  //     }
+  //     return standUpInteraction;
+  //   }
+  // });
 
   introInteraction.addAction('auto', mainInteraction);
   mainInteraction.addAction('Оглядется', overviewInteraction);
-  mainInteraction.addAction('Встать', standUpInteraction);
+  if (isPresent(userPositionInteraction)) mainInteraction.addAction('Встать', userPositionInteraction);
   mainInteraction.addAction('Закончить игру', baseInteractions.exitInteraction);
   overviewInteraction.addAction('auto', mainInteraction);
   seeMyselfInteraction.addAction('auto', mainInteraction);
 
-  standUpInteraction
-    .addAction('Пойти налево', goLeftInteraction)
-    .addAction('Пойти прямо', goForwardInteraction)
-    .addAction('Пойти направо', goRightInteraction)
-    .addAction('Закончить игру', baseInteractions.exitInteraction);
+  // standUpInteraction
+  //   .addAction('Пойти налево', goLeftInteraction)
+  //   .addAction('Пойти прямо', goForwardInteraction)
+  //   .addAction('Пойти направо', goRightInteraction)
+  //   .addAction('Закончить игру', baseInteractions.exitInteraction);
 
   return introInteraction;
 };
