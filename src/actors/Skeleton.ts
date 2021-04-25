@@ -33,7 +33,7 @@ export class Skeleton extends AbstractActor {
 
   public attackDamage: number;
   public criticalChance: number;
-  public criticalDamageModifier: number = 2;
+  public criticalDamageModifier: number = 1.75;
   public accuracy: number;
 
   constructor(options: AbstractActorOptions = {}) {
