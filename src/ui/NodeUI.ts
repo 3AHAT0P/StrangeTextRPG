@@ -38,6 +38,7 @@ export const MessageTypes: Record<MessageType, TextModifiers[]> = {
   damageTaken: [TextModifiers.FgRed],
   option: [TextModifiers.Italic],
   stats: [TextModifiers.Dim, TextModifiers.FgMagenta],
+  markdown: [],
 }
 
 export class NodeUI extends AbstractUI {

@@ -199,22 +199,85 @@ export const buildThirdLocation = (ui: AbstractUI, state: SessionState, nextLoca
     '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-',
   ];
 
+  const currentPositionOnMap = {
+    row: 4,
+    column: 1,
+  };
+
+  const showMapInteraction = new Interaction(ui, {
+    buildMessage() {
+      // 🟥🟧🟨🟩🟦 🟪⬛️⬜️🟫
+      let mapPiece = '';
+      mapPiece += '⬛️ - недостижимое место\n';
+      mapPiece += '🟫 - wall, стена, нет прохода\n';
+      mapPiece += '🟪 - break, обрыв, нет прохода\n';
+      mapPiece += '⬜️ - чистое место\n';
+      mapPiece += '🟦 - merchant, торговец\n';
+      mapPiece += '🟩 - player, игрок\n';
+      mapPiece += '🟥 - out, выход\n';
+      mapPiece += '🟨 - gold, золото\n';
+      mapPiece += '❔ - не разведанная территория\n';
+      mapPiece += '    N\n';
+      mapPiece += 'W - X - E\n';
+      mapPiece += '    S\n';
+      mapPiece += '\n';
+      for (let row = currentPositionOnMap.row - 1; row <= currentPositionOnMap.row + 1; row += 1) {
+        mapPiece += '';
+        for (let column = currentPositionOnMap.column - 1; column <= currentPositionOnMap.column + 1; column += 1) {
+          const cell = map[row * 18 + column];
+          if (row === currentPositionOnMap.row && column === currentPositionOnMap.column) mapPiece += '🟩';
+          else if (cell === '1' || cell === '2' || cell === '3') mapPiece += '❔';
+          else if (cell === '-') mapPiece += '⬛️';
+          else if (cell === 'w') mapPiece += '🟫';
+          else if (cell === 'b') mapPiece += '🟪';
+          else if (cell === '0') mapPiece += '⬜️';
+          else if (cell === 'm') mapPiece += '🟦';
+          else if (cell === 'o') mapPiece += '🟥';
+          else if (cell === 'g') mapPiece += '🟨';
+          else if (cell === 'p') mapPiece += '⬜️';
+        }
+        mapPiece += '\n';
+      }
+      ui.sendToUser(mapPiece, 'markdown');
+      return 'mapPiece';
+    }
+  });
+
   const interactiveMap: Map<string, AbstractInteraction> = new Map();
   let userPositionInteraction: AbstractInteraction | null = null;
 
   for (let rowIndex = 0; rowIndex < 11; rowIndex += 1) {
     for (let columnIndex = 0; columnIndex < 18; columnIndex += 1) {
       const cell = map[rowIndex * 18 + columnIndex];
-      let inputInteraction;
-      let outputInteraction;
+      let inputInteraction: AbstractInteraction | null = null;
+      let outputInteraction: AbstractInteraction | null = null;
       if (cell === '0') {
         inputInteraction = new SimpleInteraction(ui, { message: 'Тут ничего и никого нет.' });
-        outputInteraction = inputInteraction;
+        outputInteraction = new Interaction(ui, {
+          buildMessage() { return 'Куда дальше?'; },
+          async activate() {
+            currentPositionOnMap.row = rowIndex;
+            currentPositionOnMap.column = columnIndex;
+            if (isPresent(outputInteraction)) showMapInteraction.addAction('auto', outputInteraction);
+            return 'SUPER';
+          },
+        });
+        inputInteraction.addAction('auto', outputInteraction);
       }
       if (cell === '1' || cell === '2' || cell === '3') {
-        outputInteraction = new SimpleInteraction(ui, { message: 'Больше тут ничего и никого нет. Куда дальше?' });
+        const internalInteraction = new SimpleInteraction(ui, { message: 'Больше тут ничего и никого нет.' });
+        outputInteraction = new Interaction(ui, {
+          buildMessage() { return 'Куда дальше?'; },
+          async activate() {
+            currentPositionOnMap.row = rowIndex;
+            currentPositionOnMap.column = columnIndex;
+            if (isPresent(outputInteraction)) showMapInteraction.addAction('auto', outputInteraction);
+            return 'SUPER';
+          },
+        });
+        internalInteraction.addAction('auto', outputInteraction);
         inputInteraction = new BattleInteraction(ui, { player: state.player, enemies: Array.from(Array(Number(cell)), (_, index) => new Rat({ typePostfix: `№${index + 1}` }))});
-        inputInteraction.addAction('onWin', outputInteraction);
+        inputInteraction.addAction('onWin', internalInteraction);
         inputInteraction.addAction('onDied', baseInteractions.lastInteraction);
       }
       if (cell === 'm') {
@@ -235,12 +298,21 @@ export const buildThirdLocation = (ui: AbstractUI, state: SessionState, nextLoca
           message: `${state.player.getType({ declension: 'nominative', capitalised: true })} видишь торговца.`,
         });
 
-        inputInteraction.addAction('Поговорить с торговцем', talkToMerchantInteraction);
+        inputInteraction.addAction('💬 Поговорить с торговцем', talkToMerchantInteraction);
 
         talkToMerchantInteraction.addAction('Купить 1 зелье здоровья (10 золтых)', buyHealthPointInteraction);
         buyHealthPointInteraction.addAction('auto', inputInteraction);
 
-        outputInteraction = inputInteraction;
+        outputInteraction = new Interaction(ui, {
+          buildMessage() { return 'Идем дальше?'; },
+          async activate() {
+            currentPositionOnMap.row = rowIndex;
+            currentPositionOnMap.column = columnIndex;
+            if (isPresent(outputInteraction)) showMapInteraction.addAction('auto', outputInteraction);
+            return 'SUPER';
+          },
+        });
+        inputInteraction.addAction('auto', outputInteraction);
       }
       if (cell === 'o') {
         inputInteraction = new SimpleInteraction(ui, {
@@ -256,12 +328,22 @@ export const buildThirdLocation = (ui: AbstractUI, state: SessionState, nextLoca
           message: `Перед ${state.player.getType({ declension: 'ablative' })} есть выбор куда идти\n`,
         });
 
-        outputInteraction = inputInteraction;
+        outputInteraction = new Interaction(ui, {
+          buildMessage() { return 'Куда дальше?'; },
+          async activate() {
+            currentPositionOnMap.row = rowIndex;
+            currentPositionOnMap.column = columnIndex;
+            if (isPresent(outputInteraction)) showMapInteraction.addAction('auto', outputInteraction);
+            return 'SUPER';
+          },
+        });
+        inputInteraction.addAction('auto', outputInteraction);
 
         userPositionInteraction = inputInteraction;
       }
 
       if (isPresent(inputInteraction) && isPresent(outputInteraction)) {
+        outputInteraction.addAction('Оглядется', showMapInteraction);
         interactiveMap.set(`${rowIndex}:${columnIndex}`, inputInteraction);
         interactiveMap.set(`${rowIndex}:${columnIndex}=o`, outputInteraction);
         const NInteraction = interactiveMap.get(`${rowIndex - 1}:${columnIndex}`);

@@ -23,6 +23,7 @@ export const MessageTypes: Record<MessageType, []> = {
   damageTaken: [],
   option: [],
   stats: [],
+  markdown: [],
 }
 
 const eventEmitter = new EventEmitter();
@@ -77,7 +78,8 @@ export class TelegramBotUi extends AbstractSessionUI {
   }
 
   public async sendToUser(sessionId: string, message: string, type: MessageType): Promise<void> {
-    await this.bot.telegram.sendMessage(sessionId, message);
+    if (type === 'markdown') await this.bot.telegram.sendMessage(sessionId, message, { parse_mode: 'HTML' });
+    else await this.bot.telegram.sendMessage(sessionId, message);
   }
 
   public async sendOptionsToUser(sessionId: string, message: string, options: string[]): Promise<void> {
