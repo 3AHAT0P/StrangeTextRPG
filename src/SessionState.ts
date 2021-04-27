@@ -1,11 +1,11 @@
 import { AbstractActor } from "./actors/AbstractActor";
-import { AbstractInteraction } from "./interactions/AbstractInteraction";
-import { AdditionalSessionInfo } from "./ui/TelegramBotUI";
+import { Interactable } from "./interactions/AbstractInteraction";
+import { AdditionalSessionInfo } from "./ui/AbstractSessionUI";
 
 export interface SessionState {
   sessionId: string;
   player: AbstractActor;
-  currentInteraction: AbstractInteraction;
+  currentInteraction: Interactable;
   additionalInfo: AdditionalSessionInfo;
   finishSession(): Promise<void>;
 }

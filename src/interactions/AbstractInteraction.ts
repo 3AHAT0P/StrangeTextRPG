@@ -1,6 +1,10 @@
 import { AbstractUI } from "../ui/AbstractUI";
 
-export abstract class AbstractInteraction {
+export interface Interactable {
+  activate(): Promise<AbstractInteraction | null>;
+}
+
+export abstract class AbstractInteraction implements Interactable {
   protected ui: AbstractUI;
   protected actions: Map<string, AbstractInteraction> = new Map();
 
