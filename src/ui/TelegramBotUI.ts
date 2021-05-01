@@ -46,6 +46,7 @@ export class TelegramBotUi extends AbstractSessionUI {
     });
 
     this.bot.start(async (ctx) => {
+      console.log('ADADADADADQWEQ$!$!@#!@');
       const listOfCommands = Markup.inlineKeyboard([
         Markup.button.callback('Start new game', 'startNewGame'),
         Markup.button.callback('Finish current game', 'finishGame'),

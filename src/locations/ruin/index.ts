@@ -6,9 +6,10 @@ import { NextLocation, getBaseInteractions } from "../../interactions/scenario";
 import { SimpleInteraction } from "../../interactions/SimpleInteraction";
 import { SessionState } from "../../SessionState";
 import { AbstractUI } from "../../ui/AbstractUI";
+import { Point, Size } from "../../utils/@types";
 import { isPresent } from "../../utils/check";
 
-import { map } from './map';
+import { map, mapObjects, mapSize } from './map';
 
 export interface AbstractLocationOptions {
   ui: AbstractUI;
@@ -28,23 +29,38 @@ export abstract class AbstractLocation implements Interactable {
   public abstract activate(): Promise<AbstractInteraction | null>;
 }
 
-export interface Point {
-  x: number;
-  y: number;
-}
+const mapSigns: Record<mapObjects, string> = {
+  '-': '⬛️',
+  'w': '🟫',
+  'b': '🟪',
+  '0': '⬜️',
+  'm': '🔵',
+  'p': '🔹',
+  'o': '🟥',
+  'g': '💰',
+  '?': '❔',
+  '1': '1',
+  '2': '2',
+  '3': '3',
+  '4': '4',
+  '5': '5',
+} as const;
 
 export class RuinLocation extends AbstractLocation {
-  private printMap(currentPosition: Point, userVisibleMap: string[], mapSize: ): string {
+  private printMap(currentPosition: Point, userVisibleMap: mapObjects[], mapSize: Size): string {
     // 🟥🟧🟨🟩🟦 🟪⬛️⬜️🟫
+    // 🔴🟠🟡🟢🔵🟣⚫️⚪️🟤
+    // 🔸🔹🔶🔷♦️
+    // 🚪 💰
     let mapPiece = '';
     mapPiece += '⬛️ - недостижимое место\n';
     mapPiece += '🟫 - wall, стена, нет прохода\n';
     mapPiece += '🟪 - break, обрыв, нет прохода\n';
     mapPiece += '⬜️ - чистое место\n';
-    mapPiece += '🟦 - merchant, торговец\n';
+    mapPiece += '🔵 - merchant, торговец\n';
     mapPiece += '🔹 - player, игрок\n';
     mapPiece += '🟥 - out, выход\n';
-    mapPiece += '🟨 - gold, золото\n';
+    mapPiece += '🔸 - gold, золото\n';
     mapPiece += '❔ - не разведанная территория\n';
     mapPiece += '⬆️ - N (Север)\n';
     mapPiece += '➡️ - E (Восток)\n';
@@ -53,18 +69,13 @@ export class RuinLocation extends AbstractLocation {
     mapPiece += '\n';
     for (let y = currentPosition.y - 1; y <= currentPosition.y + 1; y += 1) {
       mapPiece += '';
+      if (y < 0 || y > mapSize.height - 1) continue;
       for (let x = currentPosition.x - 1; x <= currentPosition.x + 1; x += 1) {
-        const cell = userVisibleMap[y * 18 + x];
+        if (x < 0 || x > mapSize.width - 1) continue;
+        const cell = userVisibleMap[y * mapSize.width + x];
         if (y === currentPosition.y && x === currentPosition.x) mapPiece += '🔹';
-        else if (cell === '?') mapPiece += '❔';
-        else if (cell === '-') mapPiece += '⬛️';
-        else if (cell === 'w') mapPiece += '🟫';
-        else if (cell === 'b') mapPiece += '🟪';
-        else if (cell === '0') mapPiece += '⬜️';
-        else if (cell === 'm') mapPiece += '🟦';
-        else if (cell === 'o') mapPiece += '🟥';
-        else if (cell === 'g') mapPiece += '🟨';
         else if (cell === 'p') mapPiece += '⬜️';
+        else mapPiece += mapSigns[cell];
       }
       mapPiece += '\n';
     }
@@ -84,38 +95,138 @@ export class RuinLocation extends AbstractLocation {
     const isTrue = true;
 
     const currentPosition = { x: 0, y: 0 };
-    const userVisibleMap = map.map(() => '?');
+    const userPositionIndex = map.indexOf('p');
+    currentPosition.y = Math.ceil(userPositionIndex / mapSize.width);
+    currentPosition.x = userPositionIndex - currentPosition.y * mapSize.width;
+
+    const userVisibleMap = map.map<mapObjects>(() => '?');
+
+    const options: string[] = ['Оглядется', 'Встать'];
+    let walkOptions: string[] = [];
+
+    const internalPlayerState = {
+      isStandUp: false,
+    };
+
+    // 'Идти на СЕВЕР';
+    // 'Идти на ЮГ';
+    // 'Идти на ЗАПАД';
+    // 'Идти на ВОСТОК';
+
 
     while (isTrue) {
+      // await this.ui.sendToUser(`Что будешь делать?\n`, 'default');
 
-    }
+      const option = await this.ui.interactWithUser('Что будешь делать?', options.concat(walkOptions));
+      if (option === 'Оглядется' && !internalPlayerState.isStandUp) {
+        options.push('Посмотреть на себя в лужу');
+        await this.ui.sendToUser(`Сумрачно.`
+          + ` ${player.getType({ declension: 'nominative', capitalised: true })} сидишь опёршись на уцелевший угол стены.`
+          + ` Над ${player.getType({ declension: 'ablative' })} есть небольшой кусок крыши. Рядом почти потухший костер.`
+          + ` Поодаль везде грязь и лужи. Моросит мелкий дождик.\n`,
+          'default',
+        );
+      } else if (option === 'Оглядется' && internalPlayerState.isStandUp) {
+        await this.ui.sendToUser(this.printMap(currentPosition, userVisibleMap, mapSize), 'default');
+      } else if (option === 'Посмотреть на себя в лужу') {
+        const stats = player.stats;
+        this.ui.sendToUser(`${player.getType({ declension: 'possessive', capitalised: true })} характеристики:\n`
+          + `Очки здоровья - ${stats.healthPoints} / ${stats.maxHealthPoints}\n`
+          + `Защита - ${stats.armor}\n`
+          + `Сила удара - ${stats.attackDamage}\n`
+          + `Шанс попасть ударом - ${stats.accuracy}\n`
+          + `Шанс попасть в уязвимое место - ${stats.criticalChance}\n`
+          + `В кармане звенят ${player.gold} золота\n`,
+          'default',
+        );
+      } else if (option === 'Встать') {
+        internalPlayerState.isStandUp = true;
+        options.splice(options.indexOf('Встать'), 1);
+      } else if (option.startsWith('Идти на')) {
+        if (option === 'Идти на ЗАПАД') {
+          currentPosition.x -= 1;
+        } else if (option === 'Идти на ВОСТОК') {
+          currentPosition.x += 1;
+        } else if (option === 'Идти на СЕВЕР') {
+          currentPosition.y -= 1;
+        } else if (option === 'Идти на ЮГ') {
+          currentPosition.y += 1;
+        }
+        const currentPositionIndex = currentPosition.y * mapSize.width + currentPosition.x;
+        for (let y = currentPosition.y - 1; y <= currentPosition.y + 1; y += 1) {
+          if (y < 0 || y > mapSize.height - 1) continue;
+          for (let x = currentPosition.x - 1; x <= currentPosition.x + 1; x += 1) {
+            if (x < 0 || x > mapSize.width - 1) continue;
+            userVisibleMap[y * mapSize.width + x] = map[y * mapSize.width + x];
+          }
+        }
 
-    await this.ui.sendToUser(`Сумрачно.`
-      + ` ${player.getType({ declension: 'nominative', capitalised: true })} сидишь опёршись на уцелевший угол стены.`
-      + ` Над ${player.getType({ declension: 'ablative' })} есть небольшой кусок крыши. Рядом почти потухший костер.`
-      + ` Поодаль везде грязь и лужи. Моросит мелкий дождик.\n`,
-      'default',
-    );
+        walkOptions = [];
 
+        if (map[currentPositionIndex] === 'm') {
+          // await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} видишь торговца.`, 'default');
+          // walkOptions.push('💬 Поговорить с торговцем');
 
+          // const talkToMerchantInteraction = new SimpleInteraction(ui, {
+          //   message: `Здравствуй, ${this.state.additionalInfo.playerName}. Извини, за столь скудный выбор.\nЧего изволишь?`,
+          // });
 
-    const mainInteraction = new SimpleInteraction(ui, { message: `Что будешь делать?\n` });
+          // const buyHealthPointInteraction = new Interaction(ui, {
+          //   buildMessage() { return 'Хороший выбор :)' },
+          //   async activate() {
+          //     const result = state.player.exchangeGoldToItem(10, { healthPoitions: 1 });
+          //     if (!result) ui.sendToUser(`К сожалению, у ${state.player.getType({ declension: 'genitive' })} не хватает золота.`, 'default');
+          //     return 'SUPER';
+          //   }
+          // });
 
-    const overviewInteraction = new Interaction(ui, {
-      buildMessage() {
-        return `Сумрачно.`
-          + ` ${state.player.getType({ declension: 'nominative', capitalised: true })} сидишь опёршись на уцелевший угол стены.`
-          + ` Над ${state.player.getType({ declension: 'ablative' })} есть небольшой кусок крыши. Рядом почти потухший костер.`
-          + ` Поодаль везде грязь и лужи. Моросит мелкий дождик.\n`;
-      },
-      async activate() {
-        mainInteraction.addAction('Посмотреть на себя в лужу', seeMyselfInteraction);
-        return 'SUPER';
+          // inputInteraction.addAction('💬 Поговорить с торговцем', talkToMerchantInteraction);
+
+          // talkToMerchantInteraction.addAction('Купить 1 зелье здоровья (10 золтых)', buyHealthPointInteraction);
+          // buyHealthPointInteraction.addAction('auto', inputInteraction);
+
+          // outputInteraction = new Interaction(ui, {
+          //   buildMessage() { return 'Идем дальше?'; },
+          //   async activate() {
+          //     currentPositionOnMap.row = rowIndex;
+          //     currentPositionOnMap.column = columnIndex;
+          //     if (isPresent(outputInteraction)) showMapInteraction.addAction('auto', outputInteraction);
+          //     return 'SUPER';
+          //   },
+          // });
+          // inputInteraction.addAction('auto', outputInteraction);
+        }
+      } else if (option === '💬 Поговорить с торговцем') {
+        const merchantGoods = {
+          oneHealthPoition: 'Купить 1 зелье здоровья (10 золтых)',
+        };
+        const buyOption = await this.ui.interactWithUser(
+          `Здравствуй, ${this.state.additionalInfo.playerName}. Извини, за столь скудный выбор.\nЧего изволишь?`,
+          [merchantGoods.oneHealthPoition],
+        );
+        if (buyOption === merchantGoods.oneHealthPoition) {
+          const result = player.exchangeGoldToItem(10, { healthPoitions: 1 });
+          if (!result) this.ui.sendToUser(`К сожалению, у ${player.getType({ declension: 'genitive' })} не хватает золота.`, 'default');
+        }
       }
-    });
 
 
-
+      if (internalPlayerState.isStandUp) {
+        const currentPositionIndex = currentPosition.y * mapSize.width + currentPosition.x;
+        if (currentPosition.x > 0 && !['w', 'b', '-'].includes(map[currentPositionIndex - 1])) {
+          walkOptions.push('Идти на ЗАПАД');
+        }
+        if (currentPosition.x < mapSize.width - 1 && !['w', 'b', '-'].includes(map[currentPositionIndex + 1])) {
+          walkOptions.push('Идти на ВОСТОК');
+        }
+        if (currentPosition.y > 0 && !['w', 'b', '-'].includes(map[currentPositionIndex - mapSize.width])) {
+          walkOptions.push('Идти на СЕВЕР');
+        }
+        if (currentPosition.y < mapSize.height - 1 && !['w', 'b', '-'].includes(map[currentPositionIndex + mapSize.width])) {
+          walkOptions.push('Идти на ЮГ');
+        }
+      }
+    }
 
 
     const toBeContinuedInteraction = new SimpleInteraction(this.ui, {
@@ -129,7 +240,7 @@ export class RuinLocation extends AbstractLocation {
 
 
 
-export const buildThirdLocation = async (ui: AbstractUI, state: SessionState, nextLocation?: NextLocation): AbstractInteraction => {
+export const buildThirdLocation = (ui: AbstractUI, state: SessionState, nextLocation?: NextLocation): AbstractInteraction => {
   const baseInteractions = getBaseInteractions(ui, state);
 
 
@@ -170,45 +281,6 @@ export const buildThirdLocation = async (ui: AbstractUI, state: SessionState, ne
     row: 4,
     column: 1,
   };
-
-  const showMapInteraction = new Interaction(ui, {
-    buildMessage() {
-      // 🟥🟧🟨🟩🟦 🟪⬛️⬜️🟫
-      let mapPiece = '';
-      mapPiece += '⬛️ - недостижимое место\n';
-      mapPiece += '🟫 - wall, стена, нет прохода\n';
-      mapPiece += '🟪 - break, обрыв, нет прохода\n';
-      mapPiece += '⬜️ - чистое место\n';
-      mapPiece += '🟦 - merchant, торговец\n';
-      mapPiece += '🟩 - player, игрок\n';
-      mapPiece += '🟥 - out, выход\n';
-      mapPiece += '🟨 - gold, золото\n';
-      mapPiece += '❔ - не разведанная территория\n';
-      mapPiece += '    N\n';
-      mapPiece += 'W - X - E\n';
-      mapPiece += '    S\n';
-      mapPiece += '\n';
-      for (let row = currentPositionOnMap.row - 1; row <= currentPositionOnMap.row + 1; row += 1) {
-        mapPiece += '';
-        for (let column = currentPositionOnMap.column - 1; column <= currentPositionOnMap.column + 1; column += 1) {
-          const cell = map[row * 18 + column];
-          if (row === currentPositionOnMap.row && column === currentPositionOnMap.column) mapPiece += '🟩';
-          else if (cell === '1' || cell === '2' || cell === '3') mapPiece += '❔';
-          else if (cell === '-') mapPiece += '⬛️';
-          else if (cell === 'w') mapPiece += '🟫';
-          else if (cell === 'b') mapPiece += '🟪';
-          else if (cell === '0') mapPiece += '⬜️';
-          else if (cell === 'm') mapPiece += '🟦';
-          else if (cell === 'o') mapPiece += '🟥';
-          else if (cell === 'g') mapPiece += '🟨';
-          else if (cell === 'p') mapPiece += '⬜️';
-        }
-        mapPiece += '\n';
-      }
-      ui.sendToUser(mapPiece, 'markdown');
-      return 'mapPiece';
-    }
-  });
 
   const interactiveMap: Map<string, AbstractInteraction> = new Map();
   let userPositionInteraction: AbstractInteraction | null = null;
