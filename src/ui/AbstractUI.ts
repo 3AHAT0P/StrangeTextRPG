@@ -1,4 +1,4 @@
-export type MessageType = "default" | "damageDealt" | "damageTaken" | "option" | "stats";
+export type MessageType = 'default' | 'damageDealt' | 'damageTaken' | 'option' | 'stats' | 'markdown' | 'clean';
 
 export abstract class AbstractUI {
   public abstract sendToUser(message: string, type: MessageType): Promise<void>;

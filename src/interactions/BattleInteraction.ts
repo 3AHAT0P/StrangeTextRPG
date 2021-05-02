@@ -1,7 +1,7 @@
 import { AbstractUI } from "../ui/AbstractUI";
 import { AbstractActor, AttackResult } from "../actors/AbstractActor";
 import { SimpleInteraction } from './SimpleInteraction';
-import { AbstractInteraction } from "./AbstractInteraction";
+import { AbstractInteraction, Interactable } from "./AbstractInteraction";
 
 export interface BattleInteractionOptions {
   player: AbstractActor,
@@ -36,7 +36,7 @@ export class BattleInteraction extends AbstractInteraction {
     return message;
   }
 
-  public async activate(): Promise<AbstractInteraction> {
+  public async activate(): Promise<Interactable> {
     if (this._aliveEnemies.length > 0) {
       await this.ui.sendToUser(
         `${this._player.getType({ declension: 'nominative', capitalised: true })}`

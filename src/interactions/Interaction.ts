@@ -1,13 +1,13 @@
 import { AbstractUI, MessageType } from "../ui/AbstractUI";
-import { AbstractInteraction } from "./AbstractInteraction";
+import { AbstractInteraction, Interactable } from "./AbstractInteraction";
 
 export const isInteraction = (
-  interaction: AbstractInteraction,
+  interaction: Interactable,
 ): interaction is Interaction => interaction instanceof Interaction;
 
 export interface InteractionOptions {
   buildMessage?(): string;
-  activate?(this: Interaction): Promise<AbstractInteraction | null | 'SUPER'>;
+  activate?(this: Interaction): Promise<Interactable | null | 'SUPER'>;
   messageType?: MessageType;
 }
 
@@ -16,7 +16,7 @@ export class Interaction extends AbstractInteraction {
 
   protected _buildMessage: null | (() => string) = null;
 
-  protected _activate: null | (() => Promise<AbstractInteraction | null | 'SUPER'>) = null;
+  protected _activate: null | (() => Promise<Interactable | null | 'SUPER'>) = null;
 
   constructor(ui: AbstractUI, options: InteractionOptions = {}) {
     super(ui);
@@ -31,7 +31,7 @@ export class Interaction extends AbstractInteraction {
     throw new Error('Method not implemented');
   }
 
-  public async activate(): Promise<AbstractInteraction | null> {
+  public async activate(): Promise<Interactable | null> {
     if (this._activate !== null) {
       const result = await this._activate();
       if (result === 'SUPER') return super.activate();
