@@ -1,28 +1,12 @@
-import { Point, Size } from '../../utils/@types';
-
-/*
-  - - недостижимое место
-  w - wall, стена, нет прохода
-  b - break, обрыв, нет прохода
-  0, 1, 2, ... - количество монстров на локации
-  m - merchant, торговец
-  p - player, игрок
-  o - out, выход
-  g - gold, немного золота (1-5)
-  G - GOLD, много золота (10-20)
-      N
-  W - X - E
-      S
-*/
-
-export type mapObjects = '-' | 'w' | 'b' | '0' | 'm' | 'p' | 'o' | 'g' | '?' | '1' | '2' | '3' | '4' | '5';
+import { Size } from '../../utils/@types';
+import { POIIcon } from '../AreaMap';
 
 export const mapSize: Size = {
   width: 18,
   height: 11,
 };
 
-export const map: mapObjects[] = [
+export const map: POIIcon[] = [
   '-', '-', 'w', 'w', 'w', 'w', 'b', 'b', 'b', 'b', 'b', 'b', 'b', '-', '-', '-', '-', '-',
   'w', 'w', 'w', '1', '2', 'w', '2', '0', '0', '1', '0', 'g', 'w', '-', '-', '-', '-', '-',
   'w', '0', 'w', '0', '1', 'w', '1', '0', '1', '0', 'w', 'g', 'w', '-', '-', '-', '-', '-',

@@ -13,6 +13,7 @@ export const MessageTypes: Record<MessageType, []> = {
   option: [],
   stats: [],
   markdown: [],
+  clean: [],
 }
 
 const eventEmitter = new EventEmitter();
@@ -46,7 +47,6 @@ export class TelegramBotUi extends AbstractSessionUI {
     });
 
     this.bot.start(async (ctx) => {
-      console.log('ADADADADADQWEQ$!$!@#!@');
       const listOfCommands = Markup.inlineKeyboard([
         Markup.button.callback('Start new game', 'startNewGame'),
         Markup.button.callback('Finish current game', 'finishGame'),
@@ -71,6 +71,8 @@ export class TelegramBotUi extends AbstractSessionUI {
     this.bot.action('finishGame', (ctx) => {
       const sessionId = (ctx.chat?.id ?? ctx.callbackQuery.from.id).toString();
 
+      eventEmitter.removeAllListeners(sessionId);
+
       setTimeout(runOnFinish, 16, sessionId, this);
     });
 
@@ -88,7 +90,8 @@ export class TelegramBotUi extends AbstractSessionUI {
   }
 
   public async sendToUser(sessionId: string, message: string, type: MessageType): Promise<void> {
-    await this.bot.telegram.sendMessage(sessionId, message);
+    if (type === 'clean') await this.bot.telegram.sendMessage(sessionId, message, { reply_markup: Markup.removeKeyboard().reply_markup });
+    else await this.bot.telegram.sendMessage(sessionId, message);
   }
 
   public async sendOptionsToUser(sessionId: string, message: string, options: string[]): Promise<void> {

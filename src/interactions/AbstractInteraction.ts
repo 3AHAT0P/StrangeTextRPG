@@ -1,12 +1,13 @@
 import { AbstractUI } from "../ui/AbstractUI";
 
 export interface Interactable {
-  activate(): Promise<AbstractInteraction | null>;
+  activate(): Promise<Interactable | null>;
+  addAction(message: string, nextNode: Interactable): this;
 }
 
 export abstract class AbstractInteraction implements Interactable {
   protected ui: AbstractUI;
-  protected actions: Map<string, AbstractInteraction> = new Map();
+  protected actions: Map<string, Interactable> = new Map();
 
   public abstract buildMessage(...args: unknown[]): string;
 
@@ -14,7 +15,7 @@ export abstract class AbstractInteraction implements Interactable {
     this.ui = ui;
   }
 
-  public addAction(message: string, nextNode: AbstractInteraction): this {
+  public addAction(message: string, nextNode: Interactable): this {
     this.actions.set(message, nextNode);
     return this;
   }
@@ -24,7 +25,7 @@ export abstract class AbstractInteraction implements Interactable {
     return this;
   }
 
-  public async activate(): Promise<AbstractInteraction | null> {
+  public async activate(): Promise<Interactable | null> {
     const autoInteractions = this.actions.get('auto');
     if (autoInteractions != null) {
       this.ui.sendToUser(this.buildMessage(), 'default');

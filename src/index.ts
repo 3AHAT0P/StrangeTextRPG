@@ -1,6 +1,6 @@
 import { Player } from './actors/Player';
 import { Interactable } from './interactions/AbstractInteraction';
-import { buildFirstLocation, buildSecondLocation, buildThirdLocation, buildZeroLocation } from './interactions/scenario';
+import { buildZeroLocation } from './scenario';
 import { SimpleInteraction } from './interactions/SimpleInteraction';
 import { SessionState } from './SessionState';
 import { SessionUIProxy } from './ui/SessionUIProxy';
@@ -52,23 +52,9 @@ class App {
       };
       this.sessionStateMap.set(sessionId, state);
 
-      // const firstLocation = buildFirstLocation(
-      //   currentSessionUI,
-      //   state,
-      //   {
-      //     actionMessage: 'Перейти к демо локации #2',
-      //     interaction: buildSecondLocation(
-      //       currentSessionUI, state, {
-      //         actionMessage: 'Перейти к демо локации #3',
-      //         interaction: buildThirdLocation(currentSessionUI, state),
-      //       }),
-      //   },
-      // );
-
       const zeroLocation = buildZeroLocation(currentSessionUI, state);
       state.currentInteraction = zeroLocation;
-      // const thirdLocation = buildThirdLocation(currentSessionUI, state);
-      // state.currentInteraction = thirdLocation;
+
       await this.treeTraversal(state);
     } catch (error) {
       console.error(error);
@@ -92,12 +78,9 @@ class App {
       };
       this.sessionStateMap.set(sessionId, state);
 
-      const firstLocation = buildFirstLocation(
-        ui,
-        state,
-        { actionMessage: 'Перейти к демо локации #2', interaction: buildSecondLocation(ui, state)},
-      );
-      state.currentInteraction = firstLocation;
+      const zeroLocation = buildZeroLocation(ui, state);
+      state.currentInteraction = zeroLocation;
+
       await this.treeTraversal(state);
     } catch (error) {
       console.error(error);
