@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon",
+    "area:map:preview": "nodemon --config ./nodemon.area-map-preview.json",
     "prod:start": "pm2 start src/index.ts",
     "prod:stop": "pm2 stop src/index.ts",
     "prod:reload": "pm2 restart src/index.ts",

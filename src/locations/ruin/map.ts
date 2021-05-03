@@ -1,15 +1,22 @@
+import { KnifeWeapon } from '../../actors/weapon';
 import { Size } from '../../utils/@types';
-import { POIIcon } from '../AreaMap';
+import { AdditionalSpotInfo, POIIcon } from '../AreaMap';
 
 export const mapSize: Size = {
   width: 18,
   height: 11,
 };
 
+export const additionalMapInfo: Record<string, AdditionalSpotInfo> = {
+  '2:3': {
+    reward: KnifeWeapon,
+  },
+};
+
 export const map: POIIcon[] = [
   '-', '-', 'w', 'w', 'w', 'w', 'b', 'b', 'b', 'b', 'b', 'b', 'b', '-', '-', '-', '-', '-',
   'w', 'w', 'w', '1', '2', 'w', '2', '0', '0', '1', '0', 'g', 'w', '-', '-', '-', '-', '-',
-  'w', '0', 'w', '0', '1', 'w', '1', '0', '1', '0', 'w', 'g', 'w', '-', '-', '-', '-', '-',
+  'w', '0', 'w', 'B', '1', 'w', '1', '0', '1', '0', 'w', 'g', 'w', '-', '-', '-', '-', '-',
   'w', '0', '0', '0', 'w', 'w', '0', '1', '0', '0', 'w', '3', 'w', '-', '-', '-', '-', '-',
   'w', 'p', '0', '0', '1', '0', '1', 'w', '1', '0', 'w', 'm', 'w', '-', '-', '-', '-', '-',
   'w', 'w', 'w', 'w', '1', 'w', 'w', 'w', '0', '1', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w',

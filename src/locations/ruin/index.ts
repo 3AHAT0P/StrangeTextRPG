@@ -6,15 +6,17 @@ import { SimpleInteraction } from "../../interactions/SimpleInteraction";
 import { getRandomIntInclusive } from "../../utils/getRandomIntInclusive";
 import { AbstractLocation } from "../AbstractLocation";
 
-import { map, mapSize } from './map';
+import { map, mapSize, additionalMapInfo } from './map';
 import { AreaMap } from "../AreaMap";
+import { KnifeWeapon } from "../../actors/weapon";
+import { Player } from "../../actors/Player";
 
-const ruinAreaMap = new AreaMap(map, mapSize);
+const ruinAreaMap = new AreaMap(map, mapSize, additionalMapInfo);
 
 export class RuinLocation extends AbstractLocation {
   public async activate(): Promise<AbstractInteraction | null> {
 
-    const player = this.state.player;
+    const player = this.state.player as Player;
 
     await this.ui.sendToUser(`Привет ${this.state.additionalInfo.playerName}.\n`
       + `${player.getType({ declension: 'nominative', capitalised: true })} очнулся посреди каких-то руин.\n`
@@ -29,6 +31,7 @@ export class RuinLocation extends AbstractLocation {
 
     const internalPlayerState = {
       isStandUp: false,
+      seeRatCorpse: async () => { /* pass */ },
     };
 
     while (isTrue) {
@@ -48,13 +51,20 @@ export class RuinLocation extends AbstractLocation {
         await this.ui.sendToUser(ruinAreaMap.printMap(), 'default');
       } else if (choosedAction === 'Посмотреть на себя в лужу') {
         const stats = player.stats;
+        // TODO: Сделать для вещей нормальный текст отображения!
         this.ui.sendToUser(`${player.getType({ declension: 'possessive', capitalised: true })} характеристики:\n`
-          + `Очки здоровья - ${stats.healthPoints} / ${stats.maxHealthPoints}\n`
-          + `Защита - ${stats.armor}\n`
-          + `Сила удара - ${stats.attackDamage}\n`
-          + `Шанс попасть ударом - ${stats.accuracy}\n`
-          + `Шанс попасть в уязвимое место - ${stats.criticalChance}\n`
-          + `В кармане звенят ${player.gold} золота\n`,
+          + `  ❤️Очки здоровья - ${stats.healthPoints} / ${stats.maxHealthPoints}\n`
+          + `  🛡Защита - ${stats.armor}\n`
+          + `  🗡Сила удара - ${stats.attackDamage}\n`
+          + `  🎯Шанс попасть ударом - ${stats.accuracy}\n`
+          + `  ‼️Шанс попасть в уязвимое место - ${stats.criticalChance}\n`
+          + `  ✖️Модификатор критического урона - ${stats.criticalDamageModifier}\n`
+          + `  💰В кармане звенят ${player.gold} золота\n`
+          + `\nНа ${player.getType({ declension: 'dative' })} надеты:\n`
+          + `  Поношеная куртка из парусины\n`
+          + `  Поношеные штаны из парусины\n`
+          + `\nВ руках ${ player.wearingEquipment.rightHand instanceof KnifeWeapon ? 'обычный нож' : 'ничего'}.\n`
+          ,
           'default',
         );
       } else if (choosedAction === 'Встать') {
@@ -73,7 +83,22 @@ export class RuinLocation extends AbstractLocation {
 
         if (currentSpot == null) { console.error('Oops, something went wrong!'); }
         
-        else if (currentSpot.type === 'MERCHANT') {
+        else if (currentSpot.type === 'BAG') {
+          const info = ruinAreaMap.currentSpot?.additionalInfo;
+          if (info != null && info.reward === KnifeWeapon) {
+            await this.ui.sendToUser(`Внезапно, ${player.getType({ declension: 'nominative' })} спотыкаешься о труп крысы.`, 'default');
+            localActions.add('👀 Осмотреть труп');
+            // TODO: It's Interaction????
+            internalPlayerState.seeRatCorpse = async () => {
+              await this.ui.sendToUser(
+                `Крыса, как крыса. Но в боку у нее торчит нож. О, теперь будет чем отбиваться от этих тварей!`,
+                'default',
+              );
+              player.equipWeapon(new KnifeWeapon());
+            }
+          }
+        
+        } else if (currentSpot.type === 'MERCHANT') {
           await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} видишь торговца.`, 'default');
           localActions.add('💬 Поговорить с торговцем');
         
@@ -123,12 +148,18 @@ export class RuinLocation extends AbstractLocation {
           const result = player.exchangeGoldToItem(10, { healthPoitions: 1 });
           if (!result) this.ui.sendToUser(`К сожалению, у ${player.getType({ declension: 'genitive' })} не хватает золота.`, 'default');
         }
+
       } else if (choosedAction === '💰 Подобрать золото') {
         const reward = getRandomIntInclusive(1, 10);
         localActions.delete('💰 Подобрать золото');
         ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
         player.collectReward({ gold: reward });
         this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} подбираешь ${reward} золота.`, 'default');
+
+      } else if (choosedAction === '👀 Осмотреть труп') {
+        localActions.delete('👀 Осмотреть труп');
+        ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
+        await internalPlayerState.seeRatCorpse();
       }
 
       if (internalPlayerState.isStandUp) {

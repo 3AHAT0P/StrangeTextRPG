@@ -2,6 +2,8 @@ import { capitalise } from "../utils/capitalise";
 import { getRandomIntInclusive } from "../utils/getRandomIntInclusive";
 
 import { AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions } from "./AbstractActor";
+import { BodyArmor, LeatherBodyArmor } from "./armor";
+import { EmptyWeapon, PawsWeapon, TeethWeapon, Weapon } from "./weapon";
 
 export const RatDeclensionOfNouns = {
   nominative: 'крыса',
@@ -25,26 +27,36 @@ export const RatDeclensionOfNounsPlural = {
   possessive: 'крыс',
 };
 
+interface RatEquipmentSlots {
+  body?: LeatherBodyArmor; // Leather
+  jaws?: TeethWeapon; // Teeth
+  hands?: PawsWeapon; // Paws
+}
+
 export class Rat extends AbstractActor {
-  public type = 'крыса';
+  type = 'крыса';
 
-  public healthPoints: number;
-  public armor: number;
+  protected _activeWeapon: TeethWeapon | PawsWeapon | EmptyWeapon;
 
-  public attackDamage: number;
-  public criticalChance: number;
-  public criticalDamageModifier: number = 2;
-  public accuracy: number;
+  get armor(): number { return this._wearingEquipment.body?.armor ?? 0; }
+  get attackDamage(): number { return this._activeWeapon.attackDamage; }
+  get criticalChance(): number { return this._activeWeapon.criticalChance; }
+  get criticalDamageModifier(): number { return this._activeWeapon.criticalDamageModifier; }
+  get accuracy(): number { return this._activeWeapon.accuracy; }
+
+  _wearingEquipment: RatEquipmentSlots = {
+    body: new LeatherBodyArmor(),
+    jaws: new TeethWeapon(),
+    hands: new PawsWeapon(),
+  };
 
   constructor(options: AbstractActorOptions = {}) {
     super(options);
 
     this.maxHealthPoints = 5;
     this.healthPoints = 5;
-    this.armor = 0.1;
-    this.attackDamage = .4;
-    this.criticalChance = .4;
-    this.accuracy = .6;
+
+    this._activeWeapon = this._wearingEquipment.jaws ?? new EmptyWeapon();
   }
 
   public getType(
