@@ -1,0 +1,11 @@
+{
+  "watch": [
+    "src"
+  ],
+  "ext": "ts,json",
+  "ignore": [
+    "src/**/*.spec.ts"
+  ],
+  "exec": "ts-node ./_previewMap.ts",
+  "signal": "SIGTERM"
+}

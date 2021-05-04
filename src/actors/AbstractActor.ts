@@ -1,4 +1,5 @@
 import { getRandomIntInclusive } from "../utils/getRandomIntInclusive";
+import { Weapon } from "./weapon";
 
 export interface AttackResult {
   damage: number;
@@ -41,16 +42,20 @@ export abstract class AbstractActor {
 
   protected maxHealthPoints: number = 0;
   protected healthPoints: number = 0;
-  protected armor: number = 0;
+  protected abstract armor: number;
 
-  protected attackDamage: number = 0;
-  protected criticalChance: number = 0;
-  protected criticalDamageModifier: number = 2;
-  protected accuracy: number = .8;
+  protected abstract attackDamage: number;
+  protected abstract criticalChance: number;
+  protected abstract criticalDamageModifier: number;
+  protected abstract accuracy: number;
 
   protected _gold: number = 0;
 
   protected _bag: Bag = { healthPoitions: 0 };
+
+  protected abstract _wearingEquipment: unknown;
+
+  public get wearingEquipment() { return this._wearingEquipment; }
 
   get stats() {
     return {
@@ -110,7 +115,7 @@ export abstract class AbstractActor {
     };
   }
 
-  public useHealthPoition() {
+  public useHealthPoition(): false | number {
     if (this._bag.healthPoitions === 0) return false;
     
     this._bag.healthPoitions -= 1;
@@ -136,4 +141,5 @@ export abstract class AbstractActor {
   public getReward(): RewardBag { return {}; }
 
   public collectReward(reward: RewardBag): void { /* pass */ }
+  public equipWeapon(weapon: Weapon, hand: 'LEFT' | 'RIGHT' = 'RIGHT'): boolean { return true; }
 }

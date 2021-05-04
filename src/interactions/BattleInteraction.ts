@@ -8,6 +8,13 @@ export interface BattleInteractionOptions {
   enemies: AbstractActor[],
 }
 
+const ACTIONS = {
+  attack: 'Атаковать 🗡',
+  examine: 'Осмотреть 👀',
+  useHealthPoition: 'Использовать зелье лечения',
+  back: 'Назад',
+};
+
 export class BattleInteraction extends AbstractInteraction {
   private _player: AbstractActor;
   private _enemies: AbstractActor[];
@@ -49,27 +56,52 @@ export class BattleInteraction extends AbstractInteraction {
     while (this._aliveEnemies.length > 0) {
       const message = 'Что будешь делать?\n';
 
-      const options = this._aliveEnemies.map((enemy) => {
-        return `АТАКОВАТЬ ${enemy.getType({ declension: 'accusative', withPostfix: true })}`;
-      });
+      const actions = new Set([ACTIONS.attack, ACTIONS.examine]);
 
-      if (this._player.healthPoitions > 0) options.push(`Использовать зелье лечения`);
+      if (this._player.healthPoitions > 0) actions.add(ACTIONS.useHealthPoition);
 
-      const option = await this.ui.interactWithUser(message, options);
-      if (option === 'Использовать зелье лечения') {
+      const choosedAction = await this.ui.interactWithUser(message, [...actions]);
+      if (choosedAction === ACTIONS.useHealthPoition) {
         const healVolume = this._player.useHealthPoition();
         if (healVolume) await this.ui.sendToUser('❤️' + `${this._player.getType({ declension: 'nominative' })} вылечился на ${healVolume} ОЗ. Всего у тебя ${this._player.stats.healthPoints} из ${this._player.stats.maxHealthPoints} ОЗ`, 'default');
-      } else {
-        const optionId = options.indexOf(option);
+      
+      } else if (choosedAction === ACTIONS.examine) {
+        const examineActions = this._aliveEnemies.map((enemy) => {
+          return `Осмотреть ${enemy.getType({ declension: 'accusative', withPostfix: true })}`;
+        });
+        const choosedExamineAction = await this.ui.interactWithUser('Кого?', examineActions.concat([ACTIONS.back]));
+        if (choosedExamineAction == ACTIONS.back) continue;
+        const actionId = examineActions.indexOf(choosedExamineAction);
+        const enemy = this._aliveEnemies[actionId];
+        const enemyStats = enemy.stats;
+        this.ui.sendToUser(`Xарактеристики ${enemy.getType({ declension: 'genitive', withPostfix: true })}:\n`
+          + `  ❤️Очки здоровья - ${enemyStats.healthPoints} / ${enemyStats.maxHealthPoints}\n`
+          + `  🛡Защита - ${enemyStats.armor}\n`
+          + `  🗡Сила удара - ${enemyStats.attackDamage}\n`
+          + `  🎯Шанс попасть ударом - ${enemyStats.accuracy}\n`
+          + `  ‼️Шанс попасть в уязвимое место - ${enemyStats.criticalChance}\n`
+          + `  ✖️Модификатор критического урона - ${enemyStats.criticalDamageModifier}\n`
+          ,
+          'default',
+        );
+      
+      } else if (choosedAction === ACTIONS.attack) {
+        const attackActions = this._aliveEnemies.map((enemy) => {
+          return `Атаковать ${enemy.getType({ declension: 'accusative', withPostfix: true })}`;
+        });
+        const choosedAttackAction = await this.ui.interactWithUser('Кого?', attackActions.concat([ACTIONS.back]));
+        if (choosedAttackAction == ACTIONS.back) continue;
 
-        const attackedEnemy = this._aliveEnemies[optionId];
+        const actionId = attackActions.indexOf(choosedAttackAction);
+
+        const attackedEnemy = this._aliveEnemies[actionId];
         const attackResult = this._player.doAttack(attackedEnemy);
 
-        await this.ui.sendToUser('🗡' + this.buildAttackMessage(this._player, attackedEnemy, attackResult), 'damageDealt');
+        await this.ui.sendToUser(this.buildAttackMessage(this._player, attackedEnemy, attackResult), 'damageDealt');
 
         if (!attackResult.isAlive) {
-          const diedEnemy = this._aliveEnemies[optionId];
-          this._aliveEnemies.splice(optionId, 1);
+          const diedEnemy = this._aliveEnemies[actionId];
+          this._aliveEnemies.splice(actionId, 1);
           const reward = diedEnemy.getReward();
           this._player.collectReward(reward);
           await this.ui.sendToUser(
@@ -80,7 +112,7 @@ export class BattleInteraction extends AbstractInteraction {
       }
 
       const enemiesAttack = this._aliveEnemies.map((actor: AbstractActor) => {
-        return '🩸' + this.buildAttackMessage(actor, this._player, actor.doAttack(this._player));
+        return this.buildAttackMessage(actor, this._player, actor.doAttack(this._player));
       }).join('');
       if (enemiesAttack !== '') await this.ui.sendToUser(enemiesAttack, 'damageTaken');
 

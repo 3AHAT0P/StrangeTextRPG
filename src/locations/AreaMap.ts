@@ -1,3 +1,5 @@
+import { Armor } from '../actors/armor';
+import { Weapon } from '../actors/weapon';
 import { Point, Size } from '../utils/@types';
 
 /*
@@ -17,8 +19,16 @@ import { Point, Size } from '../utils/@types';
 */
 
 export type DIRECTION = 'NORTH' | 'SOUTH' | 'WEST' | 'EAST';
-export type POIName = 'UNREACHABLE' | 'WALL' | 'BREAK' | 'CLEAN' | 'MERCHANT' | 'PLAYER' | 'EXIT' | 'GOLD' | 'UNKNOWN' | 'VERY_EASY_BATTLE' | 'EASY_BATTLE' | 'MEDIUM_BATTLE' | 'HARD_BATTLE' | 'VERY_HARD_BATTLE';
-export type POIIcon = '-' | 'w' | 'b' | '0' | 'm' | 'p' | 'o' | 'g' | '?' | '1' | '2' | '3' | '4' | '5';
+export type POIName = 'UNREACHABLE' | 'WALL' | 'BREAK'
+  | 'CLEAN' | 'UNKNOWN' | 'EXIT'
+  | 'MERCHANT' | 'PLAYER'
+  | 'GOLD' | 'BAG'
+  | 'VERY_EASY_BATTLE' | 'EASY_BATTLE' | 'MEDIUM_BATTLE' | 'HARD_BATTLE' | 'VERY_HARD_BATTLE';
+export type POIIcon = '-' | 'w' | 'b'
+  | '0' | '?' | 'o'
+  | 'm' | 'p'
+  | 'g' | 'B'
+  | '1' | '2' | '3' | '4' | '5';
 
 export const PointOfInterest: Readonly<Record<POIName, POIIcon>> = {
   UNREACHABLE: '-',
@@ -35,6 +45,7 @@ export const PointOfInterest: Readonly<Record<POIName, POIIcon>> = {
   MEDIUM_BATTLE: '3',
   HARD_BATTLE: '4',
   VERY_HARD_BATTLE: '5',
+  BAG: 'B',
 };
 
 export const InversedPOI = (Object.entries(PointOfInterest) as Array<[POIName, POIIcon]>).reduce((acc: Partial<Record<POIIcon, POIName>>, [key, value]) => {
@@ -57,7 +68,14 @@ export const mapSigns: Readonly<Record<POIName, string>> = {
   MEDIUM_BATTLE: '3',
   HARD_BATTLE: '4',
   VERY_HARD_BATTLE: '5',
+  BAG: '📦',
 };
+
+export interface AdditionalBagSpotInfo {
+  reward: typeof Weapon | typeof Armor;
+}
+
+export type AdditionalSpotInfo = AdditionalBagSpotInfo;
 
 export interface MapSpot {
   coordinates: Point;
@@ -66,6 +84,7 @@ export interface MapSpot {
   sign: string;
   isVisible: boolean;
   isThroughable: boolean;
+  additionalInfo: AdditionalSpotInfo | null;
 }
 
 export class AreaMap {
@@ -80,7 +99,7 @@ export class AreaMap {
 
   public get currentSpot(): MapSpot | undefined { return this.map.get(`${this.playerPosition.y}:${this.playerPosition.x}`); }
 
-  private fillMap(map: POIIcon[]) {
+  private fillMap(map: POIIcon[], additionalInfo: Record<string, AdditionalSpotInfo>) {
     const throughableTypes = ['UNREACHABLE', 'WALL', 'BREAK'];
     for (let y = 0; y < this.mapSize.height; y += 1) {
       for (let x = 0; x <= this.mapSize.width + 1; x += 1) {
@@ -94,6 +113,7 @@ export class AreaMap {
             sign: mapSigns['CLEAN'],
             isVisible: true,
             isThroughable: true,
+            additionalInfo: additionalInfo[`${y}:${x}`],
           });
         } else {
           const type = InversedPOI[icon];
@@ -104,14 +124,15 @@ export class AreaMap {
             sign: mapSigns[type],
             isVisible: false,
             isThroughable: !throughableTypes.includes(type),
+            additionalInfo: additionalInfo[`${y}:${x}`],
           });
         }
       }
     }
   }
 
-  constructor(map: POIIcon[], private mapSize: Size) {
-    this.fillMap(map);
+  constructor(map: POIIcon[], private mapSize: Size, additionalInfo: Record<string, AdditionalSpotInfo>) {
+    this.fillMap(map, additionalInfo);
   }
 
   public printLegend(): string {
