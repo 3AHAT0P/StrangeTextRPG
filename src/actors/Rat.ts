@@ -1,7 +1,8 @@
 import { capitalise } from "../utils/capitalise";
 import { getRandomIntInclusive } from "../utils/getRandomIntInclusive";
+import { returnByChance } from "../utils/returnByChance";
 
-import { AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions } from "./AbstractActor";
+import { AbstractActor, AbstractActorOptions, AttackResult, RewardBag, TypeByDeclensionOfNounOptions } from "./AbstractActor";
 import { BodyArmor, LeatherBodyArmor } from "./armor";
 import { EmptyWeapon, PawsWeapon, TeethWeapon, Weapon } from "./weapon";
 
@@ -57,6 +58,14 @@ export class Rat extends AbstractActor {
     this.healthPoints = 5;
 
     this._activeWeapon = this._wearingEquipment.jaws ?? new EmptyWeapon();
+  }
+
+  public doAttack(enemy: AbstractActor): AttackResult {
+    this._activeWeapon = returnByChance<TeethWeapon | PawsWeapon | undefined>(
+      [[this._wearingEquipment.hands, .5], [this._wearingEquipment.jaws, 1]],
+    )[0] ?? new EmptyWeapon();
+
+    return super.doAttack(enemy);
   }
 
   public getType(

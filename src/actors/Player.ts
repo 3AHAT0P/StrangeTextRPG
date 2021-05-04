@@ -23,7 +23,7 @@ interface PeopleEquipmentSlots {
   hands?: HandsArmor; // Gloves, Gauntlets
   fingers?: FingersArmor; // Ring
   leftHand?: Weapon; // Shield
-  rightHand?: Weapon; // Knife, sword, ...
+  rightHand: Weapon; // Knife, sword, ...
   legs?: LegsArmor; // trousers
   feet?: FeetArmor; // Boots, sabatons
 }
@@ -56,7 +56,7 @@ export class Player extends AbstractActor {
     super(options);
 
     this.maxHealthPoints = 10;
-    this.healthPoints = 8;
+    this.healthPoints = 80;
   }
 
   public getType({ declension, capitalised = false }: TypeByDeclensionOfNounOptions): string {

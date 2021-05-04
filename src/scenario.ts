@@ -10,6 +10,7 @@ import { SessionState } from "./SessionState";
 import { isPresent } from "./utils/check";
 import { RuinLocation } from "./locations/ruin";
 import { NextLocation } from "./locations/NextLocation";
+import { Skeleton } from "./actors/Skeleton";
 
 export const getBaseInteractions = (ui: AbstractUI, state: SessionState) => {
   const exitInteraction = new Interaction(ui, {
@@ -106,7 +107,8 @@ export const buildSecondLocation = (ui: AbstractUI, state: SessionState, nextLoc
     buildMessage() { return ''; },
     async activate() {
       const player = new Player();
-      const battleInteraction = new BattleInteraction(ui, { player, enemies: [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' })] });
+      // const battleInteraction = new BattleInteraction(ui, { player, enemies: [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' })] });
+      const battleInteraction = new BattleInteraction(ui, { player, enemies: [new Skeleton({ typePostfix: '№1' }), new Skeleton({ typePostfix: '№2' }), new Skeleton({ typePostfix: '№3' }), new Skeleton({ typePostfix: '№4' }), new Skeleton({ typePostfix: '№5' })] });
       baseInteractions.lastInteraction.addAction('Перезагрузить локацию', mainInteraction);
       if (nextLocation != null) baseInteractions.lastInteraction.addAction(nextLocation.actionMessage, nextLocation.interaction);
       battleInteraction.addAction('auto', baseInteractions.lastInteraction);

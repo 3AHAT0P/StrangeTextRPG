@@ -10,6 +10,8 @@ import { map, mapSize, additionalMapInfo } from './map';
 import { AreaMap } from "../AreaMap";
 import { KnifeWeapon } from "../../actors/weapon";
 import { Player } from "../../actors/Player";
+import { Skeleton } from "../../actors/Skeleton";
+import { capitalise } from "../../utils/capitalise";
 
 const ruinAreaMap = new AreaMap(map, mapSize, additionalMapInfo);
 
@@ -26,7 +28,7 @@ export class RuinLocation extends AbstractLocation {
 
     const isTrue = true;
 
-    const actions: Set<string> = new Set(['Оглядется', 'Встать']);
+    const actions: Set<string> = new Set(['Осмотреться', 'Встать']);
     const localActions: Set<string> = new Set();
 
     const internalPlayerState = {
@@ -38,7 +40,7 @@ export class RuinLocation extends AbstractLocation {
       // await this.ui.sendToUser(`Что будешь делать?\n`, 'default');
 
       const choosedAction = await this.ui.interactWithUser('Что будешь делать?', [...actions, ...localActions]);
-      if (choosedAction === 'Оглядется' && !internalPlayerState.isStandUp) {
+      if (choosedAction === 'Осмотреться' && !internalPlayerState.isStandUp) {
         actions.add('Посмотреть на себя в лужу');
         await this.ui.sendToUser(`Сумрачно.`
           + ` ${player.getType({ declension: 'nominative', capitalised: true })} сидишь опёршись на уцелевший угол стены.`
@@ -46,7 +48,7 @@ export class RuinLocation extends AbstractLocation {
           + ` Поодаль везде грязь и лужи. Моросит мелкий дождик.\n`,
           'default',
         );
-      } else if (choosedAction === 'Оглядется' && internalPlayerState.isStandUp) {
+      } else if (choosedAction === 'Осмотреться' && internalPlayerState.isStandUp) {
         ruinAreaMap.lookAround();
         await this.ui.sendToUser(ruinAreaMap.printMap(), 'default');
       } else if (choosedAction === 'Посмотреть на себя в лужу') {
@@ -61,9 +63,14 @@ export class RuinLocation extends AbstractLocation {
           + `  ✖️Модификатор критического урона - ${stats.criticalDamageModifier}\n`
           + `  💰В кармане звенят ${player.gold} золота\n`
           + `\nНа ${player.getType({ declension: 'dative' })} надеты:\n`
-          + `  Поношеная куртка из парусины\n`
-          + `  Поношеные штаны из парусины\n`
-          + `\nВ руках ${ player.wearingEquipment.rightHand instanceof KnifeWeapon ? 'обычный нож' : 'ничего'}.\n`
+          + ((): string => {
+              const equipment = [];
+              if (player.wearingEquipment.body != null) equipment.push(`  ${capitalise(player.wearingEquipment.body.name)}`);
+              if (player.wearingEquipment.legs != null) equipment.push(`  ${capitalise(player.wearingEquipment.legs.name)}`);
+
+              return equipment.join('\n');
+            })()
+          + `\nОружие - ${ player.wearingEquipment.rightHand?.name ?? 'ничего'}.\n`
           ,
           'default',
         );
@@ -118,6 +125,20 @@ export class RuinLocation extends AbstractLocation {
         
         } else if (currentSpot.type === 'MEDIUM_BATTLE') {
           const enemies = [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' }), new Rat({ typePostfix: '№3' })];
+          const battle = new BattleInteraction(this.ui, { player, enemies });
+          await battle.activate();
+          ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
+          this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
+        
+        } else if (currentSpot.type === 'HARD_BATTLE') {
+          const enemies = [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' }), new Rat({ typePostfix: '№3' }), new Skeleton({ typePostfix: '№1' }), new Skeleton({ typePostfix: '№2' })];
+          const battle = new BattleInteraction(this.ui, { player, enemies });
+          await battle.activate();
+          ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
+          this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
+        
+        } else if (currentSpot.type === 'VERY_HARD_BATTLE') {
+          const enemies = [new Skeleton({ typePostfix: '№1' }), new Skeleton({ typePostfix: '№2' }), new Skeleton({ typePostfix: '№3' }), new Skeleton({ typePostfix: '№4' }), new Skeleton({ typePostfix: '№5' })];
           const battle = new BattleInteraction(this.ui, { player, enemies });
           await battle.activate();
           ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');

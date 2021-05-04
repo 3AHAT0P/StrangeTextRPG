@@ -1,7 +1,11 @@
 import { capitalise } from "../utils/capitalise";
 import { getRandomIntInclusive } from "../utils/getRandomIntInclusive";
+import { truncate } from "../utils/math";
+import { returnByChance } from "../utils/returnByChance";
 
 import { AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions } from "./AbstractActor";
+import { BrokenShieldArmor, StrongBonesBodyArmor } from "./armor";
+import { EmptyWeapon, RustedAxeWeapon, RustedSwordWeapon } from "./weapon";
 
 export const SkeletonDeclensionOfNouns = {
   nominative: 'скелет',
@@ -25,26 +29,35 @@ export const SkeletonDeclensionOfNounsPlural = {
   possessive: 'скелетов',
 };
 
+interface SkeletonEquipmentSlots {
+  body?: StrongBonesBodyArmor;
+  leftHand?: BrokenShieldArmor;
+  rightHand: RustedAxeWeapon | RustedSwordWeapon | EmptyWeapon;
+}
+
+// TODO: 
 export class Skeleton extends AbstractActor {
   public type = 'скелет';
 
-  public healthPoints: number;
-  public armor: number;
+  get armor(): number { return truncate((this._wearingEquipment.body?.armor ?? 0) + (this._wearingEquipment.leftHand?.armor ?? 0), 2); }
+  get attackDamage(): number { return this._wearingEquipment.rightHand.attackDamage; }
+  get criticalChance(): number { return this._wearingEquipment.rightHand.criticalChance; }
+  get criticalDamageModifier(): number { return this._wearingEquipment.rightHand.criticalDamageModifier; }
+  get accuracy(): number { return this._wearingEquipment.rightHand.accuracy; }
 
-  public attackDamage: number;
-  public criticalChance: number;
-  public criticalDamageModifier: number = 1.75;
-  public accuracy: number;
+  _wearingEquipment: SkeletonEquipmentSlots = {
+    body: new StrongBonesBodyArmor(),
+    leftHand: returnByChance([[new BrokenShieldArmor(), .5], [void 0, 1]])[0],
+    rightHand: returnByChance<RustedSwordWeapon | RustedAxeWeapon | EmptyWeapon>([[new RustedAxeWeapon(), .5], [new RustedSwordWeapon(), .7], [new EmptyWeapon(), 1]])[0],
+  };
 
   constructor(options: AbstractActorOptions = {}) {
     super(options);
 
     this.maxHealthPoints = 7;
+    // Когда скелеты восстают из могил, или откуда там они восстают
+    // У них хп не полные. Зависит от стеени разложения, количества местных собак и т.д.
     this.healthPoints = getRandomIntInclusive(3, 7);
-    this.armor = 0.3;
-    this.attackDamage = .6;
-    this.criticalChance = .1;
-    this.accuracy = .37;
   }
 
   public getType(
@@ -64,7 +77,7 @@ export class Skeleton extends AbstractActor {
 
   public getReward(): RewardBag {
     return {
-      gold: getRandomIntInclusive(0, 15),
+      gold: getRandomIntInclusive(2, 15),
     };
   }
 }
