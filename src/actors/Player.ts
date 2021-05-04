@@ -56,7 +56,7 @@ export class Player extends AbstractActor {
     super(options);
 
     this.maxHealthPoints = 10;
-    this.healthPoints = 80;
+    this.healthPoints = 8;
   }
 
   public getType({ declension, capitalised = false }: TypeByDeclensionOfNounOptions): string {
