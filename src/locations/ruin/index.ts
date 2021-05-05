@@ -13,10 +13,9 @@ import { Player } from "../../actors/Player";
 import { Skeleton } from "../../actors/Skeleton";
 import { capitalise } from "../../utils/capitalise";
 
-const ruinAreaMap = new AreaMap(map, mapSize, additionalMapInfo);
-
 export class RuinLocation extends AbstractLocation {
   public async activate(): Promise<AbstractInteraction | null> {
+    const ruinAreaMap = new AreaMap(map, mapSize, additionalMapInfo);
 
     const player = this.state.player as Player;
 
