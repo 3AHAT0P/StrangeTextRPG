@@ -47,6 +47,8 @@ export abstract class AbstractInteraction implements Interactable {
       return ACTION_AUTO;
     }
 
+    if (this.actions.size === 0) throw new Error('Action list is empty');
+
     return await this.ui.interactWithUser(message, Array.from(this.actions.keys()));
   }
 

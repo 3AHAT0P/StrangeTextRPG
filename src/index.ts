@@ -23,6 +23,7 @@ class App {
       setTimeout(this.treeTraversal, 16, state);
     } catch (error) {
       if (error instanceof DropSessionError) return;
+      console.log(error);
       state.ui.sendToUser('Извините, что-то поломалось.\nЕсли вы не входите в команду разработки, напишите пожалуйста автору.\nСпасибо за понимание ;-)\n', 'default');
     }
   }

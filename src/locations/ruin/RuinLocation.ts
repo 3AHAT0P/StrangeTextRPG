@@ -11,6 +11,9 @@ import { Skeleton } from "../../actors/Skeleton";
 import { capitalise } from "../../utils/capitalise";
 import { AbstractActor } from "../../actors/AbstractActor";
 import { AbstractInteraction } from "../../interactions/AbstractInteraction";
+import { MerchantNPC } from "../../interactions/NPC/Merchant";
+import { DropSessionError } from "../../utils/Error/DropSessionError";
+import { Interaction } from "../../interactions/Interaction";
 
 export const RUIN_LOCATION_ACTIONS = {
   PLAYER_DIED: 'onPlayerDied',
@@ -68,6 +71,11 @@ export class RuinLocation extends AbstractLocation {
     const ruinAreaMap = new AreaMap(map, mapSize, additionalMapInfo);
 
     const player = this.state.player as Player;
+
+    const nullInteraction = new Interaction({ ui: this.ui, async activate() { return null; }})
+
+    // @DEBUG
+    player.collectReward({ gold: 31 });
 
     await this.ui.sendToUser(`Привет ${this.state.additionalInfo.playerName}.\n`
       + `${player.getType({ declension: 'nominative', capitalised: true })} очнулся посреди руин.\n`
@@ -219,25 +227,36 @@ export class RuinLocation extends AbstractLocation {
           localActions.add(SITUATIONAL_ACTIONS.PICK_UP_GOLD);
         
         } else if (currentSpot.type === 'EXIT') {
-          await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} идешь по импровизированному корридору из обомков стен.\n`
+          await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} идешь по импровизированному коридору из обломков стен.\n`
             + `По мере твоего продвижения вперед, воздух становится чище и свежее.\n`
             + `Похоже, ${player.getType({ declension: 'nominative' })} выбрался...\n`
-            + `Еще через некоторое время продвижения, ${player.getType({ declension: 'nominative' })} видишь конец корридора и человека с повозкой возле него.`,
+            + `Еще через некоторое время продвижения, ${player.getType({ declension: 'nominative' })} видишь конец коридора и человека с повозкой возле него.`,
             'clean',
           );
           break;
         }
       } else if (choosedAction === SITUATIONAL_ACTIONS.TALK_WITH_MERCHANT) {
-        const merchantGoods = {
-          oneHealthPoition: 'Купить 1 зелье здоровья (10 золтых)',
-        };
-        const buychoosedAction = await this.ui.interactWithUser(
-          `Здравствуй, ${this.state.additionalInfo.playerName}. Извини, за столь скудный выбор.\nЧего изволишь?`,
-          [merchantGoods.oneHealthPoition],
-        );
-        if (buychoosedAction === merchantGoods.oneHealthPoition) {
-          const result = player.exchangeGoldToItem(10, { healthPoitions: 1 });
-          if (!result) await this.ui.sendToUser(`К сожалению, у ${player.getType({ declension: 'genitive' })} не хватает золота.`, 'default');
+        const merchantGoods = new Set([
+          {
+            name: 'healthPoitions',
+            action: 'Купить 1 зелье здоровья (10 золтых)',
+            price: 10,
+          },
+        ]);
+
+        let interaction: AbstractInteraction = new MerchantNPC({
+          ui: this.ui,
+          player,
+          goods: merchantGoods,
+        });
+
+        interaction.addAutoAction(nullInteraction);
+
+        while (isTrue) {
+          const nextInteraction: AbstractInteraction | null = await interaction.interact();
+          if (nextInteraction == null) break;
+
+          interaction = nextInteraction;
         }
 
       } else if (choosedAction === SITUATIONAL_ACTIONS.PICK_UP_GOLD) {

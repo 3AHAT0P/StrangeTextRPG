@@ -1,4 +1,3 @@
-import { AbstractUI, MessageType } from "../ui/AbstractUI";
 import { AbstractInteraction, AbstractInteractionOptions } from "./AbstractInteraction";
 
 export const isInteraction = (
@@ -24,7 +23,7 @@ export class Interaction extends AbstractInteraction {
   protected async beforeActivate(): Promise<string> {
     if (this._buildMessage !== null) return this._buildMessage();
     
-    throw new Error('Method not implemented');
+    return 'DEFAULT MESSAGE';
   }
 
   public async activate(message: string): Promise<string> {
