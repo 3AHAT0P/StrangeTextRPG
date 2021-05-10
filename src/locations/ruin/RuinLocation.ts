@@ -74,9 +74,6 @@ export class RuinLocation extends AbstractLocation {
 
     const nullInteraction = new Interaction({ ui: this.ui, async activate() { return null; }})
 
-    // @DEBUG
-    player.collectReward({ gold: 31 });
-
     await this.ui.sendToUser(`Привет ${this.state.additionalInfo.playerName}.\n`
       + `${player.getType({ declension: 'nominative', capitalised: true })} очнулся посреди руин.\n`
       + `${player.getType({ declension: 'nominative', capitalised: true })} не знаешь кто ты, где ты, зачем ты и что вообще произошло.\n`,
