@@ -1,25 +1,23 @@
-import { AbstractUI } from "../ui/AbstractUI";
-import { AbstractInteraction } from "./AbstractInteraction";
+import { AbstractInteraction, AbstractInteractionOptions } from "./AbstractInteraction";
 
 export const isSimpleInteraction = (
   interaction: AbstractInteraction,
 ): interaction is SimpleInteraction => interaction instanceof SimpleInteraction;
 
-export interface SimpleInteractionOptions {
+export interface SimpleInteractionOptions extends AbstractInteractionOptions {
   message: string;
 }
 
 export class SimpleInteraction extends AbstractInteraction {
   private message: string;
 
-  constructor(ui: AbstractUI, options: SimpleInteractionOptions) {
-    super(ui);
+  constructor(options: SimpleInteractionOptions) {
+    super(options);
 
     this.message = options.message;
-    // if (options.activated) this._activated = options.activated;
   }
 
-  public buildMessage(): string {
+  protected async beforeActivate(): Promise<string> {
     return this.message;
   }
 }

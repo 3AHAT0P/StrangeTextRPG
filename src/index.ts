@@ -1,6 +1,6 @@
 import { Player } from './actors/Player';
-import { Interactable } from './interactions/AbstractInteraction';
-import { buildZeroLocation } from './scenario';
+import { AbstractInteraction } from './interactions/AbstractInteraction';
+import { buildZeroLocation } from './scenarios';
 import { SimpleInteraction } from './interactions/SimpleInteraction';
 import { SessionState } from './SessionState';
 import { SessionUIProxy } from './ui/SessionUIProxy';
@@ -16,13 +16,14 @@ class App {
 
   private async treeTraversal(state: SessionState): Promise<void> {
     try {
-      const nextInteractions: Interactable | null = await state.currentInteraction.activate();
+      const nextInteractions: AbstractInteraction | null = await state.currentInteraction.interact();
       if (nextInteractions == null || state.status === 'DEAD') return;
 
       state.currentInteraction = nextInteractions;
       setTimeout(this.treeTraversal, 16, state);
     } catch (error) {
       if (error instanceof DropSessionError) return;
+      console.log(error);
       state.ui.sendToUser('Извините, что-то поломалось.\nЕсли вы не входите в команду разработки, напишите пожалуйста автору.\nСпасибо за понимание ;-)\n', 'default');
     }
   }
@@ -34,8 +35,6 @@ class App {
     await ui.closeSession(sessionId);
     state.status = 'DEAD';
     this.sessionStateMap.delete(sessionId);
-
-    console.log('closeSession', this.sessionStateMap.get(sessionId));
   }
 
   private async runSession(
@@ -57,7 +56,7 @@ class App {
         sessionId,
         additionalInfo,
         player: new Player(),
-        currentInteraction: new SimpleInteraction(currentSessionUI, { message: 'Hi\n' }),
+        currentInteraction: new SimpleInteraction({ ui: currentSessionUI, message: 'Hi\n' }),
         finishSession: this.closeSession.bind(null, sessionId, ui),
         status: 'ALIVE',
         ui: currentSessionUI,
@@ -83,7 +82,7 @@ class App {
         sessionId,
         additionalInfo,
         player: new Player(),
-        currentInteraction: new SimpleInteraction(ui, { message: 'Hi\n' }),
+        currentInteraction: new SimpleInteraction({ ui, message: 'Hi\n' }),
         finishSession() {
           process.exit(0);
         },

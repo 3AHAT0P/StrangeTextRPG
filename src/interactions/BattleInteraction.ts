@@ -1,9 +1,8 @@
-import { AbstractUI } from "../ui/AbstractUI";
 import { AbstractActor, AttackResult } from "../actors/AbstractActor";
-import { SimpleInteraction } from './SimpleInteraction';
-import { AbstractInteraction, Interactable } from "./AbstractInteraction";
 
-export interface BattleInteractionOptions {
+import { AbstractInteraction, AbstractInteractionOptions } from "./AbstractInteraction";
+
+export interface BattleInteractionOptions extends AbstractInteractionOptions{
   player: AbstractActor,
   enemies: AbstractActor[],
 }
@@ -13,26 +12,36 @@ const ACTIONS = {
   examine: 'Осмотреть 👀',
   useHealthPoition: 'Использовать зелье лечения',
   back: 'Назад',
-};
+} as const;
+
+type ACTION_VALUES = typeof ACTIONS[keyof typeof ACTIONS];
+
+export const BATTLE_FINAL_ACTIONS = {
+  PLAYER_DIED: 'onDied',
+  PLAYER_WIN: 'onWin',
+} as const;
 
 export class BattleInteraction extends AbstractInteraction {
   private _player: AbstractActor;
   private _enemies: AbstractActor[];
   private _aliveEnemies: AbstractActor[];
 
-  constructor(ui: AbstractUI, options: BattleInteractionOptions) {
-    super(ui);
+  constructor(options: BattleInteractionOptions) {
+    super(options);
 
     this._player = options.player;
     this._enemies = options.enemies;
     this._aliveEnemies = this._enemies.filter((enemy) => enemy.isAlive);
   }
 
-  public buildMessage(): string {
-    throw new Error('Method not implemented');
+  protected buildFirstMessage(attacker: AbstractActor, attacked: AbstractActor[]): string {
+    const message = `${attacker.getType({ declension: 'nominative', capitalised: true })}`
+      + ` встретил ${attacked.length} ${attacked[0].getType({ declension: 'genitive', plural: attacked.length > 1 })}.`
+      + ` Они все хотят кушать, а ты выглядишь очень аппетитно.\n`;
+    return message;
   }
 
-  public buildAttackMessage(attacker: AbstractActor, attacked: AbstractActor, attackResult: AttackResult): string {
+  protected buildAttackMessage(attacker: AbstractActor, attacked: AbstractActor, attackResult: AttackResult): string {
     let message = `${attacker.getType({ declension: 'nominative', withPostfix: true, capitalised: true })} нанес`
       + ` ${attacked.getType({ declension: 'dative', withPostfix: true, capitalised: true })} ${attackResult.damage}.`;
     if (attackResult.isCritical)
@@ -43,34 +52,40 @@ export class BattleInteraction extends AbstractInteraction {
     return message;
   }
 
-  public async activate(): Promise<Interactable> {
-    if (this._aliveEnemies.length > 0) {
-      await this.ui.sendToUser(
-        `${this._player.getType({ declension: 'nominative', capitalised: true })}`
-        + ` встретил ${this._enemies.length} ${this._enemies[0].getType({ declension: 'genitive', plural: this._enemies.length > 1 })}.`
-        + ` Они все хотят кушать, а ты выглядишь очень аппетитно.\n`,
-        'default'
-      );
+  protected battleFinished() {
+    return this._aliveEnemies.length === 0 || !this._player.isAlive;
+  }
+
+  protected async activate(): Promise<string> {
+    if (!this.battleFinished()) {
+      await this.ui.sendToUser(this.buildFirstMessage(this._player, this._enemies), 'default');
     }
 
-    while (this._aliveEnemies.length > 0) {
+    let choosedAction: string | null = null;
+
+    while (!this.battleFinished()) {
       const message = 'Что будешь делать?\n';
 
-      const actions = new Set([ACTIONS.attack, ACTIONS.examine]);
+      const actions: Set<ACTION_VALUES> = new Set([ACTIONS.attack, ACTIONS.examine]);
 
       if (this._player.healthPoitions > 0) actions.add(ACTIONS.useHealthPoition);
 
-      const choosedAction = await this.ui.interactWithUser(message, [...actions]);
+      if (choosedAction === null) choosedAction = await this.ui.interactWithUser(message, [...actions]);
+
       if (choosedAction === ACTIONS.useHealthPoition) {
         const healVolume = this._player.useHealthPoition();
         if (healVolume) await this.ui.sendToUser('❤️' + `${this._player.getType({ declension: 'nominative' })} вылечился на ${healVolume} ОЗ. Всего у тебя ${this._player.stats.healthPoints} из ${this._player.stats.maxHealthPoints} ОЗ`, 'default');
+        choosedAction = null;
       
       } else if (choosedAction === ACTIONS.examine) {
         const examineActions = this._aliveEnemies.map((enemy) => {
           return `Осмотреть ${enemy.getType({ declension: 'accusative', withPostfix: true })}`;
         });
         const choosedExamineAction = await this.ui.interactWithUser('Кого?', examineActions.concat([ACTIONS.back]));
-        if (choosedExamineAction == ACTIONS.back) continue;
+        if (choosedExamineAction == ACTIONS.back) {
+          choosedAction = null;
+          continue;
+        }
         const actionId = examineActions.indexOf(choosedExamineAction);
         const enemy = this._aliveEnemies[actionId];
         const enemyStats = enemy.stats;
@@ -90,7 +105,10 @@ export class BattleInteraction extends AbstractInteraction {
           return `Атаковать ${enemy.getType({ declension: 'accusative', withPostfix: true })}`;
         });
         const choosedAttackAction = await this.ui.interactWithUser('Кого?', attackActions.concat([ACTIONS.back]));
-        if (choosedAttackAction == ACTIONS.back) continue;
+        if (choosedAttackAction == ACTIONS.back) {
+          choosedAction = null;
+          continue;
+        }
 
         const actionId = attackActions.indexOf(choosedAttackAction);
 
@@ -125,19 +143,11 @@ export class BattleInteraction extends AbstractInteraction {
 
       if (!this._player.isAlive) {
         await this.ui.sendToUser(`Умер. Совсем. Окончательно.\n`, 'default');
-        const onDiedInteraction = this.actions.get('onDied');
-        if (onDiedInteraction != null) return onDiedInteraction;
-        break;
+        return BATTLE_FINAL_ACTIONS.PLAYER_DIED;
       }
     }
 
-    const onWinInteractions = this.actions.get('onWin');
-    if (onWinInteractions != null) return onWinInteractions;
-
-    const autoInteractions = this.actions.get('auto');
-    if (autoInteractions != null) return autoInteractions;
-
-    return new SimpleInteraction(this.ui, { message: 'Продолжение следует...\n' });
+    return BATTLE_FINAL_ACTIONS.PLAYER_WIN;
   }
 
 }

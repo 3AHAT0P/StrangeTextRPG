@@ -1,31 +1,15 @@
-import { AbstractInteraction, Interactable } from "../interactions/AbstractInteraction";
+import { AbstractInteraction, AbstractInteractionOptions } from "../interactions/AbstractInteraction";
 import { SessionState } from "../SessionState";
-import { AbstractUI } from "../ui/AbstractUI";
 
-import { NextLocation } from "./NextLocation";
-
-export interface AbstractLocationOptions {
-  ui: AbstractUI;
+export interface AbstractLocationOptions extends AbstractInteractionOptions {
   state: SessionState;
-  nextLocation?: NextLocation;
 }
 
-export abstract class AbstractLocation implements Interactable {
-  protected ui: AbstractUI;
+export abstract class AbstractLocation extends AbstractInteraction {
   protected state: SessionState;
-  protected nextLocation?: NextLocation;
 
   constructor(options: AbstractLocationOptions) {
-    this.ui = options.ui;
+    super(options);
     this.state = options.state;
-    if (options.nextLocation != null)
-      this.nextLocation = options.nextLocation;
-  }
-
-  public abstract activate(): Promise<AbstractInteraction | null>;
-
-  public addAction(message: string, nextNode: Interactable): this {
-    console.log('HMM. I\'s wrong!');
-    return this;
   }
 }
