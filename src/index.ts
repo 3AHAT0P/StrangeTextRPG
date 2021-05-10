@@ -34,8 +34,6 @@ class App {
     await ui.closeSession(sessionId);
     state.status = 'DEAD';
     this.sessionStateMap.delete(sessionId);
-
-    console.log('closeSession', this.sessionStateMap.get(sessionId));
   }
 
   private async runSession(

@@ -52,8 +52,11 @@ export abstract class AbstractInteraction implements Interactable {
 
   protected async afterActivate(action: string): Promise<AbstractInteraction | null> {
     const nextInteraction = this.actions.get(action);
-    if (nextInteraction == null) console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-    if (nextInteraction == null) throw new Error('Selected action is incorrect');
+    if (nextInteraction == null) {
+      console.log(new Error(`Selected action is null: ${action}`));
+      // throw new Error('Selected action is incorrect');
+      return null;
+    }
     return nextInteraction;
   }
 

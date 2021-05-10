@@ -1,5 +1,5 @@
 import { Rat } from "../../actors/Rat";
-import { BattleInteraction } from "../../interactions/BattleInteraction";
+import { BattleInteraction, BATTLE_FINAL_ACTIONS } from "../../interactions/BattleInteraction";
 import { getRandomIntInclusive } from "../../utils/getRandomIntInclusive";
 import { AbstractLocation } from "../AbstractLocation";
 
@@ -9,6 +9,12 @@ import { KnifeWeapon } from "../../actors/weapon";
 import { Player } from "../../actors/Player";
 import { Skeleton } from "../../actors/Skeleton";
 import { capitalise } from "../../utils/capitalise";
+import { AbstractActor } from "../../actors/AbstractActor";
+import { AbstractInteraction } from "../../interactions/AbstractInteraction";
+
+export const RUIN_LOCATION_ACTIONS = {
+  PLAYER_DIED: 'onPlayerDied',
+} as const;
 
 const ACTIONS = {
   LOOK_AROUND: 'Осмотреться',
@@ -37,14 +43,35 @@ const SITUATIONAL_ACTIONS = {
 type SITUATIONAL_ACTION_VALUES = typeof SITUATIONAL_ACTIONS[keyof typeof SITUATIONAL_ACTIONS];
 
 export class RuinLocation extends AbstractLocation {
+  private createBattle(
+    player: AbstractActor,
+    enemies: AbstractActor[],
+    nextInteraction: AbstractInteraction,
+  ): BattleInteraction {
+    const battle = new BattleInteraction({ ui: this.ui, player, enemies });
+    const onDiedInteraction = this.actions.get('onDied');
+    if (onDiedInteraction != null) battle.addAction(BATTLE_FINAL_ACTIONS.PLAYER_DIED, onDiedInteraction);
+    battle.addAction(BATTLE_FINAL_ACTIONS.PLAYER_WIN, nextInteraction);
+    return battle;
+  }
+
+  private async doBattle(player: AbstractActor, enemies: AbstractActor[]): Promise<boolean> {
+    const battle = new BattleInteraction({ ui: this.ui, player, enemies });
+    const onDiedInteraction = this.actions.get('onDied');
+    if (onDiedInteraction != null) battle.addAction(BATTLE_FINAL_ACTIONS.PLAYER_DIED, onDiedInteraction);
+    await battle.interact();
+
+    return player.isAlive;
+  }
+
   public async activate(): Promise<string> {
     const ruinAreaMap = new AreaMap(map, mapSize, additionalMapInfo);
 
     const player = this.state.player as Player;
 
     await this.ui.sendToUser(`Привет ${this.state.additionalInfo.playerName}.\n`
-      + `${player.getType({ declension: 'nominative', capitalised: true })} очнулся посреди каких-то руин.\n`
-      + `${player.getType({ declension: 'nominative', capitalised: true })} не знаешь кто ты, зачем ты и что вообще произошло.\n`,
+      + `${player.getType({ declension: 'nominative', capitalised: true })} очнулся посреди руин.\n`
+      + `${player.getType({ declension: 'nominative', capitalised: true })} не знаешь кто ты, где ты, зачем ты и что вообще произошло.\n`,
       'default',
     );
 
@@ -76,7 +103,7 @@ export class RuinLocation extends AbstractLocation {
       } else if (choosedAction === ACTIONS.LOOK_AT_YOURSELF) {
         const stats = player.stats;
         // TODO: Сделать для вещей нормальный текст отображения!
-        this.ui.sendToUser(`${player.getType({ declension: 'possessive', capitalised: true })} характеристики:\n`
+        await this.ui.sendToUser(`${player.getType({ declension: 'possessive', capitalised: true })} характеристики:\n`
           + `  ❤️Очки здоровья - ${stats.healthPoints} / ${stats.maxHealthPoints}\n`
           + `  🛡Защита - ${stats.armor}\n`
           + `  🗡Сила удара - ${stats.attackDamage}\n`
@@ -133,45 +160,66 @@ export class RuinLocation extends AbstractLocation {
         
         } else if (currentSpot.type === 'VERY_EASY_BATTLE') {
           const enemies = [new Rat({ typePostfix: '№1' })];
-          const battle = new BattleInteraction({ ui: this.ui, player, enemies });
-          await battle.interact();
+
+          if (!(await this.doBattle(player, enemies))) return RUIN_LOCATION_ACTIONS.PLAYER_DIED;
+
           ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
-          this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
+          await this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
         
         } else if (currentSpot.type === 'EASY_BATTLE') {
-          const enemies = [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№1' })];
-          const battle = new BattleInteraction({ ui: this.ui, player, enemies });
-          await battle.interact();
+          const enemies = [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' })];
+
+          if (!(await this.doBattle(player, enemies))) return RUIN_LOCATION_ACTIONS.PLAYER_DIED;
+
           ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
-          this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
+          await this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
         
         } else if (currentSpot.type === 'MEDIUM_BATTLE') {
-          const enemies = [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' }), new Rat({ typePostfix: '№3' })];
-          const battle = new BattleInteraction({ ui: this.ui, player, enemies });
-          await battle.interact();
+          const enemies = [
+            new Rat({ typePostfix: '№1' }),
+            new Rat({ typePostfix: '№2' }),
+            new Rat({ typePostfix: '№3' }),
+          ];
+
+          if (!(await this.doBattle(player, enemies))) return RUIN_LOCATION_ACTIONS.PLAYER_DIED;
+
           ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
-          this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
+          await this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
         
         } else if (currentSpot.type === 'HARD_BATTLE') {
-          const enemies = [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' }), new Rat({ typePostfix: '№3' }), new Skeleton({ typePostfix: '№1' }), new Skeleton({ typePostfix: '№2' })];
-          const battle = new BattleInteraction({ ui: this.ui, player, enemies });
-          await battle.interact();
+          const enemies = [
+            new Rat({ typePostfix: '№1' }),
+            new Rat({ typePostfix: '№2' }),
+            new Rat({ typePostfix: '№3' }),
+            new Skeleton({ typePostfix: '№1' }),
+            new Skeleton({ typePostfix: '№2' }),
+          ];
+
+          if (!(await this.doBattle(player, enemies))) return RUIN_LOCATION_ACTIONS.PLAYER_DIED;
+
           ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
-          this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
+          await this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
         
         } else if (currentSpot.type === 'VERY_HARD_BATTLE') {
-          const enemies = [new Skeleton({ typePostfix: '№1' }), new Skeleton({ typePostfix: '№2' }), new Skeleton({ typePostfix: '№3' }), new Skeleton({ typePostfix: '№4' }), new Skeleton({ typePostfix: '№5' })];
-          const battle = new BattleInteraction({ ui: this.ui, player, enemies });
-          await battle.interact();
+          const enemies = [
+            new Skeleton({ typePostfix: '№1' }),
+            new Skeleton({ typePostfix: '№2' }),
+            new Skeleton({ typePostfix: '№3' }),
+            new Skeleton({ typePostfix: '№4' }),
+            new Skeleton({ typePostfix: '№5' }),
+          ];
+
+          if (!(await this.doBattle(player, enemies))) return RUIN_LOCATION_ACTIONS.PLAYER_DIED;
+
           ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
-          this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
+          await this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
         
         } else if (currentSpot.type === 'GOLD') {
-          this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} замечаешь некоторое количество золота под ногами.`, 'default');
+          await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} замечаешь некоторое количество золота под ногами.`, 'default');
           localActions.add(SITUATIONAL_ACTIONS.PICK_UP_GOLD);
         
         } else if (currentSpot.type === 'EXIT') {
-          this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} идешь по импровизированному корридору из обомков стен.\n`
+          await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} идешь по импровизированному корридору из обомков стен.\n`
             + `По мере твоего продвижения вперед, воздух становится чище и свежее.\n`
             + `Похоже, ${player.getType({ declension: 'nominative' })} выбрался...\n`
             + `Еще через некоторое время продвижения, ${player.getType({ declension: 'nominative' })} видишь конец корридора и человека с повозкой возле него.`,
@@ -189,7 +237,7 @@ export class RuinLocation extends AbstractLocation {
         );
         if (buychoosedAction === merchantGoods.oneHealthPoition) {
           const result = player.exchangeGoldToItem(10, { healthPoitions: 1 });
-          if (!result) this.ui.sendToUser(`К сожалению, у ${player.getType({ declension: 'genitive' })} не хватает золота.`, 'default');
+          if (!result) await this.ui.sendToUser(`К сожалению, у ${player.getType({ declension: 'genitive' })} не хватает золота.`, 'default');
         }
 
       } else if (choosedAction === SITUATIONAL_ACTIONS.PICK_UP_GOLD) {
@@ -197,7 +245,7 @@ export class RuinLocation extends AbstractLocation {
         localActions.delete(SITUATIONAL_ACTIONS.PICK_UP_GOLD);
         ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
         player.collectReward({ gold: reward });
-        this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} подбираешь ${reward} золота.`, 'default');
+        await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} подбираешь ${reward} золота.`, 'default');
 
       } else if (choosedAction === SITUATIONAL_ACTIONS.EXAMINE_CORPSE) {
         localActions.delete(SITUATIONAL_ACTIONS.EXAMINE_CORPSE);
