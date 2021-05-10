@@ -1,22 +1,33 @@
 import { AbstractUI } from "../ui/AbstractUI";
 
 export interface Interactable {
-  activate(): Promise<Interactable | null>;
+  interact(): Promise<Interactable | null>;
   addAction(message: string, nextNode: Interactable): this;
+  addAutoAction(nextNode: Interactable): this;
+  removeAction(message: string): this;
 }
+
+export interface AbstractInteractionOptions {
+  ui: AbstractUI;
+}
+
+export const ACTION_AUTO = 'auto';
 
 export abstract class AbstractInteraction implements Interactable {
   protected ui: AbstractUI;
-  protected actions: Map<string, Interactable> = new Map();
+  protected actions: Map<string, AbstractInteraction> = new Map();
 
-  public abstract buildMessage(...args: unknown[]): string;
-
-  constructor(ui: AbstractUI) {
+  constructor({ ui }: AbstractInteractionOptions) {
     this.ui = ui;
   }
 
-  public addAction(message: string, nextNode: Interactable): this {
+  public addAction(message: string, nextNode: AbstractInteraction): this {
     this.actions.set(message, nextNode);
+    return this;
+  }
+
+  public addAutoAction(nextNode: AbstractInteraction): this {
+    this.actions.set(ACTION_AUTO, nextNode);
     return this;
   }
 
@@ -25,19 +36,30 @@ export abstract class AbstractInteraction implements Interactable {
     return this;
   }
 
-  public async activate(): Promise<Interactable | null> {
-    const autoInteractions = this.actions.get('auto');
+  protected async beforeActivate(): Promise<string> {
+    return 'DEFAULT MESSAGE!';
+  }
+
+  protected async activate(message: string): Promise<string> {
+    const autoInteractions = this.actions.get(ACTION_AUTO);
     if (autoInteractions != null) {
-      this.ui.sendToUser(this.buildMessage(), 'default');
-      return autoInteractions;
+      await this.ui.sendToUser(message, 'default');
+      return ACTION_AUTO;
     }
 
-    const option = await this.ui.interactWithUser(
-      this.buildMessage(),
-      Array.from(this.actions.keys()),
-    );
-    const nextNode = this.actions.get(option);
-    if (nextNode == null) throw new Error('Answer is incorrect');
-    return nextNode;
+    return await this.ui.interactWithUser(message, Array.from(this.actions.keys()));
+  }
+
+  protected async afterActivate(action: string): Promise<AbstractInteraction | null> {
+    const nextInteraction = this.actions.get(action);
+    if (nextInteraction == null) console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+    if (nextInteraction == null) throw new Error('Selected action is incorrect');
+    return nextInteraction;
+  }
+
+  public async interact(): Promise<AbstractInteraction | null> {
+    const message = await this.beforeActivate();
+    const action = await this.activate(message);
+    return this.afterActivate(action);
   }
 }

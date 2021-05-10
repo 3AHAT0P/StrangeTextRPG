@@ -1,6 +1,6 @@
 import { Player } from './actors/Player';
-import { Interactable } from './interactions/AbstractInteraction';
-import { buildZeroLocation } from './scenario';
+import { AbstractInteraction } from './interactions/AbstractInteraction';
+import { buildZeroLocation } from './scenarios';
 import { SimpleInteraction } from './interactions/SimpleInteraction';
 import { SessionState } from './SessionState';
 import { SessionUIProxy } from './ui/SessionUIProxy';
@@ -16,7 +16,7 @@ class App {
 
   private async treeTraversal(state: SessionState): Promise<void> {
     try {
-      const nextInteractions: Interactable | null = await state.currentInteraction.activate();
+      const nextInteractions: AbstractInteraction | null = await state.currentInteraction.interact();
       if (nextInteractions == null || state.status === 'DEAD') return;
 
       state.currentInteraction = nextInteractions;
@@ -57,7 +57,7 @@ class App {
         sessionId,
         additionalInfo,
         player: new Player(),
-        currentInteraction: new SimpleInteraction(currentSessionUI, { message: 'Hi\n' }),
+        currentInteraction: new SimpleInteraction({ ui: currentSessionUI, message: 'Hi\n' }),
         finishSession: this.closeSession.bind(null, sessionId, ui),
         status: 'ALIVE',
         ui: currentSessionUI,
@@ -83,7 +83,7 @@ class App {
         sessionId,
         additionalInfo,
         player: new Player(),
-        currentInteraction: new SimpleInteraction(ui, { message: 'Hi\n' }),
+        currentInteraction: new SimpleInteraction({ ui, message: 'Hi\n' }),
         finishSession() {
           process.exit(0);
         },
