@@ -1,7 +1,7 @@
 # StrangeTextRPG
 
 ## Prod
-[Telegram Bot](https://t.me/@StrangeTextRPGBot)
+[Telegram Bot](https://t.me/StrangeTextRPGBot)
 
 ## Development
 For start fill .env and use `npm start`;
