@@ -1,4 +1,4 @@
-import { MessageType } from "./AbstractUI";
+import { ActionsLayout } from "./ActionsLayout";
 
 export interface AdditionalSessionInfo {
   playerName: string;
@@ -17,9 +17,8 @@ export type FinishTheGameCallback = (
 ) => Promise<void>;
 
 export abstract class AbstractSessionUI {
-  public abstract sendToUser(sessionId: string, message: string, type: MessageType): Promise<void>;
-  public abstract waitInteraction(sessionId: string): Promise<string>;
-  public abstract interactWithUser(sessionId: string, message: string, options: string[]): Promise<string>;
+  public abstract sendToUser(sessionId: string, message: string, cleanAcions?: boolean): Promise<void>;
+  public abstract interactWithUser<T extends string>(sessionId: string, message: string, actions: ActionsLayout<T>): Promise<T>;
 
   public abstract closeSession(sessionId: string): Promise<void>;
 

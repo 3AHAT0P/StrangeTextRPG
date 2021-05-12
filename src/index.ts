@@ -24,7 +24,7 @@ class App {
     } catch (error) {
       if (error instanceof DropSessionError) return;
       console.log(error);
-      state.ui.sendToUser('Извините, что-то поломалось.\nЕсли вы не входите в команду разработки, напишите пожалуйста автору.\nСпасибо за понимание ;-)\n', 'default');
+      state.ui.sendToUser('Извините, что-то поломалось.\nЕсли вы не входите в команду разработки, напишите пожалуйста автору.\nСпасибо за понимание ;-)\n');
     }
   }
 
@@ -47,7 +47,6 @@ class App {
         ui.sendToUser(
           sessionId,
           'У тебя уже начата игровая сессия. Если хочешь начать с начала нажми на кнопку "Finish", а затем "Start" в закрепленном сообщении',
-          'default',
         );
         return;
       }

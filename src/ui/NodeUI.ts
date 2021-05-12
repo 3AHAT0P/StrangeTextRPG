@@ -1,7 +1,8 @@
 import readline from 'readline';
 import { MESSAGES } from '../translations/ru';
 
-import { AbstractUI, MessageType } from "./AbstractUI";
+import { AbstractUI } from "./AbstractUI";
+import { ActionsLayout } from './ActionsLayout';
 
 export enum TextModifiers {
   Reset = '\x1b[0m',
@@ -32,7 +33,7 @@ export enum TextModifiers {
   BgWhite = '\x1b[47m',
 }
 
-export const MessageTypes: Record<MessageType, TextModifiers[]> = {
+export const MessageTypes: Record<string, TextModifiers[]> = {
   default: [],
   damageDealt: [TextModifiers.FgGreen],
   damageTaken: [TextModifiers.FgRed],
@@ -54,10 +55,10 @@ export class NodeUI extends AbstractUI {
     tabSize: 2,
   });
 
-  public async sendToUser(message: string, type: MessageType): Promise<void> {
+  public async sendToUser(message: string, cleanAcions: boolean = false): Promise<void> {
     // this.internalInterface.write(outputMessage);
     this.output.cork();
-    this.output.write(MessageTypes[type].join(''));
+    // this.output.write(MessageTypes[type].join(''));
     this.output.write(message);
     this.output.write(TextModifiers.Reset);
     process.nextTick(() => this.output.uncork());
@@ -74,27 +75,19 @@ export class NodeUI extends AbstractUI {
     return outputMessage;
   }
 
-  /**
-   * waitInteraction
-   */
-  public waitInteraction(): Promise<string> {
+  public interactWithUser<T extends string>(message: string, actions: ActionsLayout<T>): Promise<T> {
+    this.sendToUser(message);
+    if (actions.flatList.length > 0) {
+      actions.flatList.forEach((option: string, index: number) => this.sendToUser(`${index + 1}) ${option}`));
+    }
+
     return new Promise((resolve, reject) => {
       this.internalInterface.prompt();
       this.internalInterface.once('line', (answer: string) => {
         const optionId = Number(answer);
-        if (answer === '' || Number.isNaN(optionId)) reject('Answer is incorrect');
-        resolve(optionId.toString());
-        // TODO:
+        if (answer === '' || Number.isNaN(optionId) || optionId < 0 || optionId > actions.flatList.length) reject('Answer is incorrect');
+        resolve(actions.flatList[optionId]);
       });
     });
-  }
-
-  public interactWithUser(message: string, options: string[]): Promise<string> {
-    this.sendToUser(message, 'default');
-    if (options != null && options.length > 0) {
-      options.forEach((option: string, index: number) => this.sendToUser(`${index + 1}) ${option}`, 'option'));
-    }
-
-    return this.waitInteraction();
   }
 }
