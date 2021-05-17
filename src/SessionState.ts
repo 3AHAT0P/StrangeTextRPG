@@ -1,7 +1,7 @@
-import { AbstractActor } from "./actors/AbstractActor";
-import { AbstractInteraction } from "./interactions/AbstractInteraction";
-import { AdditionalSessionInfo } from "./ui/AbstractSessionUI";
-import { AbstractUI } from "./ui/AbstractUI";
+import { AbstractActor } from './actors/AbstractActor';
+import { AbstractInteraction } from './interactions/AbstractInteraction';
+import { AdditionalSessionInfo } from './ui/AbstractSessionUI';
+import { AbstractUI } from './ui/AbstractUI';
 
 export interface SessionState {
   sessionId: string;
@@ -13,4 +13,4 @@ export interface SessionState {
   ui: AbstractUI;
 }
 
-export {}
+export {};

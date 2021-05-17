@@ -1,6 +1,8 @@
-import { AbstractActor } from "../../actors/AbstractActor";
-import { AbstractInteraction, AbstractInteractionOptions, ACTION_AUTO } from "../AbstractInteraction";
-import { SimpleInteraction } from "../SimpleInteraction";
+import { AbstractActor } from '@actors/AbstractActor';
+import {
+  AbstractInteraction, AbstractInteractionOptions, ACTION_AUTO,
+  SimpleInteraction,
+} from '@interactions';
 
 export interface AbstractNPCOptions extends AbstractInteractionOptions {
   player: AbstractActor;
@@ -31,7 +33,7 @@ export class AbstractNPC extends AbstractInteraction {
     for (const [action, interaction] of this.actions.entries()) {
       epilog.addAction(action, interaction);
     }
-    
+
     this.actions.set(ACTION_AUTO, intro);
 
     return ACTION_AUTO;

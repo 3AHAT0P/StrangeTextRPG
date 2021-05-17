@@ -1,18 +1,19 @@
-import { Player } from "../../actors/Player";
-import { Rat } from "../../actors/Rat";
-import { AbstractInteraction } from "../../interactions/AbstractInteraction";
-import { BattleInteraction, BATTLE_FINAL_ACTIONS } from "../../interactions/BattleInteraction";
-import { Interaction } from "../../interactions/Interaction";
-import { buildBaseInteractions } from "../../interactions/buildBaseInteractions";
-import { SessionState } from "../../SessionState";
-import { AbstractUI } from "../../ui/AbstractUI";
-import { LocationBuilder } from "../LocationBuilder";
-import { NextLocation } from "../NextLocation";
+import { Player } from '@actors/Player';
+import { Rat } from '@actors/Rat';
+import { AbstractInteraction } from '@interactions/AbstractInteraction';
+import { BattleInteraction, BATTLE_FINAL_ACTIONS } from '@interactions/BattleInteraction';
+import { Interaction } from '@interactions/Interaction';
+import { buildBaseInteractions } from '@interactions/buildBaseInteractions';
+import { AbstractUI } from '@ui/AbstractUI';
+import { SessionState } from '../../SessionState';
+
+import { LocationBuilder } from '../LocationBuilder';
+import { NextLocation } from '../NextLocation';
 
 export const buildSecondLocation: LocationBuilder = (
   ui: AbstractUI,
   state: SessionState,
-  nextLocations: NextLocation[]
+  nextLocations: NextLocation[],
 ): AbstractInteraction => {
   const { lastInteraction } = buildBaseInteractions(ui, state);
 
@@ -33,7 +34,7 @@ export const buildSecondLocation: LocationBuilder = (
       battleInteraction.addAction(BATTLE_FINAL_ACTIONS.PLAYER_DIED, lastInteraction);
       return battleInteraction;
     },
-  })
+  });
 
   return mainInteraction;
 };

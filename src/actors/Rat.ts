@@ -1,10 +1,14 @@
-import { capitalise } from "../utils/capitalise";
-import { getRandomIntInclusive } from "../utils/getRandomIntInclusive";
-import { returnByChance } from "../utils/returnByChance";
+import { capitalise } from '@utils/capitalise';
+import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
+import { returnByChance } from '@utils/returnByChance';
 
-import { AbstractActor, AbstractActorOptions, AttackResult, RewardBag, TypeByDeclensionOfNounOptions } from "./AbstractActor";
-import { BodyArmor, LeatherBodyArmor } from "./armor";
-import { EmptyWeapon, PawsWeapon, TeethWeapon, Weapon } from "./weapon";
+import {
+  AbstractActor, AbstractActorOptions, AttackResult, RewardBag, TypeByDeclensionOfNounOptions,
+} from './AbstractActor';
+import { LeatherBodyArmor } from './armor';
+import {
+  EmptyWeapon, PawsWeapon, TeethWeapon,
+} from './weapon';
 
 export const RatDeclensionOfNouns = {
   nominative: 'крыса',
@@ -40,9 +44,13 @@ export class Rat extends AbstractActor {
   protected _activeWeapon: TeethWeapon | PawsWeapon | EmptyWeapon;
 
   get armor(): number { return this._wearingEquipment.body?.armor ?? 0; }
+
   get attackDamage(): number { return this._activeWeapon.attackDamage; }
+
   get criticalChance(): number { return this._activeWeapon.criticalChance; }
+
   get criticalDamageModifier(): number { return this._activeWeapon.criticalDamageModifier; }
+
   get accuracy(): number { return this._activeWeapon.accuracy; }
 
   _wearingEquipment: RatEquipmentSlots = {
@@ -62,21 +70,23 @@ export class Rat extends AbstractActor {
 
   public doAttack(enemy: AbstractActor): AttackResult {
     this._activeWeapon = returnByChance<TeethWeapon | PawsWeapon | undefined>(
-      [[this._wearingEquipment.hands, .5], [this._wearingEquipment.jaws, 1]],
+      [[this._wearingEquipment.hands, 0.5], [this._wearingEquipment.jaws, 1]],
     )[0] ?? new EmptyWeapon();
 
     return super.doAttack(enemy);
   }
 
   public getType(
-    { declension, plural = false, withPostfix = false, capitalised = false }: TypeByDeclensionOfNounOptions,
+    {
+      declension, plural = false, withPostfix = false, capitalised = false,
+    }: TypeByDeclensionOfNounOptions,
   ): string {
     let result = plural ? RatDeclensionOfNounsPlural[declension] : RatDeclensionOfNouns[declension];
 
     if (capitalised) result = capitalise(result);
-    if (this.typePostfix !== '' && withPostfix) result = `${result} ${this.typePostfix}`
+    if (this.typePostfix !== '' && withPostfix) result = `${result} ${this.typePostfix}`;
 
-    return '🐀 ' + result;
+    return `🐀 ${result}`;
   }
 
   public getDeathMessage(): string {

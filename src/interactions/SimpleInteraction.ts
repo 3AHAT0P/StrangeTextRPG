@@ -1,8 +1,4 @@
-import { AbstractInteraction, AbstractInteractionOptions } from "./AbstractInteraction";
-
-export const isSimpleInteraction = (
-  interaction: AbstractInteraction,
-): interaction is SimpleInteraction => interaction instanceof SimpleInteraction;
+import { AbstractInteraction, AbstractInteractionOptions } from './AbstractInteraction';
 
 export interface SimpleInteractionOptions extends AbstractInteractionOptions {
   message: string;
@@ -21,3 +17,7 @@ export class SimpleInteraction extends AbstractInteraction {
     return this.message;
   }
 }
+
+export const isSimpleInteraction = (
+  interaction: AbstractInteraction,
+): interaction is SimpleInteraction => interaction instanceof SimpleInteraction;

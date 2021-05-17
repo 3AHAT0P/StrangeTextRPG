@@ -1,16 +1,17 @@
-import { AbstractUI } from "../ui/AbstractUI";
+import { AbstractUI } from '@ui/AbstractUI';
+import { SessionState } from '../SessionState';
+
 import { SimpleInteraction } from './SimpleInteraction';
-import { Interaction } from "./Interaction";
-import { SessionState } from "../SessionState";
+import { Interaction } from './Interaction';
 
 export const buildBaseInteractions = (ui: AbstractUI, state: SessionState) => {
   const exitInteraction = new Interaction({
     ui,
     buildMessage() { return 'Удачи!\n'; },
     async activate() {
-      state.finishSession();
+      await state.finishSession();
       return null;
-    }
+    },
   });
 
   const toBeContinuedInteraction = new SimpleInteraction({ ui, message: 'Продолжение следует...\n' });

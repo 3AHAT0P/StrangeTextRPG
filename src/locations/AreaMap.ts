@@ -1,6 +1,6 @@
-import { Armor } from '../actors/armor';
-import { Weapon } from '../actors/weapon';
-import { Point, Size } from '../utils/@types';
+import { Armor } from '@actors/armor';
+import { Weapon } from '@actors/weapon';
+import { Point, Size } from '@utils/@types';
 
 /*
   - - недостижимое место
@@ -20,15 +20,15 @@ import { Point, Size } from '../utils/@types';
 
 export type DIRECTION = 'NORTH' | 'SOUTH' | 'WEST' | 'EAST';
 export type POIName = 'UNREACHABLE' | 'WALL' | 'BREAK'
-  | 'CLEAN' | 'UNKNOWN' | 'EXIT'
-  | 'MERCHANT' | 'PLAYER'
-  | 'GOLD' | 'BAG'
-  | 'VERY_EASY_BATTLE' | 'EASY_BATTLE' | 'MEDIUM_BATTLE' | 'HARD_BATTLE' | 'VERY_HARD_BATTLE';
+| 'CLEAN' | 'UNKNOWN' | 'EXIT'
+| 'MERCHANT' | 'PLAYER'
+| 'GOLD' | 'BAG'
+| 'VERY_EASY_BATTLE' | 'EASY_BATTLE' | 'MEDIUM_BATTLE' | 'HARD_BATTLE' | 'VERY_HARD_BATTLE';
 export type POIIcon = '-' | 'w' | 'b'
-  | '0' | '?' | 'o'
-  | 'm' | 'p'
-  | 'g' | 'B'
-  | '1' | '2' | '3' | '4' | '5';
+| '0' | '?' | 'o'
+| 'm' | 'p'
+| 'g' | 'B'
+| '1' | '2' | '3' | '4' | '5';
 
 export const PointOfInterest: Readonly<Record<POIName, POIIcon>> = {
   UNREACHABLE: '-',
@@ -48,10 +48,11 @@ export const PointOfInterest: Readonly<Record<POIName, POIIcon>> = {
   BAG: 'B',
 };
 
-export const InversedPOI = (Object.entries(PointOfInterest) as Array<[POIName, POIIcon]>).reduce((acc: Partial<Record<POIIcon, POIName>>, [key, value]) => {
-  acc[value] = key;
-  return acc;
-}, {}) as Readonly<Record<POIIcon, POIName>>;
+export const InversedPOI = (Object.entries(PointOfInterest) as Array<[POIName, POIIcon]>)
+  .reduce((acc: Partial<Record<POIIcon, POIName>>, [key, value]) => {
+    acc[value] = key;
+    return acc;
+  }, {}) as Readonly<Record<POIIcon, POIName>>;
 
 export const mapSigns: Readonly<Record<POIName, string>> = {
   UNREACHABLE: '⬛️',
@@ -88,7 +89,7 @@ export interface MapSpot {
 }
 
 export class AreaMap {
-  private map: Map<string, MapSpot> = new Map();
+  private map: Map<string, MapSpot> = new Map<string, MapSpot>();
 
   private _playerPosition: Point = {
     x: -1,
@@ -97,7 +98,9 @@ export class AreaMap {
 
   public get playerPosition(): Readonly<Point> { return { ...this._playerPosition }; }
 
-  public get currentSpot(): MapSpot | undefined { return this.map.get(`${this.playerPosition.y}:${this.playerPosition.x}`); }
+  public get currentSpot(): MapSpot | undefined {
+    return this.map.get(`${this.playerPosition.y}:${this.playerPosition.x}`);
+  }
 
   private fillMap(map: POIIcon[], additionalInfo: Record<string, AdditionalSpotInfo>) {
     const throughableTypes = ['UNREACHABLE', 'WALL', 'BREAK'];
@@ -109,8 +112,8 @@ export class AreaMap {
           this.map.set(`${y}:${x}`, {
             coordinates: { x, y },
             type: 'CLEAN',
-            icon: PointOfInterest['CLEAN'],
-            sign: mapSigns['CLEAN'],
+            icon: PointOfInterest.CLEAN,
+            sign: mapSigns.CLEAN,
             isVisible: true,
             isThroughable: true,
             additionalInfo: additionalInfo[`${y}:${x}`],
@@ -156,19 +159,14 @@ export class AreaMap {
     let mapPiece = this.printLegend();
     mapPiece += '\n';
     for (let y = this.playerPosition.y - 1; y <= this.playerPosition.y + 1; y += 1) {
-      if (y < 0 || y > this.mapSize.height - 1)
-        continue;
+      if (y < 0 || y > this.mapSize.height - 1) continue;
       for (let x = this.playerPosition.x - 1; x <= this.playerPosition.x + 1; x += 1) {
-        if (x < 0 || x > this.mapSize.width - 1)
-          continue;
+        if (x < 0 || x > this.mapSize.width - 1) continue;
         const spot = this.map.get(`${y}:${x}`);
         if (spot != null) {
-          if (y === this.playerPosition.y && x === this.playerPosition.x)
-            mapPiece += '🔹';
-          else if (!spot.isVisible)
-            mapPiece += mapSigns.UNKNOWN;
-          else
-            mapPiece += spot.sign;
+          if (y === this.playerPosition.y && x === this.playerPosition.x) mapPiece += '🔹';
+          else if (!spot.isVisible) mapPiece += mapSigns.UNKNOWN;
+          else mapPiece += spot.sign;
         }
       }
       mapPiece += '\n';
@@ -178,21 +176,17 @@ export class AreaMap {
 
   public canMove({ x, y }: Point): boolean {
     const destinationSpot = this.map.get(`${y}:${x}`);
-    if (destinationSpot == null)
-      return false;
+    if (destinationSpot == null) return false;
     return destinationSpot.isThroughable;
   }
 
   public lookAround(): void {
     for (let y = this.playerPosition.y - 1; y <= this.playerPosition.y + 1; y += 1) {
-      if (y < 0 || y > this.mapSize.height - 1)
-        continue;
+      if (y < 0 || y > this.mapSize.height - 1) continue;
       for (let x = this.playerPosition.x - 1; x <= this.playerPosition.x + 1; x += 1) {
-        if (x < 0 || x > this.mapSize.width - 1)
-          continue;
+        if (x < 0 || x > this.mapSize.width - 1) continue;
         const spot = this.map.get(`${y}:${x}`);
-        if (spot != null && !spot.isThroughable && !spot.isVisible)
-          spot.isVisible = true;
+        if (spot != null && !spot.isThroughable && !spot.isVisible) spot.isVisible = true;
       }
     }
   }
@@ -200,32 +194,28 @@ export class AreaMap {
   public move(direction: DIRECTION, count: number = 1): boolean {
     if (direction === 'NORTH') {
       const destinationSpot = this.map.get(`${this.playerPosition.y - count}:${this.playerPosition.x}`);
-      if (destinationSpot == null || !destinationSpot.isThroughable)
-        return false;
+      if (destinationSpot == null || !destinationSpot.isThroughable) return false;
       this._playerPosition.y -= count;
       destinationSpot.isVisible = true;
       return true;
     }
     if (direction === 'EAST') {
       const destinationSpot = this.map.get(`${this.playerPosition.y}:${this.playerPosition.x + count}`);
-      if (destinationSpot == null || !destinationSpot.isThroughable)
-        return false;
+      if (destinationSpot == null || !destinationSpot.isThroughable) return false;
       this._playerPosition.x += count;
       destinationSpot.isVisible = true;
       return true;
     }
     if (direction === 'SOUTH') {
       const destinationSpot = this.map.get(`${this.playerPosition.y + count}:${this.playerPosition.x}`);
-      if (destinationSpot == null || !destinationSpot.isThroughable)
-        return false;
+      if (destinationSpot == null || !destinationSpot.isThroughable) return false;
       this._playerPosition.y += count;
       destinationSpot.isVisible = true;
       return true;
     }
     if (direction === 'WEST') {
       const destinationSpot = this.map.get(`${this.playerPosition.y}:${this.playerPosition.x - count}`);
-      if (destinationSpot == null || !destinationSpot.isThroughable)
-        return false;
+      if (destinationSpot == null || !destinationSpot.isThroughable) return false;
       this._playerPosition.x -= count;
       destinationSpot.isVisible = true;
       return true;
@@ -235,8 +225,7 @@ export class AreaMap {
 
   public updateSpot({ x, y }: Point, type: POIName): boolean {
     const spot = this.map.get(`${y}:${x}`);
-    if (spot == null)
-      return false;
+    if (spot == null) return false;
 
     const throughableTypes = ['UNREACHABLE', 'WALL', 'BREAK'];
 

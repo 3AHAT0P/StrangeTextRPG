@@ -9,7 +9,8 @@
     "prod:start": "pm2 start src/index.ts",
     "prod:stop": "pm2 stop src/index.ts",
     "prod:reload": "pm2 restart src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint -c ./.eslintrc.js ./src"
   },
   "author": "Igor Kostyakov <i.a.kostyakov@gmail.com>",
   "license": "ISC",
@@ -18,7 +19,11 @@
     "@typescript-eslint/eslint-plugin": "^4.22.0",
     "@typescript-eslint/parser": "^4.22.0",
     "eslint": "^7.24.0",
+    "eslint-config-airbnb-typescript": "^12.3.1",
+    "eslint-import-resolver-typescript": "^2.4.0",
+    "eslint-plugin-import": "^2.23.2",
     "nodemon": "^2.0.7",
+    "tsconfig-paths": "^3.9.0",
     "typescript": "^4.2.4"
   },
   "dependencies": {

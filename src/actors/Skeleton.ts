@@ -1,11 +1,13 @@
-import { capitalise } from "../utils/capitalise";
-import { getRandomIntInclusive } from "../utils/getRandomIntInclusive";
-import { truncate } from "../utils/math";
-import { returnByChance } from "../utils/returnByChance";
+import { capitalise } from '@utils/capitalise';
+import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
+import { truncate } from '@utils/math';
+import { returnByChance } from '@utils/returnByChance';
 
-import { AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions } from "./AbstractActor";
-import { BrokenShieldArmor, StrongBonesBodyArmor } from "./armor";
-import { EmptyWeapon, RustedAxeWeapon, RustedSwordWeapon } from "./weapon";
+import {
+  AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions,
+} from './AbstractActor';
+import { BrokenShieldArmor, StrongBonesBodyArmor } from './armor';
+import { EmptyWeapon, RustedAxeWeapon, RustedSwordWeapon } from './weapon';
 
 export const SkeletonDeclensionOfNouns = {
   nominative: 'скелет',
@@ -35,20 +37,28 @@ interface SkeletonEquipmentSlots {
   rightHand: RustedAxeWeapon | RustedSwordWeapon | EmptyWeapon;
 }
 
-// TODO: 
+// TODO:
 export class Skeleton extends AbstractActor {
   public type = 'скелет';
 
-  get armor(): number { return truncate((this._wearingEquipment.body?.armor ?? 0) + (this._wearingEquipment.leftHand?.armor ?? 0), 2); }
+  get armor(): number {
+    return truncate((this._wearingEquipment.body?.armor ?? 0) + (this._wearingEquipment.leftHand?.armor ?? 0), 2);
+  }
+
   get attackDamage(): number { return this._wearingEquipment.rightHand.attackDamage; }
+
   get criticalChance(): number { return this._wearingEquipment.rightHand.criticalChance; }
+
   get criticalDamageModifier(): number { return this._wearingEquipment.rightHand.criticalDamageModifier; }
+
   get accuracy(): number { return this._wearingEquipment.rightHand.accuracy; }
 
   _wearingEquipment: SkeletonEquipmentSlots = {
     body: new StrongBonesBodyArmor(),
-    leftHand: returnByChance([[new BrokenShieldArmor(), .5], [void 0, 1]])[0],
-    rightHand: returnByChance<RustedSwordWeapon | RustedAxeWeapon | EmptyWeapon>([[new RustedAxeWeapon(), .5], [new RustedSwordWeapon(), .7], [new EmptyWeapon(), 1]])[0],
+    leftHand: returnByChance([[new BrokenShieldArmor(), 0.5], [void 0, 1]])[0],
+    rightHand: returnByChance<RustedSwordWeapon | RustedAxeWeapon | EmptyWeapon>(
+      [[new RustedAxeWeapon(), 0.5], [new RustedSwordWeapon(), 0.7], [new EmptyWeapon(), 1]],
+    )[0],
   };
 
   constructor(options: AbstractActorOptions = {}) {
@@ -61,14 +71,16 @@ export class Skeleton extends AbstractActor {
   }
 
   public getType(
-    { declension, plural = false, withPostfix = false, capitalised = false }: TypeByDeclensionOfNounOptions,
+    {
+      declension, plural = false, withPostfix = false, capitalised = false,
+    }: TypeByDeclensionOfNounOptions,
   ): string {
     let result = plural ? SkeletonDeclensionOfNounsPlural[declension] : SkeletonDeclensionOfNouns[declension];
 
     if (capitalised) result = capitalise(result);
-    if (this.typePostfix !== '' && withPostfix) result = `${result} ${this.typePostfix}`
+    if (this.typePostfix !== '' && withPostfix) result = `${result} ${this.typePostfix}`;
 
-    return '💀 ' + result;
+    return `💀 ${result}`;
   }
 
   public getDeathMessage(): string {

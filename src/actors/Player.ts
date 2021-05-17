@@ -1,9 +1,21 @@
-import { capitalise } from "../utils/capitalise";
-import { isPresent } from "../utils/check";
+import { capitalise } from '@utils/capitalise';
+import { isPresent } from '@utils/check';
 
-import { AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions } from "./AbstractActor";
-import { HeadArmor, NeckArmor, BodyArmor, HandsArmor, FingersArmor, LegsArmor, FeetArmor, CanvasCoatBodyArmor, CanvasTrousersLegsArmor } from "./armor";
-import { FistWeapon, KnifeWeapon, Weapon } from "./weapon";
+import {
+  AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions,
+} from './AbstractActor';
+import {
+  HeadArmor,
+  NeckArmor,
+  BodyArmor,
+  HandsArmor,
+  FingersArmor,
+  LegsArmor,
+  FeetArmor,
+  CanvasCoatBodyArmor,
+  CanvasTrousersLegsArmor,
+} from './armor';
+import { FistWeapon, Weapon } from './weapon';
 
 export const PlayerDeclensionOfNouns = {
   nominative: 'ты',
@@ -14,7 +26,7 @@ export const PlayerDeclensionOfNouns = {
   prepositional: 'о тебе',
 
   possessive: 'твои',
-}
+};
 
 interface PeopleEquipmentSlots {
   head?: HeadArmor; // Helmet, Hood, Hat
@@ -32,16 +44,20 @@ export class Player extends AbstractActor {
   type = 'player';
 
   get armor(): number {
-    return  0 +
+    return 0
       + (this._wearingEquipment.head?.armor ?? 0)
       + (this._wearingEquipment.body?.armor ?? 0)
       + (this._wearingEquipment.hands?.armor ?? 0)
       + (this._wearingEquipment.legs?.armor ?? 0)
       + (this._wearingEquipment.feet?.armor ?? 0);
   }
+
   get attackDamage(): number { return this._wearingEquipment.rightHand?.attackDamage ?? 0; }
+
   get criticalChance(): number { return this._wearingEquipment.rightHand?.criticalChance ?? 0; }
+
   get criticalDamageModifier(): number { return this._wearingEquipment.rightHand?.criticalDamageModifier ?? 0; }
+
   get accuracy(): number { return this._wearingEquipment.rightHand?.accuracy ?? 0; }
 
   _wearingEquipment: PeopleEquipmentSlots = {

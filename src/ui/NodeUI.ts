@@ -1,7 +1,7 @@
 import readline from 'readline';
 import { MESSAGES } from '../translations/ru';
 
-import { AbstractUI } from "./AbstractUI";
+import { AbstractUI } from './AbstractUI';
 import { ActionsLayout } from './ActionsLayout';
 
 export enum TextModifiers {
@@ -41,10 +41,11 @@ export const MessageTypes: Record<string, TextModifiers[]> = {
   stats: [TextModifiers.Dim, TextModifiers.FgMagenta],
   markdown: [],
   clean: [],
-}
+};
 
 export class NodeUI extends AbstractUI {
   private input: NodeJS.ReadStream = process.stdin;
+
   private output: NodeJS.WriteStream = process.stdout;
 
   private internalInterface: readline.Interface = readline.createInterface({
@@ -55,7 +56,7 @@ export class NodeUI extends AbstractUI {
     tabSize: 2,
   });
 
-  public async sendToUser(message: string, cleanAcions: boolean = false): Promise<void> {
+  public async sendToUser(message: string): Promise<void> {
     // this.internalInterface.write(outputMessage);
     this.output.cork();
     // this.output.write(MessageTypes[type].join(''));
@@ -64,19 +65,8 @@ export class NodeUI extends AbstractUI {
     process.nextTick(() => this.output.uncork());
   }
 
-  public prepareMessage(messages: string[], options?: string[]): string {
-    let outputMessage = messages.join('');
-    if (options != null && options.length > 0) {
-      outputMessage += options.reduce(
-        (acc: string, option: string, index: number) => `${acc} - ${index + 1}) ${option}`,
-        '',
-      );
-    }
-    return outputMessage;
-  }
-
-  public interactWithUser<T extends string>(message: string, actions: ActionsLayout<T>): Promise<T> {
-    this.sendToUser(message);
+  public async interactWithUser<T extends string>(message: string, actions: ActionsLayout<T>): Promise<T> {
+    await this.sendToUser(message);
     if (actions.flatList.length > 0) {
       actions.flatList.forEach((option: string, index: number) => this.sendToUser(`${index + 1}) ${option}`));
     }
@@ -85,7 +75,9 @@ export class NodeUI extends AbstractUI {
       this.internalInterface.prompt();
       this.internalInterface.once('line', (answer: string) => {
         const optionId = Number(answer);
-        if (answer === '' || Number.isNaN(optionId) || optionId < 0 || optionId > actions.flatList.length) reject('Answer is incorrect');
+        if (answer === '' || Number.isNaN(optionId) || optionId < 0 || optionId > actions.flatList.length) {
+          reject(new Error('Answer is incorrect'));
+        }
         resolve(actions.flatList[optionId]);
       });
     });
