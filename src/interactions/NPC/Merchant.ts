@@ -1,7 +1,9 @@
-import { AbstractInteraction, ACTION_AUTO } from "../AbstractInteraction";
-import { Interaction } from "../Interaction";
-import { SimpleInteraction } from "../SimpleInteraction";
-import { AbstractNPCOptions, AbstractNPC } from "./AbstractNPC";
+import {
+  AbstractInteraction, ACTION_AUTO,
+  SimpleInteraction, Interaction,
+} from '@interactions';
+
+import { AbstractNPCOptions, AbstractNPC } from './AbstractNPC';
 
 export interface GoodItem {
   name: string;
@@ -23,8 +25,8 @@ export class MerchantNPC extends AbstractNPC {
   }
 
   protected async buildInteractionSequance(): Promise<[AbstractInteraction, AbstractInteraction]> {
-    const ui = this.ui;
-    const player = this.player;
+    const { ui } = this;
+    const { player } = this;
 
     const introInteraction = new SimpleInteraction({ ui, message: 'Привет!' });
 
@@ -33,10 +35,10 @@ export class MerchantNPC extends AbstractNPC {
       message: `К сожалению, у ${player.getType({ declension: 'genitive' })} не хватает золота.`,
     });
 
-    const i1 = new SimpleInteraction({ ui, message: 'Извини, за столь скудный выбор.'});
+    const i1 = new SimpleInteraction({ ui, message: 'Извини, за столь скудный выбор.' });
     introInteraction.addAction('Привет!', i1);
 
-    const i2 = new SimpleInteraction({ ui, message: 'Чего изволишь?'});
+    const i2 = new SimpleInteraction({ ui, message: 'Чего изволишь?' });
     i1.addAction(ACTION_AUTO, i2);
     notEnoughtMoneyInteraction.addAction(ACTION_AUTO, i2);
 
@@ -65,5 +67,4 @@ export class MerchantNPC extends AbstractNPC {
 
     return [introInteraction, epilogInteraction];
   }
-
 }

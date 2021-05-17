@@ -1,4 +1,4 @@
-import { AbstractInteraction } from "../interactions/AbstractInteraction";
+import { AbstractInteraction } from '@interactions/AbstractInteraction';
 
 export interface NextLocation {
   actionMessage: string;

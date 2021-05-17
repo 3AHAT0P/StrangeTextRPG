@@ -6,6 +6,6 @@
   "ignore": [
     "src/**/*.spec.ts"
   ],
-  "exec": "node --inspect -r ts-node/register ./src/index.ts",
+  "exec": "node --inspect -r ts-node/register -r tsconfig-paths/register ./src/index.ts",
   "signal": "SIGTERM"
 }

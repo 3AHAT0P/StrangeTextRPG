@@ -1,10 +1,14 @@
 import EventEmitter from 'events';
-import { Telegraf, Markup } from 'telegraf'
+import { Telegraf, Markup } from 'telegraf';
+
+import { DropSessionError } from '@utils/Error/DropSessionError';
 
 import config from '../../.env.json';
-import { DropSessionError } from '../utils/Error/DropSessionError';
 
-import { AbstractSessionUI, AdditionalSessionInfo, FinishTheGameCallback, StartTheGameCallback } from './AbstractSessionUI';
+import {
+  AbstractSessionUI, AdditionalSessionInfo,
+  FinishTheGameCallback, StartTheGameCallback,
+} from './AbstractSessionUI';
 import { ActionsLayout } from './ActionsLayout';
 
 const eventEmitter: EventEmitter = new EventEmitter();
@@ -12,7 +16,9 @@ const eventEmitter: EventEmitter = new EventEmitter();
 export class TelegramBotUi extends AbstractSessionUI {
   private bot = new Telegraf(config.TELEGRAM_BOT_TOKEN);
 
-  private async sendMessageAndSetKeyboard<T extends string>(sessionId: string, message: string, actions: ActionsLayout<T>): Promise<void> {
+  private async sendMessageAndSetKeyboard<T extends string>(
+    sessionId: string, message: string, actions: ActionsLayout<T>,
+  ): Promise<void> {
     await this.bot.telegram.sendMessage(
       sessionId,
       message,
@@ -21,18 +27,18 @@ export class TelegramBotUi extends AbstractSessionUI {
   }
 
   public async onExit(sessionIds: string[], code: string): Promise<void> {
-    sessionIds.map((sessionId) => this.bot.telegram.sendMessage(
+    await Promise.allSettled(sessionIds.map((sessionId) => this.bot.telegram.sendMessage(
       sessionId,
       'Извини, но я нуждаюсь в перезагрузке. Прошу меня извинить. Пожалуйста, нажми /start.',
       { reply_markup: Markup.removeKeyboard().reply_markup },
-    ));
+    )));
     this.bot.stop(code);
   }
 
   public async closeSession(sessionId: string): Promise<void> {
     eventEmitter.emit(sessionId, '', true);
     eventEmitter.removeAllListeners(sessionId);
-    
+
     await this.bot.telegram.sendMessage(
       sessionId,
       'Удачи =)\nЕсли захочешь вернуться и начать сначала нажми на кнопку "Начать новую игру" в закрепленном сообщении.',
@@ -45,7 +51,7 @@ export class TelegramBotUi extends AbstractSessionUI {
       const sessionId = ctx.message.chat.id.toString();
 
       setTimeout(runOnFinish, 16, sessionId, this);
-      ctx.leaveChat()
+      void ctx.leaveChat();
     });
 
     this.bot.start(async (ctx) => {
@@ -56,7 +62,10 @@ export class TelegramBotUi extends AbstractSessionUI {
         Markup.button.url('Написать автору отзыв/идею/предложение', 'https://t.me/ikostyakov'),
       ], { columns: 2 });
       await ctx.unpinAllChatMessages();
-      const message = await ctx.reply(`Привет!\nЯ бот-рассказчик одной маленькой текстовой РПГ.\nЧто тебе интересно?`, { reply_markup: listOfCommands.reply_markup });
+      const message = await ctx.reply(
+        'Привет!\nЯ бот-рассказчик одной маленькой текстовой РПГ.\nЧто тебе интересно?',
+        { reply_markup: listOfCommands.reply_markup },
+      );
       await ctx.pinChatMessage(message.message_id, { disable_notification: true });
     });
 
@@ -85,7 +94,7 @@ export class TelegramBotUi extends AbstractSessionUI {
       eventEmitter.emit(ctx.message.chat.id.toString(), ctx.message.text);
     });
 
-    this.bot.launch();
+    void this.bot.launch();
 
     return this;
   }
@@ -111,8 +120,7 @@ export class TelegramBotUi extends AbstractSessionUI {
       };
 
       eventEmitter.on(sessionId, listener);
-      this.sendMessageAndSetKeyboard(sessionId, message, actions);
+      void this.sendMessageAndSetKeyboard(sessionId, message, actions);
     });
   }
 }
-

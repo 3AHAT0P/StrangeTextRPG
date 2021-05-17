@@ -6,6 +6,6 @@
   "ignore": [
     "src/**/*.spec.ts"
   ],
-  "exec": "ts-node ./_previewMap.ts",
+  "exec": "ts-node -r tsconfig-paths/register ./_previewMap.ts",
   "signal": "SIGTERM"
 }

@@ -1,5 +1,5 @@
-import { AbstractInteraction, AbstractInteractionOptions } from "../interactions/AbstractInteraction";
-import { SessionState } from "../SessionState";
+import { AbstractInteraction, AbstractInteractionOptions } from '@interactions/AbstractInteraction';
+import { SessionState } from '../SessionState';
 
 export interface AbstractLocationOptions extends AbstractInteractionOptions {
   state: SessionState;

@@ -1,7 +1,8 @@
-import { AbstractActor, AttackResult } from "../actors/AbstractActor";
-import { ActionsLayout } from "../ui/ActionsLayout";
+/* eslint-disable no-await-in-loop */
+import { AbstractActor, AttackResult } from '@actors/AbstractActor';
+import { ActionsLayout } from '@ui/ActionsLayout';
 
-import { AbstractInteraction, AbstractInteractionOptions } from "./AbstractInteraction";
+import { AbstractInteraction, AbstractInteractionOptions } from './AbstractInteraction';
 
 export interface BattleInteractionOptions extends AbstractInteractionOptions{
   player: AbstractActor,
@@ -24,7 +25,9 @@ export const BATTLE_FINAL_ACTIONS = {
 
 export class BattleInteraction extends AbstractInteraction {
   private _player: AbstractActor;
+
   private _enemies: AbstractActor[];
+
   private _aliveEnemies: AbstractActor[];
 
   constructor(options: BattleInteractionOptions) {
@@ -38,17 +41,15 @@ export class BattleInteraction extends AbstractInteraction {
   protected buildFirstMessage(attacker: AbstractActor, attacked: AbstractActor[]): string {
     const message = `${attacker.getType({ declension: 'nominative', capitalised: true })}`
       + ` встретил ${attacked.length} ${attacked[0].getType({ declension: 'genitive', plural: attacked.length > 1 })}.`
-      + ` Они все хотят кушать, а ты выглядишь очень аппетитно.\n`;
+      + ' Они все хотят кушать, а ты выглядишь очень аппетитно.\n';
     return message;
   }
 
   protected buildAttackMessage(attacker: AbstractActor, attacked: AbstractActor, attackResult: AttackResult): string {
     let message = `${attacker.getType({ declension: 'nominative', withPostfix: true, capitalised: true })} нанес`
       + ` ${attacked.getType({ declension: 'dative', withPostfix: true, capitalised: true })} ${attackResult.damage}.`;
-    if (attackResult.isCritical)
-      message += ` ‼️КРИТ`;
-    if (attackResult.isMiss)
-      message += ` ⚠️Промах`;
+    if (attackResult.isCritical) message += ' ‼️КРИТ';
+    if (attackResult.isMiss) message += ' ⚠️Промах';
     message += '\n';
     return message;
   }
@@ -71,40 +72,35 @@ export class BattleInteraction extends AbstractInteraction {
 
       if (this._player.healthPoitions > 0) actions.add(ACTIONS.useHealthPoition);
 
-      if (choosedAction === null) choosedAction = await this.ui.interactWithUser(message, new ActionsLayout<ACTION_VALUES>().addRow(...actions));
+      if (choosedAction === null) {
+        choosedAction = await this.ui.interactWithUser(message, new ActionsLayout<ACTION_VALUES>().addRow(...actions));
+      }
 
       if (choosedAction === ACTIONS.useHealthPoition) {
         const healVolume = this._player.useHealthPoition();
-        if (healVolume) await this.ui.sendToUser('❤️' + `${this._player.getType({ declension: 'nominative' })} вылечился на ${healVolume} ОЗ. Всего у тебя ${this._player.stats.healthPoints} из ${this._player.stats.maxHealthPoints} ОЗ`);
+        if (healVolume) await this.ui.sendToUser(`❤️ ${this._player.getType({ declension: 'nominative' })} вылечился на ${healVolume} ОЗ. Всего у тебя ${this._player.stats.healthPoints} из ${this._player.stats.maxHealthPoints} ОЗ`);
         choosedAction = null;
-      
       } else if (choosedAction === ACTIONS.examine) {
-        const examineActions = this._aliveEnemies.map((enemy) => {
-          return `Осмотреть ${enemy.getType({ declension: 'accusative', withPostfix: true })}`;
-        });
+        const examineActions = this._aliveEnemies.map((enemy) => `Осмотреть ${enemy.getType({ declension: 'accusative', withPostfix: true })}`);
         const choosedExamineAction = await this.ui.interactWithUser('Кого?', new ActionsLayout().addRow(...examineActions.concat([ACTIONS.back])));
-        if (choosedExamineAction == ACTIONS.back) {
+        if (choosedExamineAction === ACTIONS.back) {
           choosedAction = null;
           continue;
         }
         const actionId = examineActions.indexOf(choosedExamineAction);
         const enemy = this._aliveEnemies[actionId];
         const enemyStats = enemy.stats;
-        this.ui.sendToUser(`Xарактеристики ${enemy.getType({ declension: 'genitive', withPostfix: true })}:\n`
+        await this.ui.sendToUser(`Xарактеристики ${enemy.getType({ declension: 'genitive', withPostfix: true })}:\n`
           + `  ❤️Очки здоровья - ${enemyStats.healthPoints} / ${enemyStats.maxHealthPoints}\n`
           + `  🛡Защита - ${enemyStats.armor}\n`
           + `  🗡Сила удара - ${enemyStats.attackDamage}\n`
           + `  🎯Шанс попасть ударом - ${enemyStats.accuracy}\n`
           + `  ‼️Шанс попасть в уязвимое место - ${enemyStats.criticalChance}\n`
-          + `  ✖️Модификатор критического урона - ${enemyStats.criticalDamageModifier}\n`,
-        );
-      
+          + `  ✖️Модификатор критического урона - ${enemyStats.criticalDamageModifier}\n`);
       } else if (choosedAction === ACTIONS.attack) {
-        const attackActions = this._aliveEnemies.map((enemy) => {
-          return `Атаковать ${enemy.getType({ declension: 'accusative', withPostfix: true })}`;
-        });
+        const attackActions = this._aliveEnemies.map((enemy) => `Атаковать ${enemy.getType({ declension: 'accusative', withPostfix: true })}`);
         const choosedAttackAction = await this.ui.interactWithUser('Кого?', new ActionsLayout().addRow(...attackActions.concat([ACTIONS.back])));
-        if (choosedAttackAction == ACTIONS.back) {
+        if (choosedAttackAction === ACTIONS.back) {
           choosedAction = null;
           continue;
         }
@@ -127,25 +123,22 @@ export class BattleInteraction extends AbstractInteraction {
         }
       }
 
-      const enemiesAttack = this._aliveEnemies.map((actor: AbstractActor) => {
-        return this.buildAttackMessage(actor, this._player, actor.doAttack(this._player));
-      }).join('');
+      const enemiesAttack = this._aliveEnemies.map(
+        (actor: AbstractActor) => this.buildAttackMessage(actor, this._player, actor.doAttack(this._player)),
+      ).join('');
       if (enemiesAttack !== '') await this.ui.sendToUser(enemiesAttack);
 
       let roundResultMessage = '⚔️Результаты раунда:\n';
       roundResultMessage += ` - У ${this._player.getType({ declension: 'genitive' })} ${this._player.stats.healthPoints} ОЗ;\n`;
-      roundResultMessage += this._aliveEnemies.map((actor: AbstractActor) => {
-        return ` - У ${actor.getType({ declension: 'genitive', withPostfix: true })} ${actor.stats.healthPoints} ОЗ;\n`;
-      }).join('');
+      roundResultMessage += this._aliveEnemies.map((actor: AbstractActor) => ` - У ${actor.getType({ declension: 'genitive', withPostfix: true })} ${actor.stats.healthPoints} ОЗ;\n`).join('');
       await this.ui.sendToUser(roundResultMessage);
 
       if (!this._player.isAlive) {
-        await this.ui.sendToUser(`Умер. Совсем. Окончательно.\n`);
+        await this.ui.sendToUser('Умер. Совсем. Окончательно.\n');
         return BATTLE_FINAL_ACTIONS.PLAYER_DIED;
       }
     }
 
     return BATTLE_FINAL_ACTIONS.PLAYER_WIN;
   }
-
 }

@@ -1,5 +1,6 @@
-import { KnifeWeapon } from '../../actors/weapon';
-import { Size } from '../../utils/@types';
+import { KnifeWeapon } from '@actors/weapon';
+import { Size } from '@utils/@types';
+
 import { AdditionalSpotInfo, POIIcon } from '../AreaMap';
 
 export const mapSize: Size = {

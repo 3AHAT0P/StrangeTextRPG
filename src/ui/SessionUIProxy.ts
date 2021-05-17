@@ -1,6 +1,6 @@
-import { AbstractUI } from "./AbstractUI";
+import { AbstractUI } from './AbstractUI';
 import { AbstractSessionUI } from './AbstractSessionUI';
-import { ActionsLayout } from "./ActionsLayout";
+import { ActionsLayout } from './ActionsLayout';
 
 export class SessionUIProxy extends AbstractUI {
   constructor(private readonly _baseUI: AbstractSessionUI, private readonly _sessionId: string) {

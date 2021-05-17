@@ -1,15 +1,16 @@
+import { AbstractInteraction } from '@interactions/AbstractInteraction';
+import { SimpleInteraction } from '@interactions/SimpleInteraction';
+import { buildBaseInteractions } from '@interactions/buildBaseInteractions';
+import { AbstractUI } from '@ui/AbstractUI';
 import { SessionState } from '../../SessionState';
-import { AbstractInteraction } from "../../interactions/AbstractInteraction";
-import { SimpleInteraction } from "../../interactions/SimpleInteraction";
-import { buildBaseInteractions } from "../../interactions/buildBaseInteractions";
-import { AbstractUI } from "../../ui/AbstractUI";
-import { NextLocation } from "../NextLocation";
+
+import { NextLocation } from '../NextLocation';
 import { LocationBuilder } from '../LocationBuilder';
 
 export const buildFirstLocation: LocationBuilder = (
   ui: AbstractUI,
   state: SessionState,
-  nextLocations: NextLocation[]
+  nextLocations: NextLocation[],
 ): AbstractInteraction => {
   const { lastInteraction, toBeContinuedInteraction } = buildBaseInteractions(ui, state);
 

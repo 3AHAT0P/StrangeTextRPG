@@ -1,8 +1,4 @@
-import { AbstractInteraction, AbstractInteractionOptions } from "./AbstractInteraction";
-
-export const isInteraction = (
-  interaction: AbstractInteraction,
-): interaction is Interaction => interaction instanceof Interaction;
+import { AbstractInteraction, AbstractInteractionOptions } from './AbstractInteraction';
 
 export interface InteractionOptions extends AbstractInteractionOptions {
   buildMessage?(): string;
@@ -22,7 +18,7 @@ export class Interaction extends AbstractInteraction {
 
   protected async beforeActivate(): Promise<string> {
     if (this._buildMessage !== null) return this._buildMessage();
-    
+
     return 'DEFAULT MESSAGE';
   }
 
@@ -32,7 +28,7 @@ export class Interaction extends AbstractInteraction {
       if (result instanceof AbstractInteraction) {
         this.addAction('__default__', result);
         return '__default__';
-      } else if (result === 'SUPER') return super.activate(message);
+      } if (result === 'SUPER') return super.activate(message);
 
       return 'null';
     }
@@ -40,3 +36,7 @@ export class Interaction extends AbstractInteraction {
     return super.activate(message);
   }
 }
+
+export const isInteraction = (
+  interaction: AbstractInteraction,
+): interaction is Interaction => interaction instanceof Interaction;

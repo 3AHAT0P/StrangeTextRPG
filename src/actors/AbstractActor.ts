@@ -1,5 +1,5 @@
-import { getRandomIntInclusive } from "../utils/getRandomIntInclusive";
-import { Weapon } from "./weapon";
+import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
+import { Weapon } from './weapon';
 
 export interface AttackResult {
   damage: number;
@@ -13,7 +13,7 @@ export interface Bag {
 }
 
 export interface RewardBag {
-  gold?: number; 
+  gold?: number;
 }
 
 export interface AbstractActorOptions {
@@ -38,15 +38,21 @@ export type DeclensionOfNouns =
 
 export abstract class AbstractActor {
   protected type: string = 'unknown';
+
   protected typePostfix: string = '';
 
   protected maxHealthPoints: number = 0;
+
   protected healthPoints: number = 0;
+
   protected abstract armor: number;
 
   protected abstract attackDamage: number;
+
   protected abstract criticalChance: number;
+
   protected abstract criticalDamageModifier: number;
+
   protected abstract accuracy: number;
 
   protected _gold: number = 0;
@@ -84,6 +90,7 @@ export abstract class AbstractActor {
   }
 
   public abstract getType(options: TypeByDeclensionOfNounOptions): string;
+
   public abstract getDeathMessage(): string;
 
   public doAttack(enemy: AbstractActor): AttackResult {
@@ -117,7 +124,7 @@ export abstract class AbstractActor {
 
   public useHealthPoition(): false | number {
     if (this._bag.healthPoitions === 0) return false;
-    
+
     this._bag.healthPoitions -= 1;
     const healVolume = getRandomIntInclusive(2, 5);
     this.healthPoints += healVolume;
@@ -140,6 +147,9 @@ export abstract class AbstractActor {
 
   public getReward(): RewardBag { return {}; }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public collectReward(reward: RewardBag): void { /* pass */ }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public equipWeapon(weapon: Weapon, hand: 'LEFT' | 'RIGHT' = 'RIGHT'): boolean { return true; }
 }

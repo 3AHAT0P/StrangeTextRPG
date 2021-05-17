@@ -7,4 +7,4 @@ export const returnByChance = <T extends unknown>(items: Array<[T, number]>, onl
     }
   }
   return result;
-}
+};
