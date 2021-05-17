@@ -5,23 +5,20 @@ import config from '../../.env.json';
 import { DropSessionError } from '../utils/Error/DropSessionError';
 
 import { AbstractSessionUI, AdditionalSessionInfo, FinishTheGameCallback, StartTheGameCallback } from './AbstractSessionUI';
-
-import { MessageType } from "./AbstractUI";
-
-export const MessageTypes: Record<MessageType, []> = {
-  default: [],
-  damageDealt: [],
-  damageTaken: [],
-  option: [],
-  stats: [],
-  markdown: [],
-  clean: [],
-}
+import { ActionsLayout } from './ActionsLayout';
 
 const eventEmitter: EventEmitter = new EventEmitter();
 
 export class TelegramBotUi extends AbstractSessionUI {
   private bot = new Telegraf(config.TELEGRAM_BOT_TOKEN);
+
+  private async sendMessageAndSetKeyboard<T extends string>(sessionId: string, message: string, actions: ActionsLayout<T>): Promise<void> {
+    await this.bot.telegram.sendMessage(
+      sessionId,
+      message,
+      Markup.keyboard(actions.grooupedByRows).resize(),
+    );
+  }
 
   public async onExit(sessionIds: string[], code: string): Promise<void> {
     sessionIds.map((sessionId) => this.bot.telegram.sendMessage(
@@ -93,44 +90,28 @@ export class TelegramBotUi extends AbstractSessionUI {
     return this;
   }
 
-  public async sendToUser(sessionId: string, message: string, type: MessageType): Promise<void> {
-    if (type === 'clean') await this.bot.telegram.sendMessage(sessionId, message, { reply_markup: Markup.removeKeyboard().reply_markup });
+  public async sendToUser(sessionId: string, message: string, cleanAcions: boolean = false): Promise<void> {
+    if (cleanAcions) await this.bot.telegram.sendMessage(sessionId, message, Markup.removeKeyboard());
     else await this.bot.telegram.sendMessage(sessionId, message);
   }
 
-  public async sendOptionsToUser(sessionId: string, message: string, options: string[]): Promise<void> {
-    await this.bot.telegram.sendMessage(
-      sessionId,
-      message,
-      Markup.keyboard(options).resize(),
-    );
-  }
+  public interactWithUser<T extends string>(sessionId: string, message: string, actions: ActionsLayout<T>): Promise<T> {
+    if (actions.flatList.length === 0) throw new Error('Action list is empty');
 
-  /**
-   * waitInteraction
-   */
-  public waitInteraction(sessionId: string): Promise<string> {
-    return new Promise((resolve) => {
-      eventEmitter.once(sessionId, resolve);
-    });
-  }
-
-  public interactWithUser(sessionId: string, message: string, options: string[]): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      const listener = (option: string, forceReject: boolean = false) => {
+    return new Promise<T>((resolve, reject) => {
+      const listener = (action: T, forceReject: boolean = false) => {
         if (forceReject) {
           eventEmitter.off(sessionId, listener);
           return reject(new DropSessionError(`Force drop session ${sessionId}.`));
         }
-        const optionId = options.indexOf(option);
-        if (optionId >= 0) {
+        if (actions.flatList.includes(action)) {
           eventEmitter.off(sessionId, listener);
-          return resolve(option);
+          return resolve(action);
         }
       };
+
       eventEmitter.on(sessionId, listener);
-      if (options == null || options.length === 0) this.sendToUser(sessionId, message, 'default');
-      else this.sendOptionsToUser(sessionId, message, options);
+      this.sendMessageAndSetKeyboard(sessionId, message, actions);
     });
   }
 }

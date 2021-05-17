@@ -1,4 +1,5 @@
 import { AbstractActor, AttackResult } from "../actors/AbstractActor";
+import { ActionsLayout } from "../ui/ActionsLayout";
 
 import { AbstractInteraction, AbstractInteractionOptions } from "./AbstractInteraction";
 
@@ -52,16 +53,16 @@ export class BattleInteraction extends AbstractInteraction {
     return message;
   }
 
-  protected battleFinished() {
+  protected battleFinished(): boolean {
     return this._aliveEnemies.length === 0 || !this._player.isAlive;
   }
 
   protected async activate(): Promise<string> {
     if (!this.battleFinished()) {
-      await this.ui.sendToUser(this.buildFirstMessage(this._player, this._enemies), 'default');
+      await this.ui.sendToUser(this.buildFirstMessage(this._player, this._enemies));
     }
 
-    let choosedAction: string | null = null;
+    let choosedAction: ACTION_VALUES | null = null;
 
     while (!this.battleFinished()) {
       const message = 'Что будешь делать?\n';
@@ -70,18 +71,18 @@ export class BattleInteraction extends AbstractInteraction {
 
       if (this._player.healthPoitions > 0) actions.add(ACTIONS.useHealthPoition);
 
-      if (choosedAction === null) choosedAction = await this.ui.interactWithUser(message, [...actions]);
+      if (choosedAction === null) choosedAction = await this.ui.interactWithUser(message, new ActionsLayout<ACTION_VALUES>().addRow(...actions));
 
       if (choosedAction === ACTIONS.useHealthPoition) {
         const healVolume = this._player.useHealthPoition();
-        if (healVolume) await this.ui.sendToUser('❤️' + `${this._player.getType({ declension: 'nominative' })} вылечился на ${healVolume} ОЗ. Всего у тебя ${this._player.stats.healthPoints} из ${this._player.stats.maxHealthPoints} ОЗ`, 'default');
+        if (healVolume) await this.ui.sendToUser('❤️' + `${this._player.getType({ declension: 'nominative' })} вылечился на ${healVolume} ОЗ. Всего у тебя ${this._player.stats.healthPoints} из ${this._player.stats.maxHealthPoints} ОЗ`);
         choosedAction = null;
       
       } else if (choosedAction === ACTIONS.examine) {
         const examineActions = this._aliveEnemies.map((enemy) => {
           return `Осмотреть ${enemy.getType({ declension: 'accusative', withPostfix: true })}`;
         });
-        const choosedExamineAction = await this.ui.interactWithUser('Кого?', examineActions.concat([ACTIONS.back]));
+        const choosedExamineAction = await this.ui.interactWithUser('Кого?', new ActionsLayout().addRow(...examineActions.concat([ACTIONS.back])));
         if (choosedExamineAction == ACTIONS.back) {
           choosedAction = null;
           continue;
@@ -95,16 +96,14 @@ export class BattleInteraction extends AbstractInteraction {
           + `  🗡Сила удара - ${enemyStats.attackDamage}\n`
           + `  🎯Шанс попасть ударом - ${enemyStats.accuracy}\n`
           + `  ‼️Шанс попасть в уязвимое место - ${enemyStats.criticalChance}\n`
-          + `  ✖️Модификатор критического урона - ${enemyStats.criticalDamageModifier}\n`
-          ,
-          'default',
+          + `  ✖️Модификатор критического урона - ${enemyStats.criticalDamageModifier}\n`,
         );
       
       } else if (choosedAction === ACTIONS.attack) {
         const attackActions = this._aliveEnemies.map((enemy) => {
           return `Атаковать ${enemy.getType({ declension: 'accusative', withPostfix: true })}`;
         });
-        const choosedAttackAction = await this.ui.interactWithUser('Кого?', attackActions.concat([ACTIONS.back]));
+        const choosedAttackAction = await this.ui.interactWithUser('Кого?', new ActionsLayout().addRow(...attackActions.concat([ACTIONS.back])));
         if (choosedAttackAction == ACTIONS.back) {
           choosedAction = null;
           continue;
@@ -115,7 +114,7 @@ export class BattleInteraction extends AbstractInteraction {
         const attackedEnemy = this._aliveEnemies[actionId];
         const attackResult = this._player.doAttack(attackedEnemy);
 
-        await this.ui.sendToUser(this.buildAttackMessage(this._player, attackedEnemy, attackResult), 'damageDealt');
+        await this.ui.sendToUser(this.buildAttackMessage(this._player, attackedEnemy, attackResult));
 
         if (!attackResult.isAlive) {
           const diedEnemy = this._aliveEnemies[actionId];
@@ -124,7 +123,6 @@ export class BattleInteraction extends AbstractInteraction {
           this._player.collectReward(reward);
           await this.ui.sendToUser(
             `${diedEnemy.getDeathMessage()} ${this._player.getType({ declension: 'nominative' })} получил ${reward.gold ?? 0} золота.`,
-            'default',
           );
         }
       }
@@ -132,17 +130,17 @@ export class BattleInteraction extends AbstractInteraction {
       const enemiesAttack = this._aliveEnemies.map((actor: AbstractActor) => {
         return this.buildAttackMessage(actor, this._player, actor.doAttack(this._player));
       }).join('');
-      if (enemiesAttack !== '') await this.ui.sendToUser(enemiesAttack, 'damageTaken');
+      if (enemiesAttack !== '') await this.ui.sendToUser(enemiesAttack);
 
       let roundResultMessage = '⚔️Результаты раунда:\n';
       roundResultMessage += ` - У ${this._player.getType({ declension: 'genitive' })} ${this._player.stats.healthPoints} ОЗ;\n`;
       roundResultMessage += this._aliveEnemies.map((actor: AbstractActor) => {
         return ` - У ${actor.getType({ declension: 'genitive', withPostfix: true })} ${actor.stats.healthPoints} ОЗ;\n`;
       }).join('');
-      await this.ui.sendToUser(roundResultMessage, 'stats');
+      await this.ui.sendToUser(roundResultMessage);
 
       if (!this._player.isAlive) {
-        await this.ui.sendToUser(`Умер. Совсем. Окончательно.\n`, 'default');
+        await this.ui.sendToUser(`Умер. Совсем. Окончательно.\n`);
         return BATTLE_FINAL_ACTIONS.PLAYER_DIED;
       }
     }

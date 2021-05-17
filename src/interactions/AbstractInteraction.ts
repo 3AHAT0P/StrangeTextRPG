@@ -1,4 +1,5 @@
 import { AbstractUI } from "../ui/AbstractUI";
+import { ActionsLayout } from "../ui/ActionsLayout";
 
 export interface Interactable {
   interact(): Promise<Interactable | null>;
@@ -9,6 +10,7 @@ export interface Interactable {
 
 export interface AbstractInteractionOptions {
   ui: AbstractUI;
+  actionsLayout?: ActionsLayout<string>;
 }
 
 export const ACTION_AUTO = 'auto';
@@ -16,9 +18,11 @@ export const ACTION_AUTO = 'auto';
 export abstract class AbstractInteraction implements Interactable {
   protected ui: AbstractUI;
   protected actions: Map<string, AbstractInteraction> = new Map();
+  protected actionsLayout: ActionsLayout<string> = new ActionsLayout({ columns: 2 });
 
-  constructor({ ui }: AbstractInteractionOptions) {
+  constructor({ ui, actionsLayout }: AbstractInteractionOptions) {
     this.ui = ui;
+    if (actionsLayout != null) this.actionsLayout = actionsLayout;
   }
 
   public addAction(message: string, nextNode: AbstractInteraction): this {
@@ -43,13 +47,13 @@ export abstract class AbstractInteraction implements Interactable {
   protected async activate(message: string): Promise<string> {
     const autoInteractions = this.actions.get(ACTION_AUTO);
     if (autoInteractions != null) {
-      await this.ui.sendToUser(message, 'default');
+      await this.ui.sendToUser(message);
       return ACTION_AUTO;
     }
 
     if (this.actions.size === 0) throw new Error('Action list is empty');
 
-    return await this.ui.interactWithUser(message, Array.from(this.actions.keys()));
+    return await this.ui.interactWithUser(message, new ActionsLayout().addRow(...this.actions.keys()));
   }
 
   protected async afterActivate(action: string): Promise<AbstractInteraction | null> {

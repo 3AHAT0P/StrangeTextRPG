@@ -1,9 +1,8 @@
-export type MessageType = 'default' | 'damageDealt' | 'damageTaken' | 'option' | 'stats' | 'markdown' | 'clean';
+import { ActionsLayout } from "./ActionsLayout";
 
 export abstract class AbstractUI {
-  public abstract sendToUser(message: string, type: MessageType): Promise<void>;
-  public abstract waitInteraction(): Promise<string>;
-  public abstract interactWithUser(message: string, options: string[]): Promise<string>;
+  public abstract sendToUser(message: string, cleanAcions?: boolean): Promise<void>;
+  public abstract interactWithUser<T extends string>(message: string, actions: ActionsLayout<T>): Promise<T>;
 
   public async onExit(...args: any[]): Promise<void> { /* pass */ }
 }

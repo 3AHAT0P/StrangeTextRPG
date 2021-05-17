@@ -24,7 +24,7 @@ export const buildZeroLocation = (ui: AbstractUI, state: SessionState): Abstract
     ui,
     buildMessage() { return 'Reloading...'; },
     async activate(message) {
-      await ui.sendToUser(message, 'default');
+      await ui.sendToUser(message);
       // TODO: Возможно нам тут нужно немного больше чем просто резетнуть игрока
       state.player = new Player();
       return introInteraction;

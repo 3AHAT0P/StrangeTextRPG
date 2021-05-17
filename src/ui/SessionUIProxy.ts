@@ -1,18 +1,21 @@
-import { AbstractUI, MessageType } from "./AbstractUI";
+import { AbstractUI } from "./AbstractUI";
 import { AbstractSessionUI } from './AbstractSessionUI';
+import { ActionsLayout } from "./ActionsLayout";
 
 export class SessionUIProxy extends AbstractUI {
-
   constructor(private readonly _baseUI: AbstractSessionUI, private readonly _sessionId: string) {
     super();
   }
-  public sendToUser(message: string, type: MessageType): Promise<void> {
-    return this._baseUI.sendToUser(this._sessionId, message, type);
+
+  public sendToUser(message: string, cleanAcions?: boolean): Promise<void> {
+    return this._baseUI.sendToUser(this._sessionId, message, cleanAcions);
   }
-  public waitInteraction(): Promise<string> {
-    return this._baseUI.waitInteraction(this._sessionId);
+
+  public interactWithUser<T extends string>(message: string, actions: ActionsLayout<T>): Promise<T> {
+    return this._baseUI.interactWithUser(this._sessionId, message, actions);
   }
-  public interactWithUser(message: string, options: string[]): Promise<string> {
-    return this._baseUI.interactWithUser(this._sessionId, message, options);
+
+  public async onExit(...args: any[]): Promise<void> {
+    return this._baseUI.onExit(args[0], args[1]);
   }
 }

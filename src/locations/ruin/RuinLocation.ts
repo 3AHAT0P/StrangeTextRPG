@@ -12,8 +12,8 @@ import { capitalise } from "../../utils/capitalise";
 import { AbstractActor } from "../../actors/AbstractActor";
 import { AbstractInteraction } from "../../interactions/AbstractInteraction";
 import { MerchantNPC } from "../../interactions/NPC/Merchant";
-import { DropSessionError } from "../../utils/Error/DropSessionError";
 import { Interaction } from "../../interactions/Interaction";
+import { ActionsLayout } from "../../ui/ActionsLayout";
 
 export const RUIN_LOCATION_ACTIONS = {
   PLAYER_DIED: 'onPlayerDied',
@@ -28,10 +28,11 @@ const ACTIONS = {
 type ACTION_VALUES = typeof ACTIONS[keyof typeof ACTIONS];
 
 const MOVE_ACTIONS = {
-  TO_WEST: 'Идти на ЗАПАД ⬅️',
-  TO_EAST: 'Идти на ВОСТОК ➡️',
-  TO_NORTH: 'Идти на СЕВЕР ⬆️',
-  TO_SOUTH: 'Идти на ЮГ ⬇️',
+  TO_WEST: '👣 ⬅️',
+  TO_EAST: '👣 ➡️',
+  TO_NORTH: '👣 ⬆️',
+  TO_SOUTH: '👣 ⬇️',
+  NO_WAY: '🚷',
 } as const;
 
 type MOVE_ACTION_VALUES = typeof MOVE_ACTIONS[keyof typeof MOVE_ACTIONS];
@@ -77,13 +78,13 @@ export class RuinLocation extends AbstractLocation {
     await this.ui.sendToUser(`Привет ${this.state.additionalInfo.playerName}.\n`
       + `${player.getType({ declension: 'nominative', capitalised: true })} очнулся посреди руин.\n`
       + `${player.getType({ declension: 'nominative', capitalised: true })} не знаешь кто ты, где ты, зачем ты и что вообще произошло.\n`,
-      'default',
     );
 
     const isTrue = true;
 
     const actions: Set<ACTION_VALUES> = new Set([ACTIONS.LOOK_AROUND, ACTIONS.STAND_UP]);
-    const localActions: Set<MOVE_ACTION_VALUES | SITUATIONAL_ACTION_VALUES> = new Set();
+    const localActions: Set<SITUATIONAL_ACTION_VALUES> = new Set();
+    let moveActions: MOVE_ACTION_VALUES[] = [];
 
     const internalPlayerState = {
       isStandUp: false,
@@ -91,20 +92,25 @@ export class RuinLocation extends AbstractLocation {
     };
 
     while (isTrue) {
-      // await this.ui.sendToUser(`Что будешь делать?\n`, 'default');
+      // await this.ui.sendToUser(`Что будешь делать?\n`);
 
-      const choosedAction = await this.ui.interactWithUser('Что будешь делать?', [...actions, ...localActions]);
+      const choosedAction = await this.ui.interactWithUser(
+        'Что будешь делать?',
+        new ActionsLayout<ACTION_VALUES | MOVE_ACTION_VALUES | SITUATIONAL_ACTION_VALUES>({ columns: 4 })
+          .addRow(...actions)
+          .addRow(...localActions)
+          .addRow(...moveActions),
+        );
       if (choosedAction === ACTIONS.LOOK_AROUND && !internalPlayerState.isStandUp) {
         actions.add(ACTIONS.LOOK_AT_YOURSELF);
         await this.ui.sendToUser(`Сумрачно.`
           + ` ${player.getType({ declension: 'nominative', capitalised: true })} сидишь опёршись на уцелевший угол стены.`
           + ` Над ${player.getType({ declension: 'ablative' })} есть небольшой кусок крыши. Рядом почти потухший костер.`
           + ` Поодаль везде грязь и лужи. Моросит мелкий дождик.\n`,
-          'default',
         );
       } else if (choosedAction === ACTIONS.LOOK_AROUND && internalPlayerState.isStandUp) {
         ruinAreaMap.lookAround();
-        await this.ui.sendToUser(ruinAreaMap.printMap(), 'default');
+        await this.ui.sendToUser(ruinAreaMap.printMap());
       } else if (choosedAction === ACTIONS.LOOK_AT_YOURSELF) {
         const stats = player.stats;
         // TODO: Сделать для вещей нормальный текст отображения!
@@ -124,14 +130,12 @@ export class RuinLocation extends AbstractLocation {
 
               return equipment.join('\n');
             })()
-          + `\nОружие - ${ player.wearingEquipment.rightHand?.name ?? 'ничего'}.\n`
-          ,
-          'default',
+          + `\nОружие - ${ player.wearingEquipment.rightHand?.name ?? 'ничего'}.\n`,
         );
       } else if (choosedAction === ACTIONS.STAND_UP) {
         internalPlayerState.isStandUp = true;
         actions.delete(ACTIONS.STAND_UP);
-      } else if (choosedAction.startsWith('Идти на')) {
+      } else if (choosedAction.startsWith('Идти на') || choosedAction.startsWith('👣')) { // @TODO:
 
         if (choosedAction === MOVE_ACTIONS.TO_WEST) ruinAreaMap.move('WEST');
         else if (choosedAction === MOVE_ACTIONS.TO_EAST) ruinAreaMap.move('EAST');
@@ -147,20 +151,19 @@ export class RuinLocation extends AbstractLocation {
         else if (currentSpot.type === 'BAG') {
           const info = ruinAreaMap.currentSpot?.additionalInfo;
           if (info != null && info.reward === KnifeWeapon) {
-            await this.ui.sendToUser(`Внезапно, ${player.getType({ declension: 'nominative' })} спотыкаешься о труп крысы.`, 'default');
+            await this.ui.sendToUser(`Внезапно, ${player.getType({ declension: 'nominative' })} спотыкаешься о труп крысы.`);
             localActions.add(SITUATIONAL_ACTIONS.EXAMINE_CORPSE);
             // TODO: It's Interaction????
             internalPlayerState.seeRatCorpse = async () => {
               await this.ui.sendToUser(
                 `Крыса, как крыса. Но в боку у нее торчит нож. О, теперь будет чем отбиваться от этих тварей!`,
-                'default',
               );
               player.equipWeapon(new KnifeWeapon());
             }
           }
         
         } else if (currentSpot.type === 'MERCHANT') {
-          await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} видишь торговца.`, 'default');
+          await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} видишь торговца.`);
           localActions.add(SITUATIONAL_ACTIONS.TALK_WITH_MERCHANT);
         
         } else if (currentSpot.type === 'VERY_EASY_BATTLE') {
@@ -169,7 +172,7 @@ export class RuinLocation extends AbstractLocation {
           if (!(await this.doBattle(player, enemies))) return RUIN_LOCATION_ACTIONS.PLAYER_DIED;
 
           ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
-          await this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
+          await this.ui.sendToUser('Больше тут ничего и никого нет.');
         
         } else if (currentSpot.type === 'EASY_BATTLE') {
           const enemies = [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' })];
@@ -177,7 +180,7 @@ export class RuinLocation extends AbstractLocation {
           if (!(await this.doBattle(player, enemies))) return RUIN_LOCATION_ACTIONS.PLAYER_DIED;
 
           ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
-          await this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
+          await this.ui.sendToUser('Больше тут ничего и никого нет.');
         
         } else if (currentSpot.type === 'MEDIUM_BATTLE') {
           const enemies = [
@@ -189,7 +192,7 @@ export class RuinLocation extends AbstractLocation {
           if (!(await this.doBattle(player, enemies))) return RUIN_LOCATION_ACTIONS.PLAYER_DIED;
 
           ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
-          await this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
+          await this.ui.sendToUser('Больше тут ничего и никого нет.');
         
         } else if (currentSpot.type === 'HARD_BATTLE') {
           const enemies = [
@@ -203,7 +206,7 @@ export class RuinLocation extends AbstractLocation {
           if (!(await this.doBattle(player, enemies))) return RUIN_LOCATION_ACTIONS.PLAYER_DIED;
 
           ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
-          await this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
+          await this.ui.sendToUser('Больше тут ничего и никого нет.');
         
         } else if (currentSpot.type === 'VERY_HARD_BATTLE') {
           const enemies = [
@@ -217,10 +220,10 @@ export class RuinLocation extends AbstractLocation {
           if (!(await this.doBattle(player, enemies))) return RUIN_LOCATION_ACTIONS.PLAYER_DIED;
 
           ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
-          await this.ui.sendToUser('Больше тут ничего и никого нет.', 'default');
+          await this.ui.sendToUser('Больше тут ничего и никого нет.');
         
         } else if (currentSpot.type === 'GOLD') {
-          await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} замечаешь некоторое количество золота под ногами.`, 'default');
+          await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} замечаешь некоторое количество золота под ногами.`);
           localActions.add(SITUATIONAL_ACTIONS.PICK_UP_GOLD);
         
         } else if (currentSpot.type === 'EXIT') {
@@ -228,7 +231,7 @@ export class RuinLocation extends AbstractLocation {
             + `По мере твоего продвижения вперед, воздух становится чище и свежее.\n`
             + `Похоже, ${player.getType({ declension: 'nominative' })} выбрался...\n`
             + `Еще через некоторое время продвижения, ${player.getType({ declension: 'nominative' })} видишь конец коридора и человека с повозкой возле него.`,
-            'clean',
+            true,
           );
           break;
         }
@@ -261,7 +264,7 @@ export class RuinLocation extends AbstractLocation {
         localActions.delete(SITUATIONAL_ACTIONS.PICK_UP_GOLD);
         ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
         player.collectReward({ gold: reward });
-        await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} подбираешь ${reward} золота.`, 'default');
+        await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} подбираешь ${reward} золота.`);
 
       } else if (choosedAction === SITUATIONAL_ACTIONS.EXAMINE_CORPSE) {
         localActions.delete(SITUATIONAL_ACTIONS.EXAMINE_CORPSE);
@@ -270,18 +273,23 @@ export class RuinLocation extends AbstractLocation {
       }
 
       if (internalPlayerState.isStandUp) {
+        moveActions = [];
+
         if (ruinAreaMap.canMove({ x: ruinAreaMap.playerPosition.x - 1, y: ruinAreaMap.playerPosition.y })) {
-          localActions.add(MOVE_ACTIONS.TO_WEST);
-        }
-        if (ruinAreaMap.canMove({ x: ruinAreaMap.playerPosition.x + 1, y: ruinAreaMap.playerPosition.y })) {
-          localActions.add(MOVE_ACTIONS.TO_EAST);
-        }
+          moveActions.push(MOVE_ACTIONS.TO_WEST);
+        } else moveActions.push(MOVE_ACTIONS.NO_WAY);
+
         if (ruinAreaMap.canMove({ x: ruinAreaMap.playerPosition.x, y: ruinAreaMap.playerPosition.y - 1 })) {
-          localActions.add(MOVE_ACTIONS.TO_NORTH);
-        }
+          moveActions.push(MOVE_ACTIONS.TO_NORTH);
+        } else moveActions.push(MOVE_ACTIONS.NO_WAY);
+
+        if (ruinAreaMap.canMove({ x: ruinAreaMap.playerPosition.x + 1, y: ruinAreaMap.playerPosition.y })) {
+          moveActions.push(MOVE_ACTIONS.TO_EAST);
+        } else moveActions.push(MOVE_ACTIONS.NO_WAY);
+
         if (ruinAreaMap.canMove({ x: ruinAreaMap.playerPosition.x, y: ruinAreaMap.playerPosition.y + 1 })) {
-          localActions.add(MOVE_ACTIONS.TO_SOUTH);
-        }
+          moveActions.push(MOVE_ACTIONS.TO_SOUTH);
+        } else moveActions.push(MOVE_ACTIONS.NO_WAY);
       }
     }
 
