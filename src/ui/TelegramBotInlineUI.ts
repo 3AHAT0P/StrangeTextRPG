@@ -1,31 +1,37 @@
 import EventEmitter from 'events';
 import { Telegraf, Markup } from 'telegraf';
-import { Message } from 'telegraf/typings/core/types/typegram';
+import { InlineKeyboardButton, InlineKeyboardMarkup, Message } from 'telegraf/typings/core/types/typegram';
 
 import { getConfig } from 'ConfigProvider';
 import { DropSessionError } from '@utils/Error/DropSessionError';
 import { catchAndLogError } from '@utils/catchAndLogError';
 
 import { AbstractSessionUI } from './AbstractSessionUI';
-import { ActionsLayout } from './ActionsLayout';
 import { StartTheGameCallback, FinishTheGameCallback, AdditionalSessionInfo } from './utils';
+import { ActionsLayout } from './ActionsLayout';
 import { SessionUIProxy } from './SessionUIProxy';
 
 const config = getConfig();
 
 const eventEmitter: EventEmitter = new EventEmitter();
 
-export class TelegramBotUi extends AbstractSessionUI {
+export class TelegramBotInlineUi extends AbstractSessionUI {
   private bot = new Telegraf(config.TELEGRAM_BOT_TOKEN);
 
-  private sendMessageAndSetKeyboard<T extends string>(
+  private sendMessageAndSetInlineKeyboard<T extends InlineKeyboardButton>(
     sessionId: string, message: string, actions: T[][],
   ): Promise<Message.TextMessage> {
     return this.bot.telegram.sendMessage(
       sessionId,
       message,
-      Markup.keyboard(actions).resize(),
+      Markup.inlineKeyboard(actions),
     );
+  }
+
+  private updateMessageInlineKeyboard(
+    message: Message.TextMessage, keyboard?: InlineKeyboardMarkup,
+  ): Promise<true | Message> {
+    return this.bot.telegram.editMessageReplyMarkup(message.chat.id, message.message_id, void 0, keyboard);
   }
 
   public async onExit(sessionIds: string[], code: string): Promise<void> {
@@ -53,7 +59,7 @@ export class TelegramBotUi extends AbstractSessionUI {
       const sessionId = ctx.message.chat.id.toString();
 
       setTimeout(runOnFinish, 16, sessionId, this);
-      catchAndLogError('TelegramBotUI::OnQuitCommand', ctx.leaveChat());
+      catchAndLogError('TelegramBotInlineUI::OnQuitCommand', ctx.leaveChat());
     });
 
     this.bot.start(async (ctx) => {
@@ -118,23 +124,33 @@ export class TelegramBotUi extends AbstractSessionUI {
   ): Promise<T> {
     if (actions.flatList.length === 0) throw new Error('Action list is empty');
 
-    return new Promise<T>((resolve, reject) => {
-      const listener = (action: T, forceReject: boolean = false) => {
+    const eventKey = `${sessionId}.${Date.now()}`;
+    const buttons = actions.groupedByRows.map(
+      (row, rowIndex) => row.map(
+        (action, columnIndex) => Markup.button.callback(action, `${eventKey}.${rowIndex}:${columnIndex}`),
+      ),
+    );
+
+    return new Promise<T>(async (resolve, reject) => {
+      const listener = (actionQuery: string, forceReject: boolean = false) => {
         if (forceReject) {
-          eventEmitter.off(sessionId, listener);
+          eventEmitter.off(eventKey, listener);
           return reject(new DropSessionError(`Force drop session ${sessionId}.`));
         }
-        if (actions.flatList.includes(action)) {
+        const [rowIndex, columnIndex] = actionQuery.split(':');
+        const action = actions.groupedByRows[Number(rowIndex)][Number(columnIndex)]; // @TODO: Here may be error.
+        if (action != null) {
           eventEmitter.off(sessionId, listener);
+          // eslint-disable-next-line @typescript-eslint/no-use-before-define
+          catchAndLogError('TelegramBotInlineUI::interactWithUser', this.updateMessageInlineKeyboard(sendedMessage));
           return resolve(action);
         }
+
+        console.log('TelegramBotInlineUI::interactWithUser', 'Action is null', actionQuery, actions);
       };
 
-      eventEmitter.on(sessionId, listener);
-      catchAndLogError(
-        'TelegramBotUI::interactWithUser',
-        this.sendMessageAndSetKeyboard(sessionId, message, actions.groupedByRows),
-      );
+      eventEmitter.on(eventKey, listener);
+      const sendedMessage = await this.sendMessageAndSetInlineKeyboard(sessionId, message, buttons);
     });
   }
 }

@@ -1,5 +1,5 @@
 import { AbstractUI } from './AbstractUI';
-import { AbstractSessionUI } from './AbstractSessionUI';
+import type { AbstractSessionUI } from './AbstractSessionUI';
 import { ActionsLayout } from './ActionsLayout';
 
 export class SessionUIProxy extends AbstractUI {
@@ -13,6 +13,10 @@ export class SessionUIProxy extends AbstractUI {
 
   public interactWithUser<T extends string>(message: string, actions: ActionsLayout<T>): Promise<T> {
     return this._baseUI.interactWithUser(this._sessionId, message, actions);
+  }
+
+  public closeSession(): Promise<void> {
+    return this._baseUI.closeSession(this._sessionId);
   }
 
   public async onExit(...args: any[]): Promise<void> {

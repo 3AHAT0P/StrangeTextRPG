@@ -1,20 +1,8 @@
+import { catchAndLogError } from '@utils/catchAndLogError';
 import { ActionsLayout } from './ActionsLayout';
-
-export interface AdditionalSessionInfo {
-  playerName: string;
-  playerId: string;
-}
-
-export type StartTheGameCallback = (
-  sessionId: string,
-  ui: AbstractSessionUI,
-  additionalSessionInfo: AdditionalSessionInfo,
-) => Promise<void>;
-
-export type FinishTheGameCallback = (
-  sessionId: string,
-  ui: AbstractSessionUI,
-) => Promise<void>;
+// eslint-disable-next-line import/no-cycle
+import { SessionUIProxy } from './SessionUIProxy';
+import { StartTheGameCallback, FinishTheGameCallback, getDefaultAdditionalSessionInfo } from './utils';
 
 export abstract class AbstractSessionUI {
   public abstract sendToUser(sessionId: string, message: string, cleanAcions?: boolean): Promise<void>;
@@ -27,7 +15,9 @@ export abstract class AbstractSessionUI {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public init(runOnStart: StartTheGameCallback, runOnFinish: FinishTheGameCallback): this {
-    setTimeout(runOnStart, 16, Math.random().toString(), this);
+    const sessionId = Math.random().toString();
+    const sessionUI = new SessionUIProxy(this, sessionId);
+    catchAndLogError('AbstractSessionUI::init', runOnStart(sessionId, sessionUI, getDefaultAdditionalSessionInfo()));
     return this;
   }
 
