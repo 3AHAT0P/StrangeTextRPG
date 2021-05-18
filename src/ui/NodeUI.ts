@@ -1,8 +1,10 @@
+import { catchAndLogError } from '@utils/catchAndLogError';
 import readline from 'readline';
 import { MESSAGES } from '../translations/ru';
 
 import { AbstractUI } from './AbstractUI';
 import { ActionsLayout } from './ActionsLayout';
+import { StartTheGameCallback } from './utils';
 
 export enum TextModifiers {
   Reset = '\x1b[0m',
@@ -56,6 +58,16 @@ export class NodeUI extends AbstractUI {
     tabSize: 2,
   });
 
+  public init(runOnStart: StartTheGameCallback): this {
+    catchAndLogError('', runOnStart('1', this, { playerName: 'unknown', playerId: '1' }));
+    return this;
+  }
+
+  public closeSession(): Promise<void> {
+    setTimeout(() => process.exit(0), 16);
+    return Promise.resolve();
+  }
+
   public async sendToUser(message: string): Promise<void> {
     // this.internalInterface.write(outputMessage);
     this.output.cork();
@@ -68,7 +80,7 @@ export class NodeUI extends AbstractUI {
   public async interactWithUser<T extends string>(message: string, actions: ActionsLayout<T>): Promise<T> {
     await this.sendToUser(message);
     if (actions.flatList.length > 0) {
-      actions.flatList.forEach((option: string, index: number) => this.sendToUser(`${index + 1}) ${option}`));
+      actions.flatList.forEach((action: string, index: number) => this.sendToUser(`${index + 1}) ${action}`));
     }
 
     return new Promise((resolve, reject) => {

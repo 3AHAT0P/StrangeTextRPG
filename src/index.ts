@@ -3,11 +3,13 @@ import { AbstractInteraction } from '@interactions/AbstractInteraction';
 import { SimpleInteraction } from '@interactions/SimpleInteraction';
 import { buildZeroLocation } from '@scenarios';
 import {
-  AbstractUI, AbstractSessionUI, SessionUIProxy,
+  AbstractUI, AbstractSessionUI,
   AdditionalSessionInfo,
   NodeUI, TelegramBotUi,
 } from '@ui';
+import { TelegramBotInlineUi } from '@ui/TelegramBotInlineUI';
 import { DropSessionError } from '@utils/Error/DropSessionError';
+import { getConfig } from 'ConfigProvider';
 
 import { SessionState } from './SessionState';
 
@@ -31,7 +33,7 @@ class App {
     }
   }
 
-  private async closeSession(sessionId: string, ui: AbstractSessionUI) {
+  private async closeSession(sessionId: string, ui: AbstractSessionUI | AbstractUI) {
     const state = this.sessionStateMap.get(sessionId);
     if (state == null) return;
 
@@ -42,52 +44,20 @@ class App {
 
   private async runSession(
     sessionId: string,
-    ui: AbstractSessionUI,
-    additionalInfo: AdditionalSessionInfo,
-  ): Promise<void> {
-    try {
-      if (this.sessionStateMap.get(sessionId) != null) {
-        await ui.sendToUser(
-          sessionId,
-          'У тебя уже начата игровая сессия. Если хочешь начать с начала нажми на кнопку "Finish", а затем "Start" в закрепленном сообщении',
-        );
-        return;
-      }
-      const currentSessionUI = new SessionUIProxy(ui, sessionId);
-      const state: SessionState = {
-        sessionId,
-        additionalInfo,
-        player: new Player(),
-        currentInteraction: new SimpleInteraction({ ui: currentSessionUI, message: 'Hi\n' }),
-        finishSession: this.closeSession.bind(null, sessionId, ui),
-        status: 'ALIVE',
-        ui: currentSessionUI,
-      };
-      this.sessionStateMap.set(sessionId, state);
-
-      const zeroLocation = buildZeroLocation(currentSessionUI, state);
-      state.currentInteraction = zeroLocation;
-
-      await this.treeTraversal(state);
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  private async runSingleSession(
-    sessionId: string,
     ui: AbstractUI,
     additionalInfo: AdditionalSessionInfo,
   ): Promise<void> {
     try {
+      if (this.sessionStateMap.get(sessionId) != null) {
+        await ui.sendToUser('У тебя уже начата игровая сессия. Если хочешь начать с начала нажми на кнопку "Finish", а затем "Start" в закрепленном сообщении');
+        return;
+      }
       const state: SessionState = {
         sessionId,
         additionalInfo,
         player: new Player(),
         currentInteraction: new SimpleInteraction({ ui, message: 'Hi\n' }),
-        finishSession() {
-          process.exit(0);
-        },
+        finishSession: this.closeSession.bind(null, sessionId, ui),
         status: 'ALIVE',
         ui,
       };
@@ -106,7 +76,7 @@ class App {
     void this.ui.onExit(Array.from(this.sessionStateMap.keys()), event.toString());
   }
 
-  constructor(type: 'NODE' | 'TELEGRAM') {
+  constructor(type: 'NODE' | 'TELEGRAM' | 'TELEGRAM_INLINE') {
     process.once('SIGINT', this.onExit.bind(this, 'SIGINT'));
     process.once('SIGTERM', this.onExit.bind(this, 'SIGTERM'));
     // process.once('beforeExit', this.onExit.bind(this));
@@ -115,13 +85,16 @@ class App {
     this.closeSession = this.closeSession.bind(this);
     this.treeTraversal = this.treeTraversal.bind(this);
 
-    if (type === 'TELEGRAM') this.ui = new TelegramBotUi().init(this.runSession, this.closeSession);
-    else {
-      this.ui = new NodeUI();
-      void this.runSingleSession('1', this.ui, { playerName: 'Путник', playerId: '1' });
-    }
+    if (type === 'TELEGRAM') this.ui = new TelegramBotUi();
+    else if (type === 'TELEGRAM_INLINE') this.ui = new TelegramBotInlineUi();
+    else this.ui = new NodeUI();
+  }
+
+  public init() {
+    this.ui.init(this.runSession, this.closeSession);
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const app = new App('TELEGRAM');
+const config = getConfig();
+const app = new App(config.MAIN_UI);
+app.init();
