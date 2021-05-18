@@ -33,6 +33,7 @@ module.exports = {
     'no-continue': ['off'],
     'class-methods-use-this': ['warn'],
     'consistent-return': ['off'],
+    'no-async-promise-executor': ['off'],
     'max-len': ['error', 120, 2, {
       ignoreUrls: true,
       ignoreComments: false,

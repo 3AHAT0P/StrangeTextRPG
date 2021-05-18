@@ -2,7 +2,7 @@ interface ActionsLayoutOptions {
   columns?: number;
 }
 
-export class ActionsLayout<T extends string> {
+export class ActionsLayout<T extends string | [string, string] = string> {
   private _maxColumns: number = 2;
 
   private _flatList: T[] = [];
