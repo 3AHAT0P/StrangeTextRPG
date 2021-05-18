@@ -1,4 +1,4 @@
-import { KnifeWeapon } from '@actors/weapon';
+import { KnifeWeapon } from '@weapon';
 import { Size } from '@utils/@types';
 
 import { AdditionalSpotInfo, POIIcon } from '../AreaMap';

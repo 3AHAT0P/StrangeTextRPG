@@ -1,5 +1,5 @@
-import { Armor } from '@actors/armor';
-import { Weapon } from '@actors/weapon';
+import { Armor } from '@armor';
+import { Weapon } from '@weapon';
 import { Point, Size } from '@utils/@types';
 
 /*
