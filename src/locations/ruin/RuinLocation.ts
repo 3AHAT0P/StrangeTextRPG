@@ -41,6 +41,13 @@ const MOVE_ACTIONS = {
 
 type MOVE_ACTION_VALUES = typeof MOVE_ACTIONS[keyof typeof MOVE_ACTIONS];
 
+const MOVE_DIRECTIONS = {
+  WEST: 'Запад',
+  EAST: 'Восток',
+  NORTH: 'Север',
+  SOUTH: 'Юг',
+} as const;
+
 const SITUATIONAL_ACTIONS = {
   EXAMINE_CORPSE: '👀 Осмотреть труп',
   TALK_WITH_MERCHANT: '💬 Поговорить с торговцем',
@@ -98,22 +105,25 @@ export class RuinLocation extends AbstractLocation {
       // await this.ui.sendToUser(`Что будешь делать?\n`);
 
       const choosedAction = await this.ui.interactWithUser(
-        'Что будешь делать?',
         new ActionsLayout<ACTION_VALUES | MOVE_ACTION_VALUES | SITUATIONAL_ACTION_VALUES>({ columns: 4 })
           .addRow(...actions)
           .addRow(...localActions)
           .addRow(...moveActions),
+        (action) => action !== MOVE_ACTIONS.NO_WAY,
       );
       if (choosedAction === ACTIONS.LOOK_AROUND && !internalPlayerState.isStandUp) {
         actions.add(ACTIONS.LOOK_AT_YOURSELF);
+        await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} оглядываешься по сторонам.`);
         await this.ui.sendToUser('Сумрачно.'
           + ` ${player.getType({ declension: 'nominative', capitalised: true })} сидишь опёршись на уцелевший угол стены.`
           + ` Над ${player.getType({ declension: 'ablative' })} есть небольшой кусок крыши. Рядом почти потухший костер.`
           + ' Поодаль везде грязь и лужи. Моросит мелкий дождик.\n');
       } else if (choosedAction === ACTIONS.LOOK_AROUND && internalPlayerState.isStandUp) {
+        await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} осматриваешь пространство вокруг тебя.`);
         ruinAreaMap.lookAround();
         await this.ui.sendToUser(ruinAreaMap.printMap());
       } else if (choosedAction === ACTIONS.LOOK_AT_YOURSELF) {
+        await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} пристально всматриваешься в отражение.`);
         const { stats } = player;
         // TODO: Сделать для вещей нормальный текст отображения!
         await this.ui.sendToUser(`${`${player.getType({ declension: 'possessive', capitalised: true })} характеристики:\n`
@@ -134,13 +144,17 @@ export class RuinLocation extends AbstractLocation {
           })()
         }\nОружие - ${player.wearingEquipment.rightHand?.name ?? 'ничего'}.\n`);
       } else if (choosedAction === ACTIONS.STAND_UP) {
+        await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} аккуратно встаешь опираясь на стену. Все толо болит и сопротивляется.`);
         internalPlayerState.isStandUp = true;
         actions.delete(ACTIONS.STAND_UP);
       } else if (choosedAction.startsWith('Идти на') || choosedAction.startsWith('👣')) { // @TODO:
-        if (choosedAction === MOVE_ACTIONS.TO_WEST) ruinAreaMap.move('WEST');
-        else if (choosedAction === MOVE_ACTIONS.TO_EAST) ruinAreaMap.move('EAST');
-        else if (choosedAction === MOVE_ACTIONS.TO_NORTH) ruinAreaMap.move('NORTH');
-        else if (choosedAction === MOVE_ACTIONS.TO_SOUTH) ruinAreaMap.move('SOUTH');
+        let direction: keyof typeof MOVE_DIRECTIONS = 'WEST';
+        if (choosedAction === MOVE_ACTIONS.TO_WEST) direction = 'WEST';
+        else if (choosedAction === MOVE_ACTIONS.TO_EAST) direction = 'EAST';
+        else if (choosedAction === MOVE_ACTIONS.TO_NORTH) direction = 'NORTH';
+        else if (choosedAction === MOVE_ACTIONS.TO_SOUTH) direction = 'SOUTH';
+        await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} идешь на ${MOVE_DIRECTIONS[direction]}.`);
+        ruinAreaMap.move(direction);
 
         localActions.clear();
 
@@ -254,6 +268,7 @@ export class RuinLocation extends AbstractLocation {
         player.collectReward({ gold: reward });
         await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} подбираешь ${reward} золота.`);
       } else if (choosedAction === SITUATIONAL_ACTIONS.EXAMINE_CORPSE) {
+        await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} осматриваешь труп крысы.`);
         localActions.delete(SITUATIONAL_ACTIONS.EXAMINE_CORPSE);
         ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
         await internalPlayerState.seeRatCorpse();

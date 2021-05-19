@@ -1,9 +1,16 @@
 import type { AbstractSessionUI } from './AbstractSessionUI';
 import type { AbstractUI } from './AbstractUI';
+import type { ActionsLayout } from './ActionsLayout';
 
 export interface AdditionalSessionInfo {
   playerName: string;
   playerId: string;
+}
+
+export interface PersistActionsContainer<T extends string> {
+  updateText: (newMessage: string) => Promise<void>;
+  updateKeyboard: (newActions: ActionsLayout<T>) => Promise<void>;
+  delete: () => Promise <void>;
 }
 
 export const getDefaultAdditionalSessionInfo = (): AdditionalSessionInfo => ({ playerName: 'Путник', playerId: '1' });

@@ -4,7 +4,7 @@ import { MESSAGES } from '../translations/ru';
 
 import { AbstractUI } from './AbstractUI';
 import { ActionsLayout } from './ActionsLayout';
-import { StartTheGameCallback } from './utils';
+import { PersistActionsContainer, StartTheGameCallback } from './utils';
 
 export enum TextModifiers {
   Reset = '\x1b[0m',
@@ -77,8 +77,12 @@ export class NodeUI extends AbstractUI {
     process.nextTick(() => this.output.uncork());
   }
 
-  public async interactWithUser<T extends string>(message: string, actions: ActionsLayout<T>): Promise<T> {
+  public async interactWithUser<T extends string>(
+    actions: ActionsLayout<T>, validate: (action: T) => boolean = () => true,
+  ): Promise<T> {
+    const message = '——————————————————————————';
     await this.sendToUser(message);
+
     if (actions.flatList.length > 0) {
       actions.flatList.forEach((action: string, index: number) => this.sendToUser(`${index + 1}) ${action}`));
     }
@@ -90,8 +94,15 @@ export class NodeUI extends AbstractUI {
         if (answer === '' || Number.isNaN(optionId) || optionId < 0 || optionId > actions.flatList.length) {
           reject(new Error('Answer is incorrect'));
         }
-        resolve(actions.flatList[optionId]);
+        if (validate(actions.flatList[optionId])) resolve(actions.flatList[optionId]);
       });
     });
+  }
+
+  public async showPersistentActions<T extends string>(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    message: string, actions: ActionsLayout<T>, actionsListener: (action: T) => void,
+  ): Promise<PersistActionsContainer<T>> {
+    throw new Error('Not Implemented'); // @TODO:
   }
 }

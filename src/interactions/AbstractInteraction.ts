@@ -11,6 +11,7 @@ export interface Interactable {
 export interface AbstractInteractionOptions {
   ui: AbstractUI;
   actionsLayout?: ActionsLayout<string>;
+  printAction?: boolean;
 }
 
 export const ACTION_AUTO = 'auto';
@@ -22,9 +23,12 @@ export abstract class AbstractInteraction implements Interactable {
 
   protected actionsLayout: ActionsLayout<string> = new ActionsLayout({ columns: 2 });
 
-  constructor({ ui, actionsLayout }: AbstractInteractionOptions) {
+  protected printAction: boolean = false;
+
+  constructor({ ui, actionsLayout, printAction }: AbstractInteractionOptions) {
     this.ui = ui;
     if (actionsLayout != null) this.actionsLayout = actionsLayout;
+    if (printAction != null) this.printAction = printAction;
   }
 
   public addAction(message: string, nextNode: AbstractInteraction): this {
@@ -47,15 +51,15 @@ export abstract class AbstractInteraction implements Interactable {
   }
 
   protected async activate(message: string): Promise<string> {
+    await this.ui.sendToUser(message);
     const autoInteractions = this.actions.get(ACTION_AUTO);
     if (autoInteractions != null) {
-      await this.ui.sendToUser(message);
       return ACTION_AUTO;
     }
 
     if (this.actions.size === 0) throw new Error('Action list is empty');
 
-    return this.ui.interactWithUser(message, new ActionsLayout().addRow(...this.actions.keys()));
+    return this.ui.interactWithUser(new ActionsLayout().addRow(...this.actions.keys()));
   }
 
   protected async afterActivate(action: string): Promise<AbstractInteraction | null> {
@@ -65,6 +69,7 @@ export abstract class AbstractInteraction implements Interactable {
       // throw new Error('Selected action is incorrect');
       return null;
     }
+    if (this.printAction && action !== ACTION_AUTO) await this.ui.sendToUser(action);
     return nextInteraction;
   }
 

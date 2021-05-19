@@ -28,17 +28,18 @@ export class MerchantNPC extends AbstractNPC {
     const { ui } = this;
     const { player } = this;
 
-    const introInteraction = new SimpleInteraction({ ui, message: 'Привет!' });
+    const introInteraction = new SimpleInteraction({ ui, message: '👤 Привет!', printAction: true });
 
     const notEnoughtMoneyInteraction = new SimpleInteraction({
       ui,
-      message: `К сожалению, у ${player.getType({ declension: 'genitive' })} не хватает золота.`,
+      message: `👤 К сожалению, у ${player.getType({ declension: 'genitive' })} не хватает золота.`,
+      printAction: true,
     });
 
-    const i1 = new SimpleInteraction({ ui, message: 'Извини, за столь скудный выбор.' });
+    const i1 = new SimpleInteraction({ ui, message: '👤 Извини, за столь скудный выбор.' });
     introInteraction.addAction('Привет!', i1);
 
-    const i2 = new SimpleInteraction({ ui, message: 'Чего изволишь?' });
+    const i2 = new SimpleInteraction({ ui, message: '👤 Чего изволишь?', printAction: true });
     i1.addAction(ACTION_AUTO, i2);
     notEnoughtMoneyInteraction.addAction(ACTION_AUTO, i2);
 
@@ -62,7 +63,7 @@ export class MerchantNPC extends AbstractNPC {
       i2.addAction(goodItem.action, i3);
     }
 
-    const epilogInteraction = new SimpleInteraction({ ui, message: 'Приходи еще :)' });
+    const epilogInteraction = new SimpleInteraction({ ui, message: '👤 Приходи еще :)' });
     i2.addAction('Ничего, спасибо.', epilogInteraction);
 
     return [introInteraction, epilogInteraction];

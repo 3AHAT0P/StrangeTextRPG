@@ -66,23 +66,26 @@ export class BattleInteraction extends AbstractInteraction {
     let choosedAction: ACTION_VALUES | null = null;
 
     while (!this.battleFinished()) {
-      const message = 'Что будешь делать?\n';
-
       const actions: Set<ACTION_VALUES> = new Set([ACTIONS.attack, ACTIONS.examine]);
 
       if (this._player.healthPoitions > 0) actions.add(ACTIONS.useHealthPoition);
 
       if (choosedAction === null) {
-        choosedAction = await this.ui.interactWithUser(message, new ActionsLayout<ACTION_VALUES>().addRow(...actions));
+        choosedAction = await this.ui.interactWithUser(new ActionsLayout<ACTION_VALUES>().addRow(...actions));
       }
 
       if (choosedAction === ACTIONS.useHealthPoition) {
         const healVolume = this._player.useHealthPoition();
-        if (healVolume) await this.ui.sendToUser(`❤️ ${this._player.getType({ declension: 'nominative' })} вылечился на ${healVolume} ОЗ. Всего у тебя ${this._player.stats.healthPoints} из ${this._player.stats.maxHealthPoints} ОЗ`);
+        if (healVolume) {
+          await this.ui.sendToUser(`${this._player.getType({ declension: 'nominative', capitalised: true })} используешь зелье лечения.`);
+          await this.ui.sendToUser(`Оно восстанавливает ${this._player.getType({ declension: 'dative' })} ${healVolume} ОЗ(❤️). Всего у ${this._player.getType({ declension: 'genitive' })} ${this._player.stats.healthPoints} из ${this._player.stats.maxHealthPoints} ОЗ(❤️)`);
+        }
         choosedAction = null;
       } else if (choosedAction === ACTIONS.examine) {
         const examineActions = this._aliveEnemies.map((enemy) => `Осмотреть ${enemy.getType({ declension: 'accusative', withPostfix: true })}`);
-        const choosedExamineAction = await this.ui.interactWithUser('Кого?', new ActionsLayout().addRow(...examineActions.concat([ACTIONS.back])));
+        const choosedExamineAction = await this.ui.interactWithUser(
+          new ActionsLayout().addRow(...examineActions.concat([ACTIONS.back])),
+        );
         if (choosedExamineAction === ACTIONS.back) {
           choosedAction = null;
           continue;
@@ -90,8 +93,9 @@ export class BattleInteraction extends AbstractInteraction {
         const actionId = examineActions.indexOf(choosedExamineAction);
         const enemy = this._aliveEnemies[actionId];
         const enemyStats = enemy.stats;
-        await this.ui.sendToUser(`Xарактеристики ${enemy.getType({ declension: 'genitive', withPostfix: true })}:\n`
-          + `  ❤️Очки здоровья - ${enemyStats.healthPoints} / ${enemyStats.maxHealthPoints}\n`
+        await this.ui.sendToUser(`${this._player.getType({ declension: 'nominative', capitalised: true })} осматриваешь ${enemy.getType({ declension: 'accusative', withPostfix: true })}.`);
+        await this.ui.sendToUser('Xарактеристики:\n'
+          + `  ❤️Очки здоровья() - ${enemyStats.healthPoints} / ${enemyStats.maxHealthPoints}\n`
           + `  🛡Защита - ${enemyStats.armor}\n`
           + `  🗡Сила удара - ${enemyStats.attackDamage}\n`
           + `  🎯Шанс попасть ударом - ${enemyStats.accuracy}\n`
@@ -99,7 +103,9 @@ export class BattleInteraction extends AbstractInteraction {
           + `  ✖️Модификатор критического урона - ${enemyStats.criticalDamageModifier}\n`);
       } else if (choosedAction === ACTIONS.attack) {
         const attackActions = this._aliveEnemies.map((enemy) => `Атаковать ${enemy.getType({ declension: 'accusative', withPostfix: true })}`);
-        const choosedAttackAction = await this.ui.interactWithUser('Кого?', new ActionsLayout().addRow(...attackActions.concat([ACTIONS.back])));
+        const choosedAttackAction = await this.ui.interactWithUser(
+          new ActionsLayout().addRow(...attackActions.concat([ACTIONS.back])),
+        );
         if (choosedAttackAction === ACTIONS.back) {
           choosedAction = null;
           continue;
@@ -112,14 +118,17 @@ export class BattleInteraction extends AbstractInteraction {
 
         await this.ui.sendToUser(this.buildAttackMessage(this._player, attackedEnemy, attackResult));
 
-        if (!attackResult.isAlive) {
-          const diedEnemy = this._aliveEnemies[actionId];
-          this._aliveEnemies.splice(actionId, 1);
-          const reward = diedEnemy.getReward();
-          this._player.collectReward(reward);
-          await this.ui.sendToUser(
-            `${diedEnemy.getDeathMessage()} ${this._player.getType({ declension: 'nominative' })} получил ${reward.gold ?? 0} золота.`,
-          );
+        for (const aliveEnemy of this._aliveEnemies.slice()) {
+          if (!aliveEnemy.isAlive) {
+            const index = this._aliveEnemies.indexOf(aliveEnemy);
+            if (index < 0) continue;
+            this._aliveEnemies.splice(index, 1);
+            const reward = aliveEnemy.getReward();
+            this._player.collectReward(reward);
+            await this.ui.sendToUser(
+              `${aliveEnemy.getDeathMessage()} ${this._player.getType({ declension: 'nominative' })} получил ${reward.gold ?? 0} золота.`,
+            );
+          }
         }
       }
 
