@@ -18,6 +18,7 @@ import { AreaMap } from '../AreaMap';
 import { AbstractLocation } from '../AbstractLocation';
 
 import { map, mapSize, additionalMapInfo } from './map';
+import { descriptions } from '../LocationDescriptions';
 
 export const RUIN_LOCATION_ACTIONS = {
   PLAYER_DIED: 'onPlayerDied',
@@ -95,10 +96,11 @@ export class RuinLocation extends AbstractLocation {
     };
 
     while (isTrue) {
-      // await this.ui.sendToUser(`Что будешь делать?\n`);
+      ruinAreaMap.lookAround();
+      const localMap = ruinAreaMap.printMap(false);
 
       const choosedAction = await this.ui.interactWithUser(
-        'Что будешь делать?',
+        `${internalPlayerState.isStandUp ? localMap : '-----------------'}`,
         new ActionsLayout<ACTION_VALUES | MOVE_ACTION_VALUES | SITUATIONAL_ACTION_VALUES>({ columns: 4 })
           .addRow(...actions)
           .addRow(...localActions)
@@ -223,6 +225,16 @@ export class RuinLocation extends AbstractLocation {
             + `Еще через некоторое время продвижения, ${player.getType({ declension: 'nominative' })} видишь конец коридора и человека с повозкой возле него.`,
           true);
           break;
+        } else {
+          const ambiences = ruinAreaMap.countAroundAmbiences();
+          const descs = (Object.keys(ambiences) as Array<keyof typeof ambiences>).reduce<string[]>((acc, key) => {
+            if (ambiences[key] > 0) {
+              return [...acc, ...descriptions[key]];
+            }
+            return acc;
+          }, []);
+          descs.push(...descriptions.default);
+          await this.ui.sendToUser(descs[getRandomIntInclusive(0, descs.length - 1)], true);
         }
       } else if (choosedAction === SITUATIONAL_ACTIONS.TALK_WITH_MERCHANT) {
         const merchantGoods = new Set([
