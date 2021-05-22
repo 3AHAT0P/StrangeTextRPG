@@ -34,6 +34,7 @@ export const buildZeroLocation = (ui: AbstractUI, state: SessionState): Abstract
 
   const nextLocation: NextLocation = {
     actionMessage: 'Вернутся к выбору локаций',
+    actionType: 'CUSTOM',
     interaction: resetInteraction,
   };
 
@@ -41,6 +42,7 @@ export const buildZeroLocation = (ui: AbstractUI, state: SessionState): Abstract
   const secondLocation = buildSecondLocation(ui, state, [nextLocation]);
   const thirdLocation = buildRuinLocation(ui, state, [nextLocation, {
     actionMessage: RUIN_LOCATION_ACTIONS.PLAYER_DIED,
+    actionType: 'SYSTEM',
     interaction: resetInteraction,
   }]);
 

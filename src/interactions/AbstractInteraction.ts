@@ -1,5 +1,7 @@
 import { AbstractUI } from '@ui/AbstractUI';
 import { ActionsLayout } from '@ui/ActionsLayout';
+// eslint-disable-next-line import/no-cycle
+import { ActionMap } from './ActionMap';
 
 export interface Interactable {
   interact(): Promise<Interactable | null>;
@@ -11,7 +13,6 @@ export interface Interactable {
 export interface AbstractInteractionOptions {
   ui: AbstractUI;
   actionsLayout?: ActionsLayout<string>;
-  printAction?: boolean;
 }
 
 export const ACTION_AUTO = 'auto';
@@ -19,30 +20,42 @@ export const ACTION_AUTO = 'auto';
 export abstract class AbstractInteraction implements Interactable {
   protected ui: AbstractUI;
 
-  protected actions: Map<string, AbstractInteraction> = new Map<string, AbstractInteraction>();
+  protected actions: ActionMap = new ActionMap();
 
   protected actionsLayout: ActionsLayout<string> = new ActionsLayout({ columns: 2 });
 
-  protected printAction: boolean = false;
-
-  constructor({ ui, actionsLayout, printAction }: AbstractInteractionOptions) {
+  constructor({ ui, actionsLayout }: AbstractInteractionOptions) {
     this.ui = ui;
     if (actionsLayout != null) this.actionsLayout = actionsLayout;
-    if (printAction != null) this.printAction = printAction;
   }
 
-  public addAction(message: string, nextNode: AbstractInteraction): this {
-    this.actions.set(message, nextNode);
+  public addAction(message: string, nextNode: AbstractInteraction, showableText: string = ''): this {
+    this.actions.addRecord(this.actions.generateId(), message, 'CUSTOM', showableText, nextNode);
     return this;
   }
 
   public addAutoAction(nextNode: AbstractInteraction): this {
-    this.actions.set(ACTION_AUTO, nextNode);
+    this.actions.addRecord(this.actions.generateId(), ACTION_AUTO, 'AUTO', '', nextNode);
+    return this;
+  }
+
+  public addSystemAction(message: string, nextNode: AbstractInteraction): this {
+    this.actions.addRecord(this.actions.generateId(), message, 'SYSTEM', '', nextNode);
+    return this;
+  }
+
+  public copyActionsFrom(actionMap: ActionMap): this {
+    actionMap.getList().forEach((record) => this.actions.addRecord(...record));
     return this;
   }
 
   public removeAction(message: string): this {
-    this.actions.delete(message);
+    this.actions.deleteRecordByAction(message);
+    return this;
+  }
+
+  public removeAllAutoActions(): this {
+    this.actions.deleteRecordByAction(ACTION_AUTO);
     return this;
   }
 
@@ -52,24 +65,25 @@ export abstract class AbstractInteraction implements Interactable {
 
   protected async activate(message: string): Promise<string> {
     await this.ui.sendToUser(message);
-    const autoInteractions = this.actions.get(ACTION_AUTO);
-    if (autoInteractions != null) {
+    const autoInteractions = this.actions.getActionsByType('AUTO');
+    if (autoInteractions.length > 0) {
       return ACTION_AUTO;
     }
 
     if (this.actions.size === 0) throw new Error('Action list is empty');
 
-    return this.ui.interactWithUser(new ActionsLayout().addRow(...this.actions.keys()));
+    return this.ui.interactWithUser(new ActionsLayout().addRow(...this.actions.getActionsByType('CUSTOM')));
   }
 
   protected async afterActivate(action: string): Promise<AbstractInteraction | null> {
-    const nextInteraction = this.actions.get(action);
+    const [, , , showableText, nextInteraction] = this.actions.getRecordByAction(action) ?? [];
     if (nextInteraction == null) {
       console.log(new Error(`Selected action is null: ${action}`));
       // throw new Error('Selected action is incorrect');
       return null;
     }
-    if (this.printAction && action !== ACTION_AUTO) await this.ui.sendToUser(action);
+
+    if (showableText != null && showableText !== '') await this.ui.sendToUser(showableText);
     return nextInteraction;
   }
 

@@ -64,7 +64,7 @@ export class RuinLocation extends AbstractLocation {
     nextInteraction: AbstractInteraction,
   ): BattleInteraction {
     const battle = new BattleInteraction({ ui: this.ui, player, enemies });
-    const onDiedInteraction = this.actions.get('onDied');
+    const onDiedInteraction = this.actions.getInteractionByAction('onDied');
     if (onDiedInteraction != null) battle.addAction(BATTLE_FINAL_ACTIONS.PLAYER_DIED, onDiedInteraction);
     battle.addAction(BATTLE_FINAL_ACTIONS.PLAYER_WIN, nextInteraction);
     return battle;
@@ -72,7 +72,7 @@ export class RuinLocation extends AbstractLocation {
 
   private async doBattle(player: AbstractActor, enemies: AbstractActor[]): Promise<boolean> {
     const battle = new BattleInteraction({ ui: this.ui, player, enemies });
-    const onDiedInteraction = this.actions.get('onDied');
+    const onDiedInteraction = this.actions.getInteractionByAction('onDied');
     if (onDiedInteraction != null) battle.addAction(BATTLE_FINAL_ACTIONS.PLAYER_DIED, onDiedInteraction);
     await battle.interact();
 
@@ -127,13 +127,13 @@ export class RuinLocation extends AbstractLocation {
         const { stats } = player;
         // TODO: Сделать для вещей нормальный текст отображения!
         await this.ui.sendToUser(`${`${player.getType({ declension: 'possessive', capitalised: true })} характеристики:\n`
-          + `  ❤️Очки здоровья - ${stats.healthPoints} / ${stats.maxHealthPoints}\n`
-          + `  🛡Защита - ${stats.armor}\n`
-          + `  🗡Сила удара - ${stats.attackDamage}\n`
-          + `  🎯Шанс попасть ударом - ${stats.accuracy}\n`
-          + `  ‼️Шанс попасть в уязвимое место - ${stats.criticalChance}\n`
-          + `  ✖️Модификатор критического урона - ${stats.criticalDamageModifier}\n`
-          + `  💰В кармане звенят ${player.gold} золота\n`
+          + `  Очки здоровья(❤️) - ${stats.healthPoints} / ${stats.maxHealthPoints}\n`
+          + `  Защита(🛡) - ${stats.armor}\n`
+          + `  Сила удара(🗡) - ${stats.attackDamage}\n`
+          + `  Шанс попасть ударом(🎯) - ${stats.accuracy}\n`
+          + `  Шанс попасть в уязвимое место(‼️) - ${stats.criticalChance}\n`
+          + `  Модификатор критического урона(✖️) - ${stats.criticalDamageModifier}\n`
+          + `  В кармане звенят(💰) ${player.gold} золота\n`
           + `\nНа ${player.getType({ declension: 'dative' })} надеты:\n`}${
           ((): string => {
             const equipment = [];
@@ -144,7 +144,7 @@ export class RuinLocation extends AbstractLocation {
           })()
         }\nОружие - ${player.wearingEquipment.rightHand?.name ?? 'ничего'}.\n`);
       } else if (choosedAction === ACTIONS.STAND_UP) {
-        await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} аккуратно встаешь опираясь на стену. Все толо болит и сопротивляется.`);
+        await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} аккуратно встаешь опираясь на стену. Все тело болит и сопротивляется.`);
         internalPlayerState.isStandUp = true;
         actions.delete(ACTIONS.STAND_UP);
       } else if (choosedAction.startsWith('Идти на') || choosedAction.startsWith('👣')) { // @TODO:
@@ -160,9 +160,11 @@ export class RuinLocation extends AbstractLocation {
 
         const { currentSpot } = ruinAreaMap;
 
-        if (currentSpot == null) { console.error('Oops, something went wrong!'); } else if (currentSpot.type === 'BAG') {
-          const info = ruinAreaMap.currentSpot?.additionalInfo;
-          if (info != null && info.reward === KnifeWeapon) {
+        if (currentSpot == null) {
+          console.error('Oops, something went wrong!');
+        } else if (currentSpot.type === 'EVENT') {
+          // const info = ruinAreaMap.currentSpot?.additionalInfo;
+          if (currentSpot.icon === 'E1') {
             await this.ui.sendToUser(`Внезапно, ${player.getType({ declension: 'nominative' })} спотыкаешься о труп крысы.`);
             localActions.add(SITUATIONAL_ACTIONS.EXAMINE_CORPSE);
             // TODO: It's Interaction????
@@ -242,8 +244,9 @@ export class RuinLocation extends AbstractLocation {
         const merchantGoods = new Set([
           {
             name: 'healthPoitions',
-            action: 'Купить 1 зелье здоровья (10 золтых)',
-            price: 10,
+            message: 'Зелье лечения = 10 золотых (📀)',
+            action: 'Купить зелье лечения',
+            price: 0,
           },
         ]);
 

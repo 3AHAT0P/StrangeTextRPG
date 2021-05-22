@@ -2,75 +2,9 @@ import { Armor } from '@armor';
 import { Weapon } from '@weapon';
 import { Point, Size } from '@utils/@types';
 
-/*
-  - - недостижимое место
-  w - wall, стена, нет прохода
-  b - break, обрыв, нет прохода
-  0 - пустая клетка
-  1, 2, ... - сложность боя
-  m - merchant, торговец
-  p - player, игрок
-  o - out, выход
-  g - gold, немного золота (1-5)
-  G - GOLD, много золота (10-20)
-      N
-  W - X - E
-      S
-*/
+import { POIName, POIIcon, pointsOfInterest } from './PointOfInterest';
 
 export type DIRECTION = 'NORTH' | 'SOUTH' | 'WEST' | 'EAST';
-export type POIName = 'UNREACHABLE' | 'WALL' | 'BREAK'
-| 'CLEAN' | 'UNKNOWN' | 'EXIT'
-| 'MERCHANT' | 'PLAYER'
-| 'GOLD' | 'BAG'
-| 'VERY_EASY_BATTLE' | 'EASY_BATTLE' | 'MEDIUM_BATTLE' | 'HARD_BATTLE' | 'VERY_HARD_BATTLE';
-export type POIIcon = '-' | 'w' | 'b'
-| '0' | '?' | 'o'
-| 'm' | 'p'
-| 'g' | 'B'
-| '1' | '2' | '3' | '4' | '5';
-
-export const PointOfInterest: Readonly<Record<POIName, POIIcon>> = {
-  UNREACHABLE: '-',
-  WALL: 'w',
-  BREAK: 'b',
-  CLEAN: '0',
-  MERCHANT: 'm',
-  PLAYER: 'p',
-  EXIT: 'o',
-  GOLD: 'g',
-  UNKNOWN: '?',
-  VERY_EASY_BATTLE: '1',
-  EASY_BATTLE: '2',
-  MEDIUM_BATTLE: '3',
-  HARD_BATTLE: '4',
-  VERY_HARD_BATTLE: '5',
-  BAG: 'B',
-};
-
-export const InversedPOI = (Object.entries(PointOfInterest) as Array<[POIName, POIIcon]>)
-  .reduce((acc: Partial<Record<POIIcon, POIName>>, [key, value]) => {
-    acc[value] = key;
-    return acc;
-  }, {}) as Readonly<Record<POIIcon, POIName>>;
-
-export const mapSigns: Readonly<Record<POIName, string>> = {
-  UNREACHABLE: '⬛️',
-  WALL: '🟫',
-  BREAK: '🟪',
-  CLEAN: '⬜️',
-  MERCHANT: '🔵',
-  PLAYER: '🔹',
-  EXIT: '🟥',
-  GOLD: '💰',
-  UNKNOWN: '❔',
-  VERY_EASY_BATTLE: '1',
-  EASY_BATTLE: '2',
-  MEDIUM_BATTLE: '3',
-  HARD_BATTLE: '4',
-  VERY_HARD_BATTLE: '5',
-  BAG: '📦',
-};
 
 export interface AdditionalBagSpotInfo {
   reward: typeof Weapon | typeof Armor;
@@ -105,26 +39,38 @@ export class AreaMap {
   private fillMap(map: POIIcon[], additionalInfo: Record<string, AdditionalSpotInfo>) {
     const throughableTypes = ['UNREACHABLE', 'WALL', 'BREAK'];
     for (let y = 0; y < this.mapSize.height; y += 1) {
-      for (let x = 0; x <= this.mapSize.width + 1; x += 1) {
-        const icon = map[y * this.mapSize.width + x];
-        if (icon === PointOfInterest.PLAYER) {
+      for (let x = 0; x < this.mapSize.width; x += 1) {
+        const mapIcon = map[y * this.mapSize.width + x];
+        if (mapIcon.startsWith('E')) {
+          const [, type, , sign] = pointsOfInterest.getRecordByName('EVENT');
+          this.map.set(`${y}:${x}`, {
+            coordinates: { x, y },
+            type,
+            icon: mapIcon,
+            sign,
+            isVisible: false,
+            isThroughable: !throughableTypes.includes(type),
+            additionalInfo: additionalInfo[`${y}:${x}`],
+          });
+        } else if (mapIcon === 'p') {
+          const cleanPOI = pointsOfInterest.getRecordByName('CLEAN');
           this._playerPosition = { x, y };
           this.map.set(`${y}:${x}`, {
             coordinates: { x, y },
-            type: 'CLEAN',
-            icon: PointOfInterest.CLEAN,
-            sign: mapSigns.CLEAN,
+            type: cleanPOI[1],
+            icon: cleanPOI[2],
+            sign: cleanPOI[3],
             isVisible: true,
             isThroughable: true,
             additionalInfo: additionalInfo[`${y}:${x}`],
           });
         } else {
-          const type = InversedPOI[icon];
+          const [, type, icon, sign] = pointsOfInterest.getRecordByIcon(mapIcon);
           this.map.set(`${y}:${x}`, {
             coordinates: { x, y },
             type,
             icon,
-            sign: mapSigns[type],
+            sign,
             isVisible: false,
             isThroughable: !throughableTypes.includes(type),
             additionalInfo: additionalInfo[`${y}:${x}`],
@@ -140,6 +86,10 @@ export class AreaMap {
 
   public printLegend(): string {
     return ''
+      + '*** Общее ***\n'
+      + '💬 [кто говорит]: - диалоговая фраза'
+      + '⚙️ {...} - системные сообщения\n'
+      + '\n*** Карта ***\n'
       + '⬛️ - недостижимое место\n'
       + '🟫 - wall, стена, нет прохода\n'
       + '🟪 - break, обрыв, нет прохода\n'
@@ -165,7 +115,7 @@ export class AreaMap {
         const spot = this.map.get(`${y}:${x}`);
         if (spot != null) {
           if (y === this.playerPosition.y && x === this.playerPosition.x) mapPiece += '🔹';
-          else if (!spot.isVisible) mapPiece += mapSigns.UNKNOWN;
+          else if (!spot.isVisible) mapPiece += pointsOfInterest.getRecordByName('UNKNOWN')[3];
           else mapPiece += spot.sign;
         }
       }
@@ -228,10 +178,10 @@ export class AreaMap {
     if (spot == null) return false;
 
     const throughableTypes = ['UNREACHABLE', 'WALL', 'BREAK'];
-
+    const [, , icon, sign] = pointsOfInterest.getRecordByName(type);
     spot.type = type;
-    spot.icon = PointOfInterest[type];
-    spot.sign = mapSigns[type];
+    spot.icon = icon;
+    spot.sign = sign;
     spot.isThroughable = !throughableTypes.includes(type);
 
     return true;

@@ -57,7 +57,7 @@ export class Skeleton extends AbstractActor {
     body: new StrongBonesBodyArmor(),
     leftHand: returnByChance([[new BrokenShieldArmor(), 0.5], [void 0, 1]])[0],
     rightHand: returnByChance<RustedSwordWeapon | RustedAxeWeapon | EmptyWeapon>(
-      [[new RustedAxeWeapon(), 0.5], [new RustedSwordWeapon(), 0.7], [new EmptyWeapon(), 1]],
+      [[new RustedAxeWeapon(), 0.6], [new RustedSwordWeapon(), 0.8], [new EmptyWeapon(), 1]],
     )[0],
   };
 
