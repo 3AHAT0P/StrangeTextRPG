@@ -289,7 +289,7 @@ export class RuinLocation extends AbstractLocation {
             name: 'healthPoitions',
             message: 'Зелье лечения = 10 золотых (📀)',
             action: 'Купить зелье лечения',
-            price: 0,
+            price: 10,
           },
         ]);
 
