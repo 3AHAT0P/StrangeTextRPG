@@ -27,3 +27,4 @@ You can use `npm run area:map:preview [path/to/map/file.ts]` (for example `npm r
 
 ### Helpful links
 [Name (actors, armor, etc.) generators](https://www.fantasynamegenerators.com/)
+[Bestiary](https://dungeon.su/bestiary/)

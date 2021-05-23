@@ -84,30 +84,8 @@ export class AreaMap {
     this.fillMap(map, additionalInfo);
   }
 
-  public printLegend(): string {
-    return ''
-      + '*** Общее ***\n'
-      + '💬 [кто говорит]: - диалоговая фраза'
-      + '⚙️ {...} - системные сообщения\n'
-      + '\n*** Карта ***\n'
-      + '⬛️ - недостижимое место\n'
-      + '🟫 - wall, стена, нет прохода\n'
-      + '🟪 - break, обрыв, нет прохода\n'
-      + '⬜️ - чистое место\n'
-      + '🔵 - merchant, торговец\n'
-      + '🔹 - player, игрок\n'
-      + '🟥 - out, выход\n'
-      + '🔸 - gold, золото\n'
-      + '❔ - не разведанная территория\n'
-      + '⬆️ - N (Север)\n'
-      + '➡️ - E (Восток)\n'
-      + '⬇️ - S (Юг)\n'
-      + '⬅️ - W (Запад)\n';
-  }
-
   public printMap(): string {
-    let mapPiece = this.printLegend();
-    mapPiece += '\n';
+    let mapPiece = '';
     for (let y = this.playerPosition.y - 1; y <= this.playerPosition.y + 1; y += 1) {
       if (y < 0 || y > this.mapSize.height - 1) continue;
       for (let x = this.playerPosition.x - 1; x <= this.playerPosition.x + 1; x += 1) {

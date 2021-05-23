@@ -72,7 +72,8 @@ export abstract class AbstractInteraction implements Interactable {
 
     if (this.actions.size === 0) throw new Error('Action list is empty');
 
-    return this.ui.interactWithUser(new ActionsLayout().addRow(...this.actions.getActionsByType('CUSTOM')));
+    this.actionsLayout.clear();
+    return this.ui.interactWithUser(this.actionsLayout.addRow(...this.actions.getActionsByType('CUSTOM')));
   }
 
   protected async afterActivate(action: string): Promise<AbstractInteraction | null> {

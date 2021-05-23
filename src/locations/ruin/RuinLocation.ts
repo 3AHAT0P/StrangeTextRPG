@@ -79,12 +79,73 @@ export class RuinLocation extends AbstractLocation {
     return player.isAlive;
   }
 
+  private async printFAQ(): Promise<void> {
+    await this.ui.sendToUser(''
+      + '*** Общее ***\n'
+      + '💬 [кто говорит]: - диалоговая фраза\n'
+      + '⚙️ {...} - системные сообщения\n'
+      + '📀 - Золото\n'
+      + '💿 - Серебро\n'
+      + '\n*** Карта ***\n'
+      + '⬛️ - недостижимое место\n'
+      + '🟫 - wall, стена, нет прохода\n'
+      + '🟪 - break, обрыв, нет прохода\n'
+      + '⬜️ - чистое место\n'
+      + '🔵 - merchant, торговец\n'
+      + '🔹 - player, игрок\n'
+      + '🟥 - out, выход\n'
+      + '🔸 - gold, золото\n'
+      + '❔ - не разведанная территория\n'
+      + '⬆️ - N (Север)\n'
+      + '➡️ - E (Восток)\n'
+      + '⬇️ - S (Юг)\n'
+      + '⬅️ - W (Запад)\n');
+  }
+
+  private printEquipment(player: Player): string {
+    const equipment = [];
+    if (player.wearingEquipment.body != null) equipment.push(`  ${capitalise(player.wearingEquipment.body.name)}`);
+    if (player.wearingEquipment.legs != null) equipment.push(`  ${capitalise(player.wearingEquipment.legs.name)}`);
+
+    return equipment.join('\n');
+  }
+
+  private async lookYourself(): Promise<void> {
+    const player = this.state.player as Player;
+
+    await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} пристально всматриваешься в отражение.`);
+    const { stats } = player;
+    // TODO: Сделать для вещей нормальный текст отображения!
+    await this.ui.sendToUser(`${`${player.getType({ declension: 'possessive', capitalised: true })} характеристики:\n`
+      + `  Очки здоровья(❤️) - ${stats.healthPoints} / ${stats.maxHealthPoints}\n`
+      + `  Защита(🛡) - ${stats.armor}\n`
+      + `  Сила удара(🗡) - ${stats.attackDamage}\n`
+      + `  Шанс попасть ударом(🎯) - ${stats.accuracy}\n`
+      + `  Шанс попасть в уязвимое место(‼️) - ${stats.criticalChance}\n`
+      + `  Модификатор критического урона(✖️) - ${stats.criticalDamageModifier}\n`
+      + `  В кармане звенят(💰) ${player.gold} золота\n`
+      + `\nНа ${player.getType({ declension: 'dative' })} надеты:\n`}${this.printEquipment(player)}\n`
+      + `Оружие - ${player.wearingEquipment.rightHand?.name ?? 'ничего'}.\n`);
+  }
+
   public async activate(): Promise<string> {
     const ruinAreaMap = new AreaMap(map, mapSize, additionalMapInfo);
 
     const player = this.state.player as Player;
 
     const nullInteraction = new Interaction({ ui: this.ui, async activate() { return null; } });
+
+    const gameMenu = await this.ui.showPersistentActions(
+      'Игровое меню',
+      new ActionsLayout({ columns: 4 }).addRow('❓', 'Открыть инвертарь'),
+      (action) => {
+        if (action === '❓') void this.printFAQ();
+        else if (action === 'Открыть инвертарь') console.log('Inventory open');
+        else if (action === 'Посмотреть на себя в лужу') void this.lookYourself();
+      },
+    );
+
+    this.state.persistActionsContainers.push(gameMenu);
 
     await this.ui.sendToUser(`Привет ${this.state.additionalInfo.playerName}.\n`
       + `${player.getType({ declension: 'nominative', capitalised: true })} очнулся посреди руин.\n`
@@ -102,8 +163,6 @@ export class RuinLocation extends AbstractLocation {
     };
 
     while (isTrue) {
-      // await this.ui.sendToUser(`Что будешь делать?\n`);
-
       const choosedAction = await this.ui.interactWithUser(
         new ActionsLayout<ACTION_VALUES | MOVE_ACTION_VALUES | SITUATIONAL_ACTION_VALUES>({ columns: 4 })
           .addRow(...actions)
@@ -112,41 +171,21 @@ export class RuinLocation extends AbstractLocation {
         (action) => action !== MOVE_ACTIONS.NO_WAY,
       );
       if (choosedAction === ACTIONS.LOOK_AROUND && !internalPlayerState.isStandUp) {
-        actions.add(ACTIONS.LOOK_AT_YOURSELF);
         await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} оглядываешься по сторонам.`);
         await this.ui.sendToUser('Сумрачно.'
           + ` ${player.getType({ declension: 'nominative', capitalised: true })} сидишь опёршись на уцелевший угол стены.`
           + ` Над ${player.getType({ declension: 'ablative' })} есть небольшой кусок крыши. Рядом почти потухший костер.`
           + ' Поодаль везде грязь и лужи. Моросит мелкий дождик.\n');
-      } else if (choosedAction === ACTIONS.LOOK_AROUND && internalPlayerState.isStandUp) {
-        await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} осматриваешь пространство вокруг тебя.`);
-        ruinAreaMap.lookAround();
-        await this.ui.sendToUser(ruinAreaMap.printMap());
-      } else if (choosedAction === ACTIONS.LOOK_AT_YOURSELF) {
-        await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} пристально всматриваешься в отражение.`);
-        const { stats } = player;
-        // TODO: Сделать для вещей нормальный текст отображения!
-        await this.ui.sendToUser(`${`${player.getType({ declension: 'possessive', capitalised: true })} характеристики:\n`
-          + `  Очки здоровья(❤️) - ${stats.healthPoints} / ${stats.maxHealthPoints}\n`
-          + `  Защита(🛡) - ${stats.armor}\n`
-          + `  Сила удара(🗡) - ${stats.attackDamage}\n`
-          + `  Шанс попасть ударом(🎯) - ${stats.accuracy}\n`
-          + `  Шанс попасть в уязвимое место(‼️) - ${stats.criticalChance}\n`
-          + `  Модификатор критического урона(✖️) - ${stats.criticalDamageModifier}\n`
-          + `  В кармане звенят(💰) ${player.gold} золота\n`
-          + `\nНа ${player.getType({ declension: 'dative' })} надеты:\n`}${
-          ((): string => {
-            const equipment = [];
-            if (player.wearingEquipment.body != null) equipment.push(`  ${capitalise(player.wearingEquipment.body.name)}`);
-            if (player.wearingEquipment.legs != null) equipment.push(`  ${capitalise(player.wearingEquipment.legs.name)}`);
-
-            return equipment.join('\n');
-          })()
-        }\nОружие - ${player.wearingEquipment.rightHand?.name ?? 'ничего'}.\n`);
+        await gameMenu.updateKeyboard(new ActionsLayout({ columns: 4 })
+          .addRow('❓', 'Открыть инвертарь')
+          .addRow('Посмотреть на себя в лужу'));
+        await this.ui.sendToUser('⚙️ {В меню добавлено новое действие}');
+        actions.delete(ACTIONS.LOOK_AROUND);
       } else if (choosedAction === ACTIONS.STAND_UP) {
         await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} аккуратно встаешь опираясь на стену. Все тело болит и сопротивляется.`);
         internalPlayerState.isStandUp = true;
         actions.delete(ACTIONS.STAND_UP);
+        actions.delete(ACTIONS.LOOK_AROUND);
       } else if (choosedAction.startsWith('Идти на') || choosedAction.startsWith('👣')) { // @TODO:
         let direction: keyof typeof MOVE_DIRECTIONS = 'WEST';
         if (choosedAction === MOVE_ACTIONS.TO_WEST) direction = 'WEST';
@@ -155,6 +194,10 @@ export class RuinLocation extends AbstractLocation {
         else if (choosedAction === MOVE_ACTIONS.TO_SOUTH) direction = 'SOUTH';
         await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} идешь на ${MOVE_DIRECTIONS[direction]}.`);
         ruinAreaMap.move(direction);
+
+        await this.ui.sendToUser(`Осматривая пространство вокруг себя, ${player.getType({ declension: 'nominative' })} видишь`);
+        ruinAreaMap.lookAround();
+        await this.ui.sendToUser(ruinAreaMap.printMap());
 
         localActions.clear();
 

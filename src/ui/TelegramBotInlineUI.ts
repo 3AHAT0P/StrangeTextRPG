@@ -222,9 +222,24 @@ export class TelegramBotInlineUi extends AbstractSessionUI {
             (action, columnIndex) => Markup.button.callback(action, `${eventKey}.${rowIndex}:${columnIndex}`),
           ),
         );
+        const newListener = (actionQuery: string) => {
+          const [rowIndex, columnIndex] = actionQuery.split(':');
+          const action = newActions.groupedByRows[Number(rowIndex)][Number(columnIndex)]; // @TODO: Here may be error.
+
+          if (action == null) {
+            console.log('TelegramBotInlineUI::showPersistentActions', 'Action is null', actionQuery, actions);
+            return;
+          }
+
+          setTimeout(actionsListener, 16, action);
+        };
+
+        eventEmitter.off(eventKey, listener);
+        eventEmitter.on(eventKey, newListener);
         await this.updateMessageInlineKeyboard(sendedMessage, Markup.inlineKeyboard(newButtons).reply_markup);
       },
       delete: async () => {
+        await this.bot.telegram.unpinChatMessage(sendedMessage.chat.id, sendedMessage.message_id);
         await this.deleteOrClearMessage(sendedMessage);
         eventEmitter.off(sessionId, listener);
       },

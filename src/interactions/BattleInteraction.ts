@@ -95,12 +95,12 @@ export class BattleInteraction extends AbstractInteraction {
         const enemyStats = enemy.stats;
         await this.ui.sendToUser(`${this._player.getType({ declension: 'nominative', capitalised: true })} осматриваешь ${enemy.getType({ declension: 'accusative', withPostfix: true })}.`);
         await this.ui.sendToUser('Xарактеристики:\n'
-          + `  ❤️Очки здоровья() - ${enemyStats.healthPoints} / ${enemyStats.maxHealthPoints}\n`
-          + `  🛡Защита - ${enemyStats.armor}\n`
-          + `  🗡Сила удара - ${enemyStats.attackDamage}\n`
-          + `  🎯Шанс попасть ударом - ${enemyStats.accuracy}\n`
-          + `  ‼️Шанс попасть в уязвимое место - ${enemyStats.criticalChance}\n`
-          + `  ✖️Модификатор критического урона - ${enemyStats.criticalDamageModifier}\n`);
+          + `  Очки здоровья(❤️) - ${enemyStats.healthPoints} / ${enemyStats.maxHealthPoints}\n`
+          + `  Защита(🛡) - ${enemyStats.armor}\n`
+          + `  Сила удара(🗡) - ${enemyStats.attackDamage}\n`
+          + `  Шанс попасть ударом(🎯) - ${enemyStats.accuracy}\n`
+          + `  Шанс попасть в уязвимое место(‼️) - ${enemyStats.criticalChance}\n`
+          + `  Модификатор критического урона(✖️) - ${enemyStats.criticalDamageModifier}\n`);
       } else if (choosedAction === ACTIONS.attack) {
         const attackActions = this._aliveEnemies.map((enemy) => `Атаковать ${enemy.getType({ declension: 'accusative', withPostfix: true })}`);
         const choosedAttackAction = await this.ui.interactWithUser(
@@ -126,7 +126,7 @@ export class BattleInteraction extends AbstractInteraction {
             const reward = aliveEnemy.getReward();
             this._player.collectReward(reward);
             await this.ui.sendToUser(
-              `${aliveEnemy.getDeathMessage()} ${this._player.getType({ declension: 'nominative' })} получил ${reward.gold ?? 0} золота.`,
+              `${aliveEnemy.getDeathMessage()} ${this._player.getType({ declension: 'nominative' })} получил ${reward.gold ?? 0} золота (📀).`,
             );
           }
         }
