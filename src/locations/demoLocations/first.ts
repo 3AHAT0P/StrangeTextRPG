@@ -52,7 +52,9 @@ export const buildFirstLocation: LocationBuilder = (
   lastInteraction.addAction('Перезагрузить локацию', mainInteraction);
 
   for (const nextLocation of nextLocations) {
-    lastInteraction.addAction(nextLocation.actionMessage, nextLocation.interaction);
+    if (nextLocation.actionType === 'SYSTEM') {
+      lastInteraction.addSystemAction(nextLocation.actionMessage, nextLocation.interaction);
+    } else lastInteraction.addAction(nextLocation.actionMessage, nextLocation.interaction);
   }
 
   return mainInteraction;

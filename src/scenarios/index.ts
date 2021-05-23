@@ -1,7 +1,6 @@
 import { AbstractUI } from '@ui/AbstractUI';
 import {
   AbstractInteraction, SimpleInteraction, Interaction,
-  buildBaseInteractions,
 } from '@interactions';
 import { Player } from '@actors/Player';
 import { NextLocation } from '@locations/NextLocation';
@@ -9,15 +8,21 @@ import { buildFirstLocation } from '@locations/demoLocations/first';
 import { buildSecondLocation } from '@locations/demoLocations/second';
 import { buildRuinLocation } from '@locations/ruin';
 import { RUIN_LOCATION_ACTIONS } from '@locations/ruin/RuinLocation';
+import { ActionsLayout } from '@ui';
 import { SessionState } from '../SessionState';
 
 export const buildZeroLocation = (ui: AbstractUI, state: SessionState): AbstractInteraction => {
-  const { exitInteraction } = buildBaseInteractions(ui, state);
-
   const introInteraction = new SimpleInteraction({
     ui,
+    actionsLayout: new ActionsLayout({ columns: 1 }),
     message: 'Добро пожаловать в эту странную текстовую РПГ (Демо версия).\n'
       + 'Что бы ты хотел попробовать?',
+  });
+
+  const demoInteraction = new SimpleInteraction({
+    ui,
+    message: 'Это режим в котором можно попробовать те или иные механики игры.\n'
+      + 'Выбери что тебе интересно.',
   });
 
   const resetInteraction = new Interaction({
@@ -34,6 +39,7 @@ export const buildZeroLocation = (ui: AbstractUI, state: SessionState): Abstract
 
   const nextLocation: NextLocation = {
     actionMessage: 'Вернутся к выбору локаций',
+    actionType: 'CUSTOM',
     interaction: resetInteraction,
   };
 
@@ -41,14 +47,18 @@ export const buildZeroLocation = (ui: AbstractUI, state: SessionState): Abstract
   const secondLocation = buildSecondLocation(ui, state, [nextLocation]);
   const thirdLocation = buildRuinLocation(ui, state, [nextLocation, {
     actionMessage: RUIN_LOCATION_ACTIONS.PLAYER_DIED,
+    actionType: 'SYSTEM',
     interaction: resetInteraction,
   }]);
 
-  introInteraction
-    .addAction('Попробовать простой сюжет', firstLocation)
+  demoInteraction
+    .addAction('Попробовать сюжет', firstLocation)
     .addAction('Попробовать боевку', secondLocation)
-    .addAction('Перейти к полноценной локации', thirdLocation)
-    .addAction('Закончить игру', exitInteraction);
+    .addAction('Назад', introInteraction);
+
+  introInteraction
+    .addAction('Перейти к списку механик', demoInteraction)
+    .addAction('Перейти к полноценной локации', thirdLocation);
 
   return introInteraction;
 };

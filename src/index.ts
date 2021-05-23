@@ -39,6 +39,7 @@ class App {
 
     await ui.closeSession(sessionId);
     state.status = 'DEAD';
+    await Promise.all(state.persistActionsContainers.map((container) => container.delete()));
     this.sessionStateMap.delete(sessionId);
   }
 
@@ -60,6 +61,7 @@ class App {
         finishSession: this.closeSession.bind(null, sessionId, ui),
         status: 'ALIVE',
         ui,
+        persistActionsContainers: [],
       };
       this.sessionStateMap.set(sessionId, state);
 

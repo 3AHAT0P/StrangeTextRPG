@@ -2,14 +2,21 @@ import { catchAndLogError } from '@utils/catchAndLogError';
 import { ActionsLayout } from './ActionsLayout';
 // eslint-disable-next-line import/no-cycle
 import { SessionUIProxy } from './SessionUIProxy';
-import { StartTheGameCallback, FinishTheGameCallback, getDefaultAdditionalSessionInfo } from './utils';
+// eslint-disable-next-line import/no-cycle
+import {
+  StartTheGameCallback, FinishTheGameCallback, getDefaultAdditionalSessionInfo, PersistActionsContainer,
+} from './utils';
 
 export abstract class AbstractSessionUI {
   public abstract sendToUser(sessionId: string, message: string, cleanAcions?: boolean): Promise<void>;
 
   public abstract interactWithUser<T extends string>(
-    sessionId: string, message: string, actions: ActionsLayout<T>,
+    sessionId: string, actions: ActionsLayout<T>, validate?: (action: T) => boolean,
   ): Promise<T>;
+
+  public abstract showPersistentActions<T extends string>(
+    sessionId: string, message: string, actions: ActionsLayout<T>, actionsListener: (action: T) => void,
+  ): Promise<PersistActionsContainer<T>>;
 
   public abstract closeSession(sessionId: string): Promise<void>;
 

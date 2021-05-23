@@ -21,6 +21,12 @@ export class ActionsLayout<T extends string> {
     if (options.columns != null) this._maxColumns = options.columns;
   }
 
+  public clear(): this {
+    this._flatList = [];
+    this._groupedByRows = [];
+    return this;
+  }
+
   public addRow(...buttons: T[]): this {
     this._flatList.push(...buttons);
     while (buttons.length > 0) {

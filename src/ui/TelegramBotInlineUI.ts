@@ -1,13 +1,19 @@
+// eslint-disable-next-line max-classes-per-file
 import EventEmitter from 'events';
 import { Telegraf, Markup } from 'telegraf';
-import { InlineKeyboardButton, InlineKeyboardMarkup, Message } from 'telegraf/typings/core/types/typegram';
+import {
+  InlineKeyboardButton, InlineKeyboardMarkup, Message, Update,
+} from 'telegraf/typings/core/types/typegram';
 
 import { getConfig } from 'ConfigProvider';
 import { DropSessionError } from '@utils/Error/DropSessionError';
 import { catchAndLogError } from '@utils/catchAndLogError';
 
 import { AbstractSessionUI } from './AbstractSessionUI';
-import { StartTheGameCallback, FinishTheGameCallback, AdditionalSessionInfo } from './utils';
+import {
+  StartTheGameCallback, FinishTheGameCallback,
+  AdditionalSessionInfo, PersistActionsContainer,
+} from './utils';
 import { ActionsLayout } from './ActionsLayout';
 import { SessionUIProxy } from './SessionUIProxy';
 
@@ -24,21 +30,42 @@ export class TelegramBotInlineUi extends AbstractSessionUI {
     return this.bot.telegram.sendMessage(
       sessionId,
       message,
-      Markup.inlineKeyboard(actions),
+      { disable_notification: true, ...Markup.inlineKeyboard(actions) },
     );
+  }
+
+  private deleteMessage(
+    message: Message.TextMessage,
+  ): Promise<true> {
+    return this.bot.telegram.deleteMessage(message.chat.id, message.message_id);
+  }
+
+  private updateMessageText(
+    message: Message.TextMessage, text: string,
+  ): Promise<true | (Update.Edited & Message.TextMessage)> {
+    return this.bot.telegram.editMessageText(message.chat.id, message.message_id, void 0, text);
   }
 
   private updateMessageInlineKeyboard(
     message: Message.TextMessage, keyboard?: InlineKeyboardMarkup,
-  ): Promise<true | Message> {
+  ): Promise<true | (Update.Edited & Message)> {
     return this.bot.telegram.editMessageReplyMarkup(message.chat.id, message.message_id, void 0, keyboard);
   }
 
+  private async deleteOrClearMessage(message: Message.TextMessage): Promise<void> {
+    try {
+      await this.deleteMessage(message);
+    } catch (error) {
+      await this.updateMessageText(message, '-');
+      await this.updateMessageInlineKeyboard(message);
+    }
+  }
+
   public async onExit(sessionIds: string[], code: string): Promise<void> {
-    await Promise.allSettled(sessionIds.map((sessionId) => this.bot.telegram.sendMessage(
+    await Promise.allSettled(sessionIds.map((sessionId) => this.sendToUser(
       sessionId,
       'Извини, но я нуждаюсь в перезагрузке. Прошу меня извинить. Пожалуйста, нажми /start.',
-      { reply_markup: Markup.removeKeyboard().reply_markup },
+      true,
     )));
     this.bot.stop(code);
   }
@@ -72,7 +99,7 @@ export class TelegramBotInlineUi extends AbstractSessionUI {
       await ctx.unpinAllChatMessages();
       const message = await ctx.reply(
         'Привет!\nЯ бот-рассказчик одной маленькой текстовой РПГ.\nЧто тебе интересно?',
-        { reply_markup: listOfCommands.reply_markup },
+        { disable_notification: true, ...listOfCommands },
       );
       await ctx.pinChatMessage(message.message_id, { disable_notification: true });
     });
@@ -115,14 +142,16 @@ export class TelegramBotInlineUi extends AbstractSessionUI {
   }
 
   public async sendToUser(sessionId: string, message: string, cleanAcions: boolean = false): Promise<void> {
-    if (cleanAcions) await this.bot.telegram.sendMessage(sessionId, message, Markup.removeKeyboard());
-    else await this.bot.telegram.sendMessage(sessionId, message);
+    const keyboard = cleanAcions ? Markup.removeKeyboard() : {};
+    await this.bot.telegram.sendMessage(sessionId, message, { disable_notification: true, ...keyboard });
   }
 
   public interactWithUser<T extends string>(
-    sessionId: string, message: string, actions: ActionsLayout<T>,
+    sessionId: string, actions: ActionsLayout<T>, validate: (action: T) => boolean = () => true,
   ): Promise<T> {
     if (actions.flatList.length === 0) throw new Error('Action list is empty');
+
+    const message = '——————————————————————————';
 
     const eventKey = `${sessionId}.${Date.now()}`;
     const buttons = actions.groupedByRows.map(
@@ -139,18 +168,81 @@ export class TelegramBotInlineUi extends AbstractSessionUI {
         }
         const [rowIndex, columnIndex] = actionQuery.split(':');
         const action = actions.groupedByRows[Number(rowIndex)][Number(columnIndex)]; // @TODO: Here may be error.
-        if (action != null) {
+        if (action != null && validate(action)) {
           eventEmitter.off(sessionId, listener);
           // eslint-disable-next-line @typescript-eslint/no-use-before-define
-          catchAndLogError('TelegramBotInlineUI::interactWithUser', this.updateMessageInlineKeyboard(sendedMessage));
+          catchAndLogError('TelegramBotInlineUI::interactWithUser', this.deleteOrClearMessage(sendedMessage));
           return resolve(action);
         }
 
-        console.log('TelegramBotInlineUI::interactWithUser', 'Action is null', actionQuery, actions);
+        if (action === null) console.log('TelegramBotInlineUI::interactWithUser', 'Action is null', actionQuery, actions);
       };
 
       eventEmitter.on(eventKey, listener);
       const sendedMessage = await this.sendMessageAndSetInlineKeyboard(sessionId, message, buttons);
     });
+  }
+
+  public async showPersistentActions<T extends string>(
+    sessionId: string, message: string, actions: ActionsLayout<T>, actionsListener: (action: T) => void,
+  ): Promise<PersistActionsContainer<T>> {
+    if (actions.flatList.length === 0) throw new Error('Action list is empty');
+
+    const eventKey = `${sessionId}.persist-${Date.now()}`;
+    const buttons = actions.groupedByRows.map(
+      (row, rowIndex) => row.map(
+        (action, columnIndex) => Markup.button.callback(action, `${eventKey}.${rowIndex}:${columnIndex}`),
+      ),
+    );
+    const listener = (actionQuery: string) => {
+      const [rowIndex, columnIndex] = actionQuery.split(':');
+      const action = actions.groupedByRows[Number(rowIndex)][Number(columnIndex)]; // @TODO: Here may be error.
+
+      if (action == null) {
+        console.log('TelegramBotInlineUI::showPersistentActions', 'Action is null', actionQuery, actions);
+        return;
+      }
+
+      setTimeout(actionsListener, 16, action);
+    };
+
+    eventEmitter.on(eventKey, listener);
+    const sendedMessage = await this.sendMessageAndSetInlineKeyboard(sessionId, message, buttons);
+    await this.bot.telegram.pinChatMessage(
+      sendedMessage.chat.id, sendedMessage.message_id, { disable_notification: true },
+    );
+
+    return {
+      updateText: async (newMessage: string) => {
+        await this.updateMessageText(sendedMessage, newMessage);
+      },
+      updateKeyboard: async (newActions: ActionsLayout<T>) => {
+        const newButtons = newActions.groupedByRows.map(
+          (row, rowIndex) => row.map(
+            (action, columnIndex) => Markup.button.callback(action, `${eventKey}.${rowIndex}:${columnIndex}`),
+          ),
+        );
+        const newListener = (actionQuery: string) => {
+          const [rowIndex, columnIndex] = actionQuery.split(':');
+          const action = newActions.groupedByRows[Number(rowIndex)][Number(columnIndex)]; // @TODO: Here may be error.
+
+          if (action == null) {
+            console.log('TelegramBotInlineUI::showPersistentActions', 'Action is null', actionQuery, actions);
+            return;
+          }
+
+          setTimeout(actionsListener, 16, action);
+        };
+
+        eventEmitter.off(eventKey, listener);
+        eventEmitter.on(eventKey, newListener);
+        await this.updateMessageInlineKeyboard(sendedMessage, Markup.inlineKeyboard(newButtons).reply_markup);
+      },
+      delete: async () => {
+        await this.bot.telegram.unpinChatMessage(sendedMessage.chat.id, sendedMessage.message_id);
+        await this.deleteOrClearMessage(sendedMessage);
+        eventEmitter.off(sessionId, listener);
+      },
+    };
   }
 }

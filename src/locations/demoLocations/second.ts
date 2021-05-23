@@ -27,11 +27,13 @@ export const buildSecondLocation: LocationBuilder = (
       lastInteraction.addAction('Перезагрузить локацию', mainInteraction);
 
       for (const nextLocation of nextLocations) {
-        lastInteraction.addAction(nextLocation.actionMessage, nextLocation.interaction);
+        if (nextLocation.actionType === 'SYSTEM') {
+          lastInteraction.addSystemAction(nextLocation.actionMessage, nextLocation.interaction);
+        } else lastInteraction.addAction(nextLocation.actionMessage, nextLocation.interaction);
       }
 
-      battleInteraction.addAction(BATTLE_FINAL_ACTIONS.PLAYER_WIN, lastInteraction);
-      battleInteraction.addAction(BATTLE_FINAL_ACTIONS.PLAYER_DIED, lastInteraction);
+      battleInteraction.addSystemAction(BATTLE_FINAL_ACTIONS.PLAYER_WIN, lastInteraction);
+      battleInteraction.addSystemAction(BATTLE_FINAL_ACTIONS.PLAYER_DIED, lastInteraction);
       return battleInteraction;
     },
   });
