@@ -14,7 +14,11 @@ export const buildRuinLocation: LocationBuilder = (
 ): AbstractInteraction => {
   const ruin = new RuinLocation({ ui, state });
 
-  for (const nextLocation of nextLocations) ruin.addAction(nextLocation.actionMessage, nextLocation.interaction);
+  for (const nextLocation of nextLocations) {
+    if (nextLocation.actionType === 'SYSTEM') {
+      ruin.addSystemAction(nextLocation.actionMessage, nextLocation.interaction);
+    } else ruin.addAction(nextLocation.actionMessage, nextLocation.interaction);
+  }
 
   return ruin;
 };

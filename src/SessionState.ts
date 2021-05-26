@@ -1,5 +1,5 @@
 import { AbstractActor } from '@actors';
-import { AbstractUI, AdditionalSessionInfo } from '@ui';
+import { AbstractUI, AdditionalSessionInfo, PersistActionsContainer } from '@ui';
 import type { AbstractInteraction } from '@interactions';
 
 export interface SessionState {
@@ -10,6 +10,7 @@ export interface SessionState {
   finishSession(): Promise<void>;
   status: 'ALIVE' | 'DEAD';
   ui: AbstractUI;
+  persistActionsContainers: PersistActionsContainer<string>[];
 }
 
 export {};

@@ -1,5 +1,5 @@
 import {
-  AbstractInteraction, ACTION_AUTO,
+  AbstractInteraction,
   SimpleInteraction, Interaction,
 } from '@interactions';
 
@@ -7,6 +7,7 @@ import { AbstractNPCOptions, AbstractNPC } from './AbstractNPC';
 
 export interface GoodItem {
   name: string;
+  message: string;
   action: string;
   price: number;
 }
@@ -28,19 +29,23 @@ export class MerchantNPC extends AbstractNPC {
     const { ui } = this;
     const { player } = this;
 
-    const introInteraction = new SimpleInteraction({ ui, message: 'Привет!' });
+    const introInteraction = new SimpleInteraction({ ui, message: '💬 [Торговец]: Привет!' });
 
     const notEnoughtMoneyInteraction = new SimpleInteraction({
       ui,
-      message: `К сожалению, у ${player.getType({ declension: 'genitive' })} не хватает золота.`,
+      message: `💬 [Торговец]: К сожалению, у ${player.getType({ declension: 'genitive' })} не хватает золота.`,
     });
 
-    const i1 = new SimpleInteraction({ ui, message: 'Извини, за столь скудный выбор.' });
-    introInteraction.addAction('Привет!', i1);
+    const i1 = new SimpleInteraction({
+      ui,
+      message: `💬 [Торговец]: Извини, за столь скудный выбор.\n${
+        Array.from(this.goods.values()).map(({ message }, index) => `${index + 1}. ${message}`).join('\n')}`,
+    });
+    introInteraction.addAction('Привет!', i1, `💬 [${player.getType({ declension: 'nominative', capitalised: true })}]: Привет!`);
 
-    const i2 = new SimpleInteraction({ ui, message: 'Чего изволишь?' });
-    i1.addAction(ACTION_AUTO, i2);
-    notEnoughtMoneyInteraction.addAction(ACTION_AUTO, i2);
+    const i2 = new SimpleInteraction({ ui, message: '💬 [Торговец]: Чего изволишь?' });
+    i1.addAutoAction(i2);
+    notEnoughtMoneyInteraction.addAutoAction(i2);
 
     for (const goodItem of this.goods.values()) {
       const i3 = new Interaction({
@@ -51,10 +56,10 @@ export class MerchantNPC extends AbstractNPC {
 
           const i4 = new SimpleInteraction({
             ui,
-            message: `У ${player.getType({ declension: 'genitive' })} осталось ${player.gold} золота`,
+            message: `⚙️ У ${player.getType({ declension: 'genitive' })} осталось ${player.gold} золота`,
           });
 
-          i4.addAction(ACTION_AUTO, i2);
+          i4.addAutoAction(i2);
 
           return i4;
         },
@@ -62,8 +67,8 @@ export class MerchantNPC extends AbstractNPC {
       i2.addAction(goodItem.action, i3);
     }
 
-    const epilogInteraction = new SimpleInteraction({ ui, message: 'Приходи еще :)' });
-    i2.addAction('Ничего, спасибо.', epilogInteraction);
+    const epilogInteraction = new SimpleInteraction({ ui, message: '💬 [Торговец]: Приходи еще :)' });
+    i2.addAction('Ничего, спасибо.', epilogInteraction, `💬 [${player.getType({ declension: 'nominative', capitalised: true })}]: Ничего, спасибо.`);
 
     return [introInteraction, epilogInteraction];
   }
