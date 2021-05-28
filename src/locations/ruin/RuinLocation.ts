@@ -103,16 +103,18 @@ export class RuinLocation extends AbstractLocation {
       + '⬅️ - W (Запад)\n');
   }
 
-  private async printDescription(ruinAreaMap: AreaMap) {
+  private async printAmbientDescription(ruinAreaMap: AreaMap) {
     const ambiences = ruinAreaMap.countAroundAmbiences();
-    const descs = (Object.keys(ambiences) as Array<keyof typeof ambiences>).reduce<string[]>((acc, key) => {
+    const ambientDescriptions = (Object.keys(ambiences) as Array<keyof typeof ambiences>)
+      .reduce<string[]>((acc, key) => {
       if (ambiences[key] > 0) {
         return [...acc, ...descriptions[key]];
       }
       return acc;
-    }, []);
-    descs.push(...descriptions.default);
-    await this.ui.sendToUser(descs[getRandomIntInclusive(0, descs.length - 1)], true);
+    },
+    []);
+    ambientDescriptions.push(...descriptions.default);
+    await this.ui.sendToUser(ambientDescriptions[getRandomIntInclusive(0, ambientDescriptions.length - 1)], true);
   }
 
   private printEquipment(player: Player): string {
@@ -148,7 +150,6 @@ export class RuinLocation extends AbstractLocation {
 
     const nullInteraction = new Interaction({ ui: this.ui, async activate() { return null; } });
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-assignment
     const gameMenu = await this.ui.showPersistentActions(
       'Игровое меню',
       new ActionsLayout({ columns: 4 }).addRow('❓', 'Открыть инвертарь'),
@@ -177,8 +178,6 @@ export class RuinLocation extends AbstractLocation {
     };
 
     while (isTrue) {
-      ruinAreaMap.lookAround();
-
       const choosedAction = await this.ui.interactWithUser(
         new ActionsLayout<ACTION_VALUES | MOVE_ACTION_VALUES | SITUATIONAL_ACTION_VALUES>({ columns: 4 })
           .addRow(...actions)
@@ -211,7 +210,7 @@ export class RuinLocation extends AbstractLocation {
         await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} идешь на ${MOVE_DIRECTIONS[direction]}.`);
         ruinAreaMap.move(direction);
         ruinAreaMap.lookAround();
-        await this.printDescription(ruinAreaMap);
+        await this.printAmbientDescription(ruinAreaMap);
         await this.ui.sendToUser(`Осматривая пространство вокруг себя, ${player.getType({ declension: 'nominative' })} видишь`);
         await this.ui.sendToUser(ruinAreaMap.printMap());
 
