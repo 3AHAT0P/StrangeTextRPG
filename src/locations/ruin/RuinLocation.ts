@@ -18,6 +18,7 @@ import { AreaMap } from '../AreaMap';
 import { AbstractLocation } from '../AbstractLocation';
 
 import { map, mapSize, additionalMapInfo } from './map';
+import { descriptions } from '../LocationDescriptions';
 
 export const RUIN_LOCATION_ACTIONS = {
   PLAYER_DIED: 'onPlayerDied',
@@ -100,6 +101,20 @@ export class RuinLocation extends AbstractLocation {
       + '➡️ - E (Восток)\n'
       + '⬇️ - S (Юг)\n'
       + '⬅️ - W (Запад)\n');
+  }
+
+  private async printAmbientDescription(ruinAreaMap: AreaMap) {
+    const ambiences = ruinAreaMap.countAroundAmbiences();
+    const ambientDescriptions = (Object.keys(ambiences) as Array<keyof typeof ambiences>)
+      .reduce<string[]>((acc, key) => {
+      if (ambiences[key] > 0) {
+        return [...acc, ...descriptions[key]];
+      }
+      return acc;
+    },
+    []);
+    ambientDescriptions.push(...descriptions.default);
+    await this.ui.sendToUser(ambientDescriptions[getRandomIntInclusive(0, ambientDescriptions.length - 1)], true);
   }
 
   private printEquipment(player: Player): string {
@@ -194,9 +209,9 @@ export class RuinLocation extends AbstractLocation {
         else if (choosedAction === MOVE_ACTIONS.TO_SOUTH) direction = 'SOUTH';
         await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} идешь на ${MOVE_DIRECTIONS[direction]}.`);
         ruinAreaMap.move(direction);
-
-        await this.ui.sendToUser(`Осматривая пространство вокруг себя, ${player.getType({ declension: 'nominative' })} видишь`);
         ruinAreaMap.lookAround();
+        await this.printAmbientDescription(ruinAreaMap);
+        await this.ui.sendToUser(`Осматривая пространство вокруг себя, ${player.getType({ declension: 'nominative' })} видишь`);
         await this.ui.sendToUser(ruinAreaMap.printMap());
 
         localActions.clear();

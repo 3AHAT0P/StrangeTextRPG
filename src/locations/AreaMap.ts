@@ -22,6 +22,13 @@ export interface MapSpot {
   additionalInfo: AdditionalSpotInfo | null;
 }
 
+export type ambiancesType = {
+  walls: number;
+  enemies: number;
+  breaks: number;
+  npc: number;
+};
+
 export class AreaMap {
   private map: Map<string, MapSpot> = new Map<string, MapSpot>();
 
@@ -117,6 +124,45 @@ export class AreaMap {
         if (spot != null && !spot.isThroughable && !spot.isVisible) spot.isVisible = true;
       }
     }
+  }
+
+  public countAroundAmbiences(): ambiancesType {
+    const result = {
+      walls: 0,
+      enemies: 0,
+      breaks: 0,
+      npc: 0,
+    };
+    for (let y = this.playerPosition.y - 1; y <= this.playerPosition.y + 1; y += 1) {
+      if (y < 0 || y > this.mapSize.height - 1) { continue; }
+      for (let x = this.playerPosition.x - 1; x <= this.playerPosition.x + 1; x += 1) {
+        if (x < 0 || x > this.mapSize.width - 1) { continue; }
+        const spot = this.map.get(`${y}:${x}`);
+        if (spot != null) {
+          switch (spot.type) {
+            case 'BREAK':
+              result.breaks += 1;
+              break;
+            case 'WALL':
+              result.walls += 1;
+              break;
+            case 'MERCHANT':
+              result.npc += 1;
+              break;
+            case 'VERY_EASY_BATTLE':
+            case 'EASY_BATTLE':
+            case 'MEDIUM_BATTLE':
+            case 'HARD_BATTLE':
+            case 'VERY_HARD_BATTLE':
+              result.enemies += 1;
+              break;
+            default:
+              break;
+          }
+        }
+      }
+    }
+    return result;
   }
 
   public move(direction: DIRECTION, count: number = 1): boolean {
