@@ -6,6 +6,9 @@ export interface Config {
   DONATE_LINK: string;
   MAIN_CONTACT: string;
   MAIN_UI: 'NODE' | 'TELEGRAM' | 'TELEGRAM_INLINE';
+  NEO4J_URL: string;
+  NEO4J_LOGIN: string;
+  NEO4J_PASSWORD: string;
 }
 
 let cacheIsDirty = true;
@@ -14,6 +17,9 @@ const cache: Config = {
   DONATE_LINK: '',
   MAIN_CONTACT: '',
   MAIN_UI: 'NODE',
+  NEO4J_URL: '',
+  NEO4J_LOGIN: '',
+  NEO4J_PASSWORD: '',
 };
 
 class ConfigValidationError extends Error {}
@@ -49,6 +55,21 @@ export const getConfig = (): Config => {
 
       cache.TELEGRAM_BOT_TOKEN = config.TELEGRAM_BOT_TOKEN;
     }
+
+    if (config.NEO4J_URL == null || config.NEO4J_URL === '') {
+      throw new ConfigValidationError('NEO4J_URL is required');
+    }
+    cache.NEO4J_URL = config.NEO4J_URL;
+
+    if (config.NEO4J_LOGIN == null || config.NEO4J_LOGIN === '') {
+      throw new ConfigValidationError('NEO4J_LOGIN is required');
+    }
+    cache.NEO4J_LOGIN = config.NEO4J_LOGIN;
+
+    if (config.NEO4J_PASSWORD == null || config.NEO4J_PASSWORD === '') {
+      throw new ConfigValidationError('NEO4J_PASSWORD is required');
+    }
+    cache.NEO4J_PASSWORD = config.NEO4J_PASSWORD;
 
     cacheIsDirty = false;
   }

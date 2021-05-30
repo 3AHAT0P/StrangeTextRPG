@@ -26,6 +26,9 @@ module.exports = {
     '@typescript-eslint/require-await': ['warn'],
     '@typescript-eslint/naming-convention': ['off'], // @TODO: Configre this rule later
     '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: false }],
+    '@typescript-eslint/no-unsafe-member-access': ['off'],
+    '@typescript-eslint/no-unsafe-assignment': ['off'],
+    '@typescript-eslint/no-unsafe-call': ['off'],
     'import/prefer-default-export': ['off'],
     'no-underscore-dangle': ['off'],
     'no-restricted-syntax': ['off'],
