@@ -1,10 +1,11 @@
 /* eslint-disable max-classes-per-file */
-import { Item, itemRarity, ItemRarity } from '@actors/item';
+import { AbstractItem, itemRarity, ItemRarity } from '@actors/AbstractItem';
+import { MESSAGES } from '../../translations/ru';
 
 export type WeaponType = 'FIST' | 'KNIFE' | 'STONE' | 'SHIELD' | 'SWORD' | 'AXE' | 'TEETH' | 'PAWS' | 'NONE';
 export type WeaponSubtype = 'ONE_HAND' | 'TWO_HAND' | 'THROWABLE' | 'ESPECIAL';
 
-export abstract class Weapon extends Item {
+export abstract class Weapon extends AbstractItem {
   readonly itemType = 'WEAPON';
 
   abstract type: WeaponType;
@@ -118,7 +119,7 @@ export class KnifeWeapon extends Weapon {
     const rarityMultiplier = itemRarity[rarity];
     this.attackDamage = 1.5 + 0.5 * rarityMultiplier;
     this.criticalChance = 0.4 + 0.1 * Math.floor(rarityMultiplier / 2);
-    this.name = `обычный нож[${rarity}]`;
+    this.name = `нож[${MESSAGES[rarity]}]`;
   }
 }
 
@@ -144,7 +145,7 @@ export class RustedSwordWeapon extends Weapon {
     this.rarity = rarity;
     const rarityMultiplier = itemRarity[rarity];
     this.attackDamage = 1 + 0.5 * Math.floor(rarityMultiplier / 2);
-    this.name = `ржавый меч[${rarity}]`;
+    this.name = `ржавый меч[${MESSAGES[rarity]}]`;
   }
 }
 
@@ -170,6 +171,6 @@ export class RustedAxeWeapon extends Weapon {
     this.rarity = rarity;
     const rarityMultiplier = itemRarity[rarity];
     this.attackDamage = 0.6 + 0.2 * rarityMultiplier;
-    this.name = `ржавый топор[${rarity}]`;
+    this.name = `ржавый топор[${MESSAGES[rarity]}]`;
   }
 }

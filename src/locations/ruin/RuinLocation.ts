@@ -229,8 +229,8 @@ export class RuinLocation extends AbstractLocation {
             internalPlayerState.seeRatCorpse = async () => {
               await this.ui.sendToUser(
                 'Крыса, как крыса. Но в боку у нее торчит нож. О, теперь будет чем отбиваться от этих тварей!',
-              ); '';
-              player.equipWeapon(new KnifeWeapon('LEGENDARY'));
+              );
+              player.equipWeapon(new KnifeWeapon());
             };
           }
         } else if (currentSpot.type === 'MERCHANT') {

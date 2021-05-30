@@ -1,4 +1,6 @@
 /* eslint-disable max-classes-per-file */
+import { AbstractItem } from '@actors/AbstractItem';
+
 export type HeadArmorType = 'HELMET' | 'HOOD' | 'HAT';
 export type NeckArmorType = 'NECKLE';
 export type BodyArmorType = 'CHEST' | 'CUIRASS' | 'JACKET' | 'COAT' | 'LEATHER' | 'SKELETON';
@@ -13,7 +15,9 @@ export type ArmorType = HeadArmorType | NeckArmorType | BodyArmorType | HandsArm
 
 export type ArmorSubtype = 'LIGHT' | 'HEAVY';
 
-export abstract class Armor {
+export abstract class Armor extends AbstractItem {
+  readonly itemType = 'ARMOR';
+
   abstract type: ArmorType;
 
   abstract subtype: ArmorSubtype;
@@ -63,6 +67,8 @@ export class LeatherBodyArmor extends BodyArmor {
   readonly armor = 0.1;
 
   readonly name = 'шкура';
+
+  readonly rarity = 'COMMON';
 }
 
 export class StrongBonesBodyArmor extends BodyArmor {
@@ -73,6 +79,8 @@ export class StrongBonesBodyArmor extends BodyArmor {
   readonly armor = 0.1;
 
   readonly name = 'твердые кости';
+
+  readonly rarity = 'COMMON';
 }
 
 export class CanvasCoatBodyArmor extends Armor {
@@ -83,6 +91,8 @@ export class CanvasCoatBodyArmor extends Armor {
   readonly armor = 0.1;
 
   readonly name = 'поношеная куртка из грубой парусины';
+
+  readonly rarity = 'COMMON';
 }
 
 export class CanvasTrousersLegsArmor extends LegsArmor {
@@ -93,6 +103,8 @@ export class CanvasTrousersLegsArmor extends LegsArmor {
   readonly armor = 0.1;
 
   readonly name = 'поношеные штаны из грубой парусины';
+
+  readonly rarity = 'COMMON';
 }
 
 export class BrokenShieldArmor extends InHandArmor {
@@ -103,4 +115,6 @@ export class BrokenShieldArmor extends InHandArmor {
   readonly armor = 0.2;
 
   readonly name = 'старый сломаный щит';
+
+  readonly rarity = 'COMMON';
 }
