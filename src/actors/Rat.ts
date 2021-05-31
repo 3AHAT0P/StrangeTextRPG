@@ -2,6 +2,10 @@ import { capitalise } from '@utils/capitalise';
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import { returnByChance } from '@utils/returnByChance';
 
+import { Player } from '@actors/Player';
+import {
+  Miscellanious, RatSkin, RatTail, StrangeFlute,
+} from '@actors/miscellanious';
 import {
   AbstractActor, AbstractActorOptions, AttackResult, RewardBag, TypeByDeclensionOfNounOptions,
 } from './AbstractActor';
@@ -93,7 +97,32 @@ export class Rat extends AbstractActor {
     return `${this.getType({ declension: 'nominative', withPostfix: true, capitalised: true })} сдохла, жалобно пища!`;
   }
 
-  public getReward(): RewardBag {
+  public getReward(player: Player): RewardBag {
+    const holdWeapon = player.wearingEquipment.rightHand;
+    if (holdWeapon?.type === 'KNIFE') {
+      const loot = [{
+        item: new RatSkin(),
+        minAmount: 1,
+        maxAmount: 3,
+        chance: 0.6,
+      }, {
+        item: new RatTail(),
+        minAmount: 1,
+        maxAmount: 1,
+        chance: 0.35,
+      }, {
+        item: new StrangeFlute(),
+        minAmount: 1,
+        maxAmount: 1,
+        chance: 0.05,
+      }];
+      const roulete = loot.map(({ item, chance }) => ([item, chance]));
+      // @ts-ignore
+      const test = returnByChance<RatSkin | RatTail | StrangeFlute>(roulete);
+      console.log('loot', loot)
+      console.log('roulete', roulete)
+      console.log('return', test)
+    }
     return {
       gold: getRandomIntInclusive(0, 10),
     };
