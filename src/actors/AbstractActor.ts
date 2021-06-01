@@ -145,7 +145,7 @@ export abstract class AbstractActor {
     return true;
   }
 
-  public getReward(player: AbstractActor): RewardBag { return {}; }
+  public getReward(player: AbstractActor): string { return ''; }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public collectReward(reward: RewardBag): void { /* pass */ }

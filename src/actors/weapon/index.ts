@@ -6,8 +6,6 @@ export type WeaponType = 'FIST' | 'KNIFE' | 'STONE' | 'SHIELD' | 'SWORD' | 'AXE'
 export type WeaponSubtype = 'ONE_HAND' | 'TWO_HAND' | 'THROWABLE' | 'ESPECIAL';
 
 export abstract class Weapon extends AbstractItem {
-  readonly itemType = 'WEAPON';
-
   abstract type: WeaponType;
 
   abstract subtype: WeaponSubtype;

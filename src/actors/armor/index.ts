@@ -16,8 +16,6 @@ export type ArmorType = HeadArmorType | NeckArmorType | BodyArmorType | HandsArm
 export type ArmorSubtype = 'LIGHT' | 'HEAVY';
 
 export abstract class Armor extends AbstractItem {
-  readonly itemType = 'ARMOR';
-
   abstract type: ArmorType;
 
   abstract subtype: ArmorSubtype;

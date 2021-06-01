@@ -87,9 +87,7 @@ export class Skeleton extends AbstractActor {
     return `${this.getType({ declension: 'nominative', withPostfix: true, capitalised: true })} с треском рассыпался!`;
   }
 
-  public getReward(): RewardBag {
-    return {
-      gold: getRandomIntInclusive(2, 15),
-    };
+  public getReward(): string {
+    return 'Кости... одни кости';
   }
 }

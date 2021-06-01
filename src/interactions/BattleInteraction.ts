@@ -123,11 +123,10 @@ export class BattleInteraction extends AbstractInteraction {
             const index = this._aliveEnemies.indexOf(aliveEnemy);
             if (index < 0) continue;
             this._aliveEnemies.splice(index, 1);
-            const reward = aliveEnemy.getReward(this._player);
-            this._player.collectReward(reward);
-            await this.ui.sendToUser(
-              `${aliveEnemy.getDeathMessage()} ${this._player.getType({ declension: 'nominative' })} получил ${reward.gold ?? 0} золота (📀).`,
-            );
+            const rewardMessage = aliveEnemy.getReward(this._player);
+            // this._player.collectReward(reward);
+            await this.ui.sendToUser(`${aliveEnemy.getDeathMessage()}.`);
+            await this.ui.sendToUser(rewardMessage);
           }
         }
       }
