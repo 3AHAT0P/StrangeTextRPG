@@ -1,9 +1,11 @@
 import {
-  Transaction, Driver, Session,
+  Driver, Session,
 } from 'neo4j-driver';
 
-import { ActionEntity, extractActionEntityFromRelationship } from './graph/ActionRelationship';
-import { InteractionEntity, InteractionModel } from './graph/InteractionNode';
+import { ActionNeo4jRepository } from './graph/ActionNeo4jRepository';
+import { InteractionNeo4jRepository } from './graph/InteractionNeo4jRepository';
+import { InteractionModel } from './entities/Interaction';
+import { ActionModel } from './entities/Action';
 
 export interface ScenarioCursorOptions {
   scenarioId: number;
@@ -11,18 +13,23 @@ export interface ScenarioCursorOptions {
   interactionId?: number;
 }
 
-const QUERIES = <const>{
-  findInteractionByProps: 'MATCH (a: Interaction) WHERE a.scenarioId = $scenarioId and a.locationId = $locationId and a.interactionId = $interactionId RETURN a',
-};
-
 export class ScenarioCursor {
   protected session: Session;
+
+  protected repositories: {
+    actionNeo4jRepository: ActionNeo4jRepository;
+    interactionNeo4jRepository: InteractionNeo4jRepository;
+  };
 
   protected currentInteraction: InteractionModel | null = null;
 
   constructor(private _driver: Driver) {
     this.session = this._driver.session();
-    InteractionModel.session = this.session;
+
+    this.repositories = <const>{
+      actionNeo4jRepository: new ActionNeo4jRepository(this.session),
+      interactionNeo4jRepository: new InteractionNeo4jRepository(this.session),
+    };
   }
 
   public async init(options: ScenarioCursorOptions): Promise<void> {
@@ -31,43 +38,30 @@ export class ScenarioCursor {
     const locationId = options.locationId ?? 0;
     const interactionId = options.interactionId ?? 1;
 
-    const result = await this.session.readTransaction(
-      (tx: Transaction) => tx.run(
-        QUERIES.findInteractionByProps,
-        {
-          scenarioId,
-          locationId,
-          interactionId,
-        },
-      ),
-    );
-
-    this.currentInteraction = InteractionModel.fromRecord(result.records[0]);
+    this.currentInteraction = await this.repositories.interactionNeo4jRepository.findByParams({
+      scenarioId,
+      locationId,
+      interactionId,
+    });
   }
 
   public destroy(): Promise<void> {
     return this.session.close();
   }
 
-  getInteraction(): InteractionEntity {
+  getInteraction(): InteractionModel {
     if (this.currentInteraction === null) throw new Error('Cursor is not initiated!');
 
     return this.currentInteraction;
   }
 
-  async getActions(): Promise<ActionEntity[]> {
+  getActions(): Promise<ActionModel[]> {
     const { id } = this.getInteraction();
-    const result = await this.session.readTransaction(
-      (tx: Transaction) => tx.run('MATCH (a: Interaction)-[r: Action]->(b) WHERE id(a) = $id RETURN r', { id }),
-    );
-
-    if (result.records.length === 0) throw new Error('Result list is empty');
-
-    return result.records.map(extractActionEntityFromRelationship);
+    return this.repositories.interactionNeo4jRepository.getRelatedActions(id);
   }
 
-  async getNextInteraction(action: ActionEntity): Promise<InteractionEntity> {
-    this.currentInteraction = await InteractionModel.findById(action.toInteractionId);
+  async getNextInteraction(action: ActionModel): Promise<InteractionModel> {
+    this.currentInteraction = await this.repositories.interactionNeo4jRepository.findById(action.toInteractionId);
 
     return this.currentInteraction;
   }

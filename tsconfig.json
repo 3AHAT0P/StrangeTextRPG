@@ -45,6 +45,12 @@
       "@/*": [
         "/*"
       ],
+      "@db": [
+        "db/index.ts"
+      ],
+      "@db/*": [
+        "db/*"
+      ],
       "@actors": [
         "actors/index.ts"
       ],

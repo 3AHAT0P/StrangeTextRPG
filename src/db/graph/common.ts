@@ -1,11 +1,13 @@
 import {
-  Node, Relationship, Record as NRecord, Integer,
+  Node, Relationship, Record as Neo4jRecord, Integer,
 } from 'neo4j-driver';
 
-import { isNode, isRelationship, isInt } from 'neo4j-driver-core';
+import {
+  isNode, isRelationship, isInt, Session,
+} from 'neo4j-driver-core';
 
 export {
-  Node, Relationship, NRecord, Integer, isNode, isRelationship, isInt,
+  Node, Relationship, Neo4jRecord, Integer, isNode, isRelationship, isInt, Session,
 };
 
 export const getIntValue = (value: number | Integer): number => (

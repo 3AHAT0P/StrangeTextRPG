@@ -52,4 +52,29 @@ export const connect = async () => {
   await driver.close();
 };
 
-connect();
+// connect();
+
+export const connect2 = async () => {
+  const driver = buildDriver();
+  const scenario = new ScenarioCursor(driver);
+  try {
+    await scenario.init({ scenarioId: 3, locationId: 1, interactionId: 32 });
+    const interaction = scenario.getInteraction();
+    const actions = await scenario.getActions();
+    console.log('@#!@#!@#!@#!@#', interaction, actions);
+    const i2 = await scenario.getNextInteraction(actions[1]);
+    const a2 = await scenario.getActions();
+    console.log('@#!@#!@#!@#!@#', i2, a2);
+    const i3 = await scenario.getNextInteraction(a2.find((action) => action.text === '👣 ➡️') ?? a2[0]);
+    const a3 = await scenario.getActions();
+    console.log('@#!@#!@#!@#!@#', i3, a3);
+  } catch (err) {
+    console.error('@@@@@@@@@', err);
+  }
+
+  // on application exit:
+  await scenario.destroy();
+  await driver.close();
+};
+
+connect2();
