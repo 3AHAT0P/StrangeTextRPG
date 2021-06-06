@@ -124,7 +124,6 @@ export class BattleInteraction extends AbstractInteraction {
             if (index < 0) continue;
             this._aliveEnemies.splice(index, 1);
             const rewardMessage = aliveEnemy.getReward(this._player);
-            // this._player.collectReward(reward);
             await this.ui.sendToUser(`${aliveEnemy.getDeathMessage()}.`);
             await this.ui.sendToUser(rewardMessage);
           }

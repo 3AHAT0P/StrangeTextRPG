@@ -119,7 +119,7 @@ export class KnifeWeapon extends Weapon {
     super();
     this.rarity = rarity;
     const rarityMultiplier = itemRarity[rarity];
-    this.attackDamage = 99 + 0.5 * rarityMultiplier;
+    this.attackDamage = 0.5 + 0.5 * rarityMultiplier;
     this.criticalChance = 0.4 + 0.1 * Math.floor(rarityMultiplier / 2);
     this.name = `нож[${MESSAGES[rarity]}]`;
   }
