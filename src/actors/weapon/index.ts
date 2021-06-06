@@ -20,7 +20,7 @@ export abstract class Weapon extends AbstractItem {
 
   abstract name: string;
 
-  protected proffesionMultiplier: any = {};
+  protected proffesions: any = {};
 }
 
 export class EmptyWeapon extends Weapon {
@@ -113,6 +113,8 @@ export class KnifeWeapon extends Weapon {
 
   readonly rarity: ItemRarity;
 
+  readonly proffesions = { skinning: 1 };
+
   constructor(rarity: ItemRarity = 'COMMON') {
     super();
     this.rarity = rarity;
@@ -120,7 +122,6 @@ export class KnifeWeapon extends Weapon {
     this.attackDamage = 99 + 0.5 * rarityMultiplier;
     this.criticalChance = 0.4 + 0.1 * Math.floor(rarityMultiplier / 2);
     this.name = `нож[${MESSAGES[rarity]}]`;
-    this.proffesionMultiplier = { skinning: 5 };
   }
 }
 

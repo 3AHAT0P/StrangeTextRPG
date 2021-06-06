@@ -6,11 +6,9 @@ import { MESSAGES } from '../../translations/ru';
 export abstract class Miscellanious extends AbstractItem {
   abstract amount: number;
 
-  // private static rarityChance: [ItemRarity, number][];
+  static rarityChance: Array<[ItemRarity, number]>;
 
   static create(amount: number = 1): RatSkin | RatTail | StrangeFlute {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     const rarity = returnByChance<ItemRarity>(this.rarityChance);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore

@@ -42,6 +42,8 @@ interface RatEquipmentSlots {
   hands?: PawsWeapon; // Paws
 }
 
+export type RatLoot = RatSkin | RatTail | StrangeFlute;
+
 export class Rat extends AbstractActor {
   type = 'крыса';
 
@@ -99,17 +101,17 @@ export class Rat extends AbstractActor {
 
   public getReward(player: Player): string {
     const holdWeapon = player.wearingEquipment.rightHand;
-    if (holdWeapon?.type === 'KNIFE') {
-      const possibleLoot: [any, number][] = [
+    if (holdWeapon?.professions.skinning) {
+      const possibleLoot: [RatLoot, number][] = [
         [RatSkin.create(), 0.7],
         [RatTail.create(), 0.6],
         [StrangeFlute.create(), 0.05],
       ];
-      const loot = returnByChance<any>(possibleLoot, false);
+      const loot = returnByChance<RatLoot>(possibleLoot, false);
       if (loot.length === 0) {
         return 'Увы, но у вы не смогли ничего добыть из крысы.';
       }
-      return `Вы получили: ${loot.map((item) => `${item.name} `)}! Увы у вас дырявые карманцы и всё выпало по дороге.`;
+      return `Вы получили: ${loot.map((item) => `${item.name} `).join(', ')}! Увы у вас дырявые карманцы и всё выпало по дороге.`;
     }
     return 'Увы, но у крысы нету карманов.';
   }
