@@ -16,103 +16,91 @@ export type ArmorType = HeadArmorType | NeckArmorType | BodyArmorType | HandsArm
 export type ArmorSubtype = 'LIGHT' | 'HEAVY';
 
 export abstract class Armor extends AbstractItem {
-  abstract type: ArmorType;
+  public abstract type: ArmorType;
 
-  abstract subtype: ArmorSubtype;
+  public abstract subtype: ArmorSubtype;
 
-  abstract armor: number;
-
-  abstract name: string;
+  public abstract armor: number;
 }
 
 export abstract class HeadArmor extends Armor {
-  abstract type: HeadArmorType;
+  public abstract type: HeadArmorType;
 }
 
 export abstract class NeckArmor extends Armor {
-  abstract type: NeckArmorType;
+  public abstract type: NeckArmorType;
 }
 
 export abstract class BodyArmor extends Armor {
-  abstract type: BodyArmorType;
+  public abstract type: BodyArmorType;
 }
 
 export abstract class HandsArmor extends Armor {
-  abstract type: HandsArmorType;
+  public abstract type: HandsArmorType;
 }
 
 export abstract class FingersArmor extends Armor {
-  abstract type: FingersArmorType;
+  public abstract type: FingersArmorType;
 }
 
 export abstract class LegsArmor extends Armor {
-  abstract type: LegsArmorType;
+  public abstract type: LegsArmorType;
 }
 
 export abstract class FeetArmor extends Armor {
-  abstract type: FeetArmorType;
+  public abstract type: FeetArmorType;
 }
 
 export abstract class InHandArmor extends Armor {
-  abstract type: InHandArmorType;
+  public abstract type: InHandArmorType;
 }
 
 export class LeatherBodyArmor extends BodyArmor {
-  readonly type = 'LEATHER';
+  protected readonly baseName = 'шкура';
 
-  readonly subtype = 'LIGHT';
+  public readonly type = 'LEATHER';
 
-  readonly armor = 0.1;
+  public readonly subtype = 'LIGHT';
 
-  readonly name = 'шкура';
-
-  readonly rarity = 'COMMON';
+  public readonly armor = 0.1;
 }
 
 export class StrongBonesBodyArmor extends BodyArmor {
-  readonly type = 'SKELETON';
+  protected readonly baseName = 'твердые кости';
 
-  readonly subtype = 'LIGHT';
+  public readonly type = 'SKELETON';
 
-  readonly armor = 0.1;
+  public readonly subtype = 'LIGHT';
 
-  readonly name = 'твердые кости';
-
-  readonly rarity = 'COMMON';
+  public readonly armor = 0.1;
 }
 
 export class CanvasCoatBodyArmor extends Armor {
-  readonly type = 'COAT';
+  protected readonly baseName = 'поношеная куртка из грубой парусины';
 
-  readonly subtype = 'LIGHT';
+  public readonly type = 'COAT';
 
-  readonly armor = 0.1;
+  public readonly subtype = 'LIGHT';
 
-  readonly name = 'поношеная куртка из грубой парусины';
-
-  readonly rarity = 'COMMON';
+  public readonly armor = 0.1;
 }
 
 export class CanvasTrousersLegsArmor extends LegsArmor {
-  readonly type = 'TROUSERS';
+  protected readonly baseName = 'поношеные штаны из грубой парусины';
 
-  readonly subtype = 'LIGHT';
+  public readonly type = 'TROUSERS';
 
-  readonly armor = 0.1;
+  public readonly subtype = 'LIGHT';
 
-  readonly name = 'поношеные штаны из грубой парусины';
-
-  readonly rarity = 'COMMON';
+  public readonly armor = 0.1;
 }
 
 export class BrokenShieldArmor extends InHandArmor {
-  readonly type = 'SHIELD';
+  protected readonly baseName = 'старый сломаный щит';
 
-  readonly subtype = 'LIGHT';
+  public readonly type = 'SHIELD';
 
-  readonly armor = 0.2;
+  public readonly subtype = 'LIGHT';
 
-  readonly name = 'старый сломаный щит';
-
-  readonly rarity = 'COMMON';
+  public readonly armor = 0.2;
 }

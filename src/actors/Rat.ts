@@ -1,18 +1,18 @@
 import { capitalise } from '@utils/capitalise';
-import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import { returnByChance } from '@utils/returnByChance';
 
 import { Player } from '@actors/Player';
 import {
-  Miscellanious, RatSkin, RatTail, StrangeFlute,
+  RatSkin, RatTail, StrangeFlute,
 } from '@actors/miscellanious';
 import {
-  AbstractActor, AbstractActorOptions, AttackResult, RewardBag, TypeByDeclensionOfNounOptions,
+  AbstractActor, AbstractActorOptions, AttackResult, TypeByDeclensionOfNounOptions,
 } from './AbstractActor';
 import { LeatherBodyArmor } from './armor';
 import {
   EmptyWeapon, PawsWeapon, TeethWeapon,
 } from './weapon';
+import { AbstractItemContructor } from './AbstractItem';
 
 export const RatDeclensionOfNouns = {
   nominative: 'крыса',
@@ -44,10 +44,18 @@ interface RatEquipmentSlots {
 
 export type RatLoot = RatSkin | RatTail | StrangeFlute;
 
+export type RatLootMeta = [constructor: AbstractItemContructor<RatLoot>, minAmount: number, maxAmount: number];
+
 export class Rat extends AbstractActor {
   type = 'крыса';
 
   protected _activeWeapon: TeethWeapon | PawsWeapon | EmptyWeapon;
+
+  protected possibleLoot: [rootMeta: RatLootMeta, chance: number][] = [
+    [[RatSkin, 1, 1], 0.7],
+    [[RatTail, 1, 1], 0.6],
+    [[StrangeFlute, 1, 1], 0.05],
+  ];
 
   get armor(): number { return this._wearingEquipment.body?.armor ?? 0; }
 
@@ -101,16 +109,14 @@ export class Rat extends AbstractActor {
 
   public getReward(player: Player): string {
     const holdWeapon = player.wearingEquipment.rightHand;
-    if (holdWeapon?.professions.skinning) {
-      const possibleLoot: [RatLoot, number][] = [
-        [RatSkin.create(), 0.7],
-        [RatTail.create(), 0.6],
-        [StrangeFlute.create(), 0.05],
-      ];
-      const loot = returnByChance<RatLoot>(possibleLoot, false);
-      if (loot.length === 0) {
-        return 'Увы, но у вы не смогли ничего добыть из крысы.';
-      }
+    if ('skinning' in holdWeapon?.professions) {
+      const lootMeta: RatLootMeta[] = returnByChance<RatLootMeta>(this.possibleLoot, false);
+      if (lootMeta.length === 0) return 'Увы, но у вы не смогли ничего добыть из крысы.';
+
+      const loot: RatLoot[] = [];
+
+      for (const [constructor, ...amount] of lootMeta) loot.push(...constructor.create(amount));
+
       return `Вы получили: ${loot.map((item) => `${item.name} `).join(', ')}! Увы у вас дырявые карманцы и всё выпало по дороге.`;
     }
     return 'Увы, но у крысы нету карманов.';

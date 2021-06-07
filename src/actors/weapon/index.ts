@@ -1,178 +1,155 @@
 /* eslint-disable max-classes-per-file */
 import { AbstractItem, itemRarity, ItemRarity } from '@actors/AbstractItem';
-import { MESSAGES } from '../../translations/ru';
 
 export type WeaponType = 'FIST' | 'KNIFE' | 'STONE' | 'SHIELD' | 'SWORD' | 'AXE' | 'TEETH' | 'PAWS' | 'NONE';
 export type WeaponSubtype = 'ONE_HAND' | 'TWO_HAND' | 'THROWABLE' | 'ESPECIAL';
 
 export abstract class Weapon extends AbstractItem {
-  abstract type: WeaponType;
+  public professions: any = {};
 
-  abstract subtype: WeaponSubtype;
+  public abstract type: WeaponType;
 
-  abstract attackDamage: number;
+  public abstract subtype: WeaponSubtype;
 
-  abstract accuracy: number;
+  public abstract attackDamage: number;
 
-  abstract criticalChance: number;
+  public abstract accuracy: number;
 
-  abstract criticalDamageModifier: number;
+  public abstract criticalChance: number;
 
-  abstract name: string;
-
-  protected proffesions: any = {};
+  public abstract criticalDamageModifier: number;
 }
 
 export class EmptyWeapon extends Weapon {
-  readonly type = 'NONE';
+  protected readonly baseName = 'ничего';
 
-  readonly subtype = 'ESPECIAL';
+  public readonly type = 'NONE';
 
-  readonly attackDamage = 0;
+  public readonly subtype = 'ESPECIAL';
 
-  readonly accuracy = 0;
+  public readonly attackDamage: number = 0;
 
-  readonly criticalChance = 0;
+  public readonly accuracy: number = 0;
 
-  readonly criticalDamageModifier = 0;
+  public readonly criticalChance: number = 0;
 
-  readonly name = 'ничего';
-
-  readonly rarity = 'COMMON';
+  public readonly criticalDamageModifier: number = 0;
 }
 
 export class TeethWeapon extends Weapon {
-  readonly type = 'TEETH';
+  protected readonly baseName = 'острые зубы';
 
-  readonly subtype = 'ESPECIAL';
+  public readonly type = 'TEETH';
 
-  readonly attackDamage = 0.4;
+  public readonly subtype = 'ESPECIAL';
 
-  readonly accuracy = 0.6;
+  public readonly attackDamage: number = 0.4;
 
-  readonly criticalChance = 0.4;
+  public readonly accuracy: number = 0.6;
 
-  readonly criticalDamageModifier = 2;
+  public readonly criticalChance: number = 0.4;
 
-  readonly name = 'острые зубы';
-
-  readonly rarity = 'COMMON';
+  public readonly criticalDamageModifier: number = 2;
 }
 
 // add attack number (2 for this)
 export class PawsWeapon extends Weapon {
-  readonly type = 'PAWS';
+  protected readonly baseName = 'острые когти';
 
-  readonly subtype = 'ESPECIAL';
+  public readonly type = 'PAWS';
 
-  readonly attackDamage = 0.6;
+  public readonly subtype = 'ESPECIAL';
 
-  readonly accuracy = 0.4;
+  public readonly attackDamage: number = 0.6;
 
-  readonly criticalChance = 0.2;
+  public readonly accuracy: number = 0.4;
 
-  readonly criticalDamageModifier = 2;
+  public readonly criticalChance: number = 0.2;
 
-  readonly name = 'острые когти';
-
-  readonly rarity = 'COMMON';
+  public readonly criticalDamageModifier: number = 2;
 }
 
 export class FistWeapon extends Weapon {
-  readonly type = 'FIST';
+  protected readonly baseName = 'кулаки';
 
-  readonly subtype = 'ESPECIAL';
+  public readonly type = 'FIST';
 
-  readonly attackDamage = 0.3;
+  public readonly subtype = 'ESPECIAL';
 
-  readonly accuracy = 0.8;
+  public readonly attackDamage: number = 0.3;
 
-  readonly criticalChance = 0.8;
+  public readonly accuracy: number = 0.8;
 
-  readonly criticalDamageModifier = 1.4;
+  public readonly criticalChance: number = 0.8;
 
-  readonly name = 'кулаки';
-
-  readonly rarity = 'COMMON';
+  public readonly criticalDamageModifier: number = 1.4;
 }
 
 export class KnifeWeapon extends Weapon {
-  readonly type = 'KNIFE';
+  protected readonly baseName: string = 'нож';
 
-  readonly subtype = 'ONE_HAND';
+  public readonly professions = <const>{ skinning: 1 };
 
-  readonly attackDamage: number;
+  public readonly type = 'KNIFE';
 
-  readonly accuracy = 0.6;
+  public readonly subtype = 'ONE_HAND';
 
-  readonly criticalChance: number;
+  public readonly attackDamage: number;
 
-  readonly criticalDamageModifier = 2;
+  public readonly accuracy: number = 0.6;
 
-  readonly name: string;
+  public readonly criticalChance: number;
 
-  readonly rarity: ItemRarity;
-
-  readonly proffesions = { skinning: 1 };
+  public readonly criticalDamageModifier: number = 2;
 
   constructor(rarity: ItemRarity = 'COMMON') {
-    super();
-    this.rarity = rarity;
+    super(rarity);
     const rarityMultiplier = itemRarity[rarity];
     this.attackDamage = 0.5 + 0.5 * rarityMultiplier;
     this.criticalChance = 0.4 + 0.1 * Math.floor(rarityMultiplier / 2);
-    this.name = `нож[${MESSAGES[rarity]}]`;
   }
 }
 
 export class RustedSwordWeapon extends Weapon {
+  protected readonly baseName: string = 'ржавый меч';
+
   readonly type = 'SWORD';
 
   readonly subtype = 'ONE_HAND';
 
   readonly attackDamage: number;
 
-  readonly accuracy = 0.3;
+  readonly accuracy: number = 0.3;
 
-  readonly criticalChance = 0.8;
+  readonly criticalChance: number = 0.8;
 
-  readonly criticalDamageModifier = 1.2;
-
-  readonly name: string;
-
-  readonly rarity: ItemRarity;
+  readonly criticalDamageModifier: number = 1.2;
 
   constructor(rarity: ItemRarity = 'COMMON') {
-    super();
-    this.rarity = rarity;
+    super(rarity);
     const rarityMultiplier = itemRarity[rarity];
     this.attackDamage = 1 + 0.5 * Math.floor(rarityMultiplier / 2);
-    this.name = `ржавый меч[${MESSAGES[rarity]}]`;
   }
 }
 
 export class RustedAxeWeapon extends Weapon {
+  protected readonly baseName: string = 'ржавый топор';
+
   readonly type = 'AXE';
 
   readonly subtype = 'ONE_HAND';
 
   readonly attackDamage: number;
 
-  readonly accuracy = 0.5;
+  readonly accuracy: number = 0.5;
 
-  readonly criticalChance = 0.2;
+  readonly criticalChance: number = 0.2;
 
-  readonly criticalDamageModifier = 1.75;
-
-  readonly name: string;
-
-  readonly rarity: ItemRarity;
+  readonly criticalDamageModifier: number = 1.75;
 
   constructor(rarity: ItemRarity = 'COMMON') {
-    super();
-    this.rarity = rarity;
+    super(rarity);
     const rarityMultiplier = itemRarity[rarity];
     this.attackDamage = 0.6 + 0.2 * rarityMultiplier;
-    this.name = `ржавый топор[${MESSAGES[rarity]}]`;
   }
 }
