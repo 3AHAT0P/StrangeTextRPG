@@ -51,10 +51,11 @@ export class Rat extends AbstractActor {
 
   protected _activeWeapon: TeethWeapon | PawsWeapon | EmptyWeapon;
 
+  // @RULE: For real chance, we should sort from low chance to higher
   protected possibleLoot: [rootMeta: RatLootMeta, chance: number][] = [
-    [[RatSkin, 1, 1], 0.7],
-    [[RatTail, 1, 1], 0.6],
     [[StrangeFlute, 1, 1], 0.05],
+    [[RatTail, 1, 1], 0.6],
+    [[RatSkin, 1, 1], 0.7],
   ];
 
   get armor(): number { return this._wearingEquipment.body?.armor ?? 0; }

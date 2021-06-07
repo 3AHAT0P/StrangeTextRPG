@@ -15,6 +15,7 @@ export interface AbstractItemContructor<T extends AbstractItem> {
 }
 
 export abstract class AbstractItem {
+  // @RULE: For real chance, we should sort from low chance to higher
   public static rarityChance: Array<[ItemRarity, number]> = [
     ['DIVINE', 0.02],
     ['LEGENDARY', 0.08],
