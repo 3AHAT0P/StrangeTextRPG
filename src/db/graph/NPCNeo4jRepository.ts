@@ -1,4 +1,4 @@
-import { InteractionModel, InteractionEntity } from '@db/entities/Interaction';
+import { NPCModel, NPCEntity, NPCSubtype } from '@db/entities/NPC';
 import { ActionModel } from '@db/entities/Action';
 
 import {
@@ -7,27 +7,27 @@ import {
 import { AbstractProperties, AbstractNeo4jRepository, DBConnectionOptions } from './AbstractNeo4jRepository';
 import { ActionNeo4jRepository } from './ActionNeo4jRepository';
 
-export interface InteractionProperties extends AbstractProperties {
-  interactionId: Integer | number;
-  text: string;
+export interface NPCProperties extends AbstractProperties {
+  NPCId: Integer | number;
+  subtype: NPCSubtype;
 }
 
-export const isInteractionNode = <T extends Integer>(
+export const isNPCNode = <T extends Integer>(
   value: Node<T>,
-): value is EspeciallyNode<InteractionProperties, T> => value.labels.includes('Interaction');
+): value is EspeciallyNode<NPCProperties, T> => value.labels.includes('NPC');
 
-export class InteractionNeo4jRepository extends AbstractNeo4jRepository<
-  typeof InteractionModel, InteractionModel, InteractionProperties
+export class NPCNeo4jRepository extends AbstractNeo4jRepository<
+  typeof NPCModel, NPCModel, NPCProperties
 > {
-  protected createQuery: string = 'CREATE (a:Interaction $params) RETURN a';
+  protected createQuery: string = 'CREATE (a:NPC $params) RETURN a';
 
-  protected findByIdQuery: string = 'MATCH (a:Interaction) WHERE id(a) = $id RETURN a';
+  protected findByIdQuery: string = 'MATCH (a:NPC) WHERE id(a) = $id RETURN a';
 
-  protected findRelatedActionsQuery: string = 'MATCH (a:Interaction)-[r:Action]->(b) WHERE id(a) = $id RETURN r';
+  protected findRelatedActionsQuery: string = 'MATCH (a:NPC)-[r:Action]->(b) WHERE id(a) = $id RETURN r';
 
-  protected buildFindByPropsQuery(params: Partial<InteractionProperties>): string {
+  protected buildFindByPropsQuery(params: Partial<NPCProperties>): string {
     const keys = Object.keys(params);
-    let query = 'MATCH (a:Interaction';
+    let query = 'MATCH (a:NPC';
     if (keys.length > 0) {
       query += ' { ';
       query += Object.keys(params)
@@ -39,24 +39,24 @@ export class InteractionNeo4jRepository extends AbstractNeo4jRepository<
     return query;
   }
 
-  protected extractFromNode(node: Node): InteractionEntity {
+  protected extractFromNode(node: Node): NPCEntity {
     const entity = super.extractFromNode(node);
-    if (!isInteractionNode(node)) throw new Error('Record isn\'t InteractionNode');
+    if (!isNPCNode(node)) throw new Error('Record isn\'t NPCNode');
 
     return {
       ...entity,
-      interactionId: getIntValue(node.properties.interactionId),
-      text: node.properties.text,
+      NPCId: getIntValue(node.properties.NPCId),
+      subtype: node.properties.subtype,
     };
   }
 
   constructor(session: Session) {
-    super(session, InteractionModel);
+    super(session, NPCModel);
   }
 
   public async findByParams(
-    params: Partial<InteractionProperties>, options?: DBConnectionOptions,
-  ): Promise<InteractionModel> {
+    params: Partial<NPCProperties>, options?: DBConnectionOptions,
+  ): Promise<NPCModel> {
     const result = await this.runQuery(this.buildFindByPropsQuery(params), params, false, options);
 
     return this.fromRecord(result.records[0].get(0));

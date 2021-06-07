@@ -2,12 +2,17 @@
 import path from 'path';
 import { createCanvas, loadImage } from 'node-canvas';
 
-import { InteractionNeo4jRepository } from '../src/db/graph/InteractionNeo4jRepository';
-import { ActionNeo4jRepository } from '../src/db/graph/ActionNeo4jRepository';
-import { InteractionModel } from '../src/db/entities/Interaction';
-import { buildDriver } from '../src/db';
+import { InteractionNeo4jRepository } from '@db/graph/InteractionNeo4jRepository';
+import { ActionNeo4jRepository } from '@db/graph/ActionNeo4jRepository';
+import { MapSpotNeo4jRepository } from '@db/graph/MapSpotNeo4jRepository';
+import { NPCNeo4jRepository } from '@db/graph/NPCNeo4jRepository';
+import { InteractionModel } from '@db/entities/Interaction';
+import { MapSpotModel, MapSpotSubtype } from '@db/entities/MapSpot';
+import { NPCModel, NPCSubtype } from '@db/entities/NPC';
+import { buildDriver } from '@db';
 
-const mapPath = path.resolve(__dirname, 'scenario5.location2.city.png');
+// const mapPath = path.resolve(__dirname, 'scenario5.location2.city.png');
+const mapPath = path.resolve(__dirname, 'test.location.png');
 
 const STRUCTURE_TO_COLOR = <const>{
   WALL: '808080',
@@ -19,19 +24,35 @@ const STRUCTURE_TO_COLOR = <const>{
   BANDIT_GUARD: '008000',
   NPC: '00ffff',
   QUEST_NPC: '800080',
+  BATTLE_VERY_EASY: 'ffaaaa',
+  BATTLE_EASY: 'ff8080',
+  BATTLE_MEDIUM: 'ff6060',
+  BATTLE_HARD: 'ff4040',
+  BATTLE_VERY_HARD: 'ff2020',
 };
 
-type Structure = keyof typeof STRUCTURE_TO_COLOR;
 type Color = typeof STRUCTURE_TO_COLOR[keyof typeof STRUCTURE_TO_COLOR];
 
 const COLOR_TO_STRUCTURE = (Object.entries(STRUCTURE_TO_COLOR))
   .reduce((result, [key, value]) => {
     // eslint-disable-next-line no-param-reassign
-    result[value] = key as Structure;
+    result[value] = key as MapSpotSubtype;
     return result;
-  }, {} as Record<Color, Structure>);
+  }, {} as Record<Color, MapSpotSubtype>);
 
 const colorRGBToHEX = (r: number, g: number, b: number) => `${r.toString(16).padEnd(2, '0')}${g.toString(16).padEnd(2, '0')}${b.toString(16).padEnd(2, '0')}`;
+
+const MOVE_ACTIONS = {
+  TO_WEST: '👣 ⬅️',
+  TO_EAST: '👣 ➡️',
+  TO_NORTH: '👣 ⬆️',
+  TO_SOUTH: '👣 ⬇️',
+  NO_WAY: '🚷',
+} as const;
+
+const isThroughable = (subtype: MapSpotSubtype): boolean => !['WALL', 'HOUSE'].includes(subtype);
+
+let globalNPCIdIndex = 1;
 
 const main = async () => {
   const image = await loadImage(mapPath);
@@ -46,68 +67,91 @@ const main = async () => {
   const session = driver.session();
   const interactionRepo = new InteractionNeo4jRepository(session);
   const actionRepo = new ActionNeo4jRepository(session);
+  const mapSpotRepo = new MapSpotNeo4jRepository(session);
+  const NPCRepo = new NPCNeo4jRepository(session);
 
-  const imap = new Map<string, InteractionModel>();
-  const MOVE_ACTIONS = {
-    TO_WEST: '👣 ⬅️',
-    TO_EAST: '👣 ➡️',
-    TO_NORTH: '👣 ⬆️',
-    TO_SOUTH: '👣 ⬇️',
-    NO_WAY: '🚷',
-  } as const;
+  const mapSpots = new Map<string, MapSpotModel>();
 
   for (let i = 0; i < imageData.data.length; i += 4) {
     const y = Math.floor((i / 4) / imageData.width);
     const x = i / 4 - y * imageData.width;
-    const text = COLOR_TO_STRUCTURE[colorRGBToHEX(
+    const subtype = COLOR_TO_STRUCTURE[colorRGBToHEX(
       imageData.data[i + 0],
       imageData.data[i + 1],
       imageData.data[i + 2],
     ) as Color];
     try {
-      const inter = await interactionRepo.create({
+      const currentSpot = await mapSpotRepo.create({
         scenarioId: 3,
         locationId: 1,
-        interactionId: i / 4,
-        text,
+        x,
+        y,
+        subtype,
+        isThroughable: isThroughable(subtype),
       });
-      console.log('X:Y', x, ':', y, text, inter);
-      imap.set(`${x}:${y}`, inter);
-      const above = imap.get(`${x}:${y - 1}`);
+      console.log(currentSpot);
+      mapSpots.set(`${x}:${y}`, currentSpot);
+      if (subtype === 'MERCHANT') {
+        const npc = await NPCRepo.create({
+          scenarioId: 3,
+          locationId: 1,
+          NPCId: globalNPCIdIndex,
+          subtype,
+        });
+        await actionRepo.create({
+          scenarioId: 3,
+          locationId: 1,
+          from: currentSpot.id,
+          to: npc.id,
+          text: `💬 Поговорить с торговцем (#${globalNPCIdIndex})`,
+          type: 'CUSTOM',
+        });
+        await actionRepo.create({
+          scenarioId: 3,
+          locationId: 1,
+          from: npc.id,
+          to: currentSpot.id,
+          text: 'OnDialogEnd',
+          type: 'SYSTEM',
+        });
+        globalNPCIdIndex += 1;
+      }
+
+      const above = mapSpots.get(`${x}:${y - 1}`);
       if (above != null) {
         await actionRepo.create({
           scenarioId: 3,
           locationId: 1,
-          from: inter.id,
+          from: currentSpot.id,
           to: above.id,
-          text: inter.text === 'WALL' || above.text === 'WALL' ? MOVE_ACTIONS.NO_WAY : MOVE_ACTIONS.TO_NORTH,
+          text: currentSpot.isThroughable && above.isThroughable ? MOVE_ACTIONS.TO_NORTH : MOVE_ACTIONS.NO_WAY,
           type: 'CUSTOM',
         });
         await actionRepo.create({
           scenarioId: 3,
           locationId: 1,
           from: above.id,
-          to: inter.id,
-          text: inter.text === 'WALL' || above.text === 'WALL' ? MOVE_ACTIONS.NO_WAY : MOVE_ACTIONS.TO_SOUTH,
+          to: currentSpot.id,
+          text: currentSpot.isThroughable && above.isThroughable ? MOVE_ACTIONS.TO_SOUTH : MOVE_ACTIONS.NO_WAY,
           type: 'CUSTOM',
         });
       }
-      const left = imap.get(`${x - 1}:${y}`);
+      const left = mapSpots.get(`${x - 1}:${y}`);
       if (left != null) {
         await actionRepo.create({
           scenarioId: 3,
           locationId: 1,
-          from: inter.id,
+          from: currentSpot.id,
           to: left.id,
-          text: inter.text === 'WALL' || left.text === 'WALL' ? MOVE_ACTIONS.NO_WAY : MOVE_ACTIONS.TO_WEST,
+          text: currentSpot.isThroughable && left.isThroughable ? MOVE_ACTIONS.TO_WEST : MOVE_ACTIONS.NO_WAY,
           type: 'CUSTOM',
         });
         await actionRepo.create({
           scenarioId: 3,
           locationId: 1,
           from: left.id,
-          to: inter.id,
-          text: inter.text === 'WALL' || left.text === 'WALL' ? MOVE_ACTIONS.NO_WAY : MOVE_ACTIONS.TO_EAST,
+          to: currentSpot.id,
+          text: currentSpot.isThroughable && left.isThroughable ? MOVE_ACTIONS.TO_EAST : MOVE_ACTIONS.NO_WAY,
           type: 'CUSTOM',
         });
       }

@@ -10,7 +10,9 @@
     "prod:stop": "pm2 stop src/index.ts",
     "prod:reload": "pm2 restart src/index.ts --node-args='-r tsconfig-paths/register'",
     "db:setup": "sudo mkdir -p /var/lib/neo4j/data && docker pull neo4j",
+    "db:setup-ee": "sudo mkdir -p /var/lib/neo4j-ee/data && docker pull neo4j:4.2.7-enterprise",
     "db:start": "docker run --publish=7474:7474 --publish=7687:7687 --volume=/var/lib/neo4j/data:/data neo4j",
+    "db:start-ee": "docker run --publish=7474:7474 --publish=7687:7687 --volume=/var/lib/neo4j-ee/data:/data neo4j:4.2.7-enterprise",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint -c ./.eslintrc.js ./src"
   },
