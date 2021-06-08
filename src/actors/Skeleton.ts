@@ -1,7 +1,7 @@
 import { capitalise } from '@utils/capitalise';
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import { truncate } from '@utils/math';
-import { returnByChance } from '@utils/returnByChance';
+import { Randomizer } from '@utils/Randomizer';
 
 import {
   AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions,
@@ -55,10 +55,10 @@ export class Skeleton extends AbstractActor {
 
   _wearingEquipment: SkeletonEquipmentSlots = {
     body: new StrongBonesBodyArmor(),
-    leftHand: returnByChance([[new BrokenShieldArmor(), 0.5], [void 0, 1]])[0],
-    rightHand: returnByChance<RustedSwordWeapon | RustedAxeWeapon | EmptyWeapon>(
-      [[new RustedAxeWeapon(), 0.6], [new RustedSwordWeapon(), 0.8], [new EmptyWeapon(), 1]],
-    )[0],
+    leftHand: Randomizer.returnOneFromList([[new BrokenShieldArmor(), 0.5], [void 0, 0.5]]),
+    rightHand: Randomizer.returnOneFromList<RustedSwordWeapon | RustedAxeWeapon | EmptyWeapon>(
+      [[new RustedAxeWeapon(), 0.3], [new RustedSwordWeapon(), 0.5], [new EmptyWeapon(), 0.2]],
+    ),
   };
 
   constructor(options: AbstractActorOptions = {}) {
@@ -87,9 +87,7 @@ export class Skeleton extends AbstractActor {
     return `${this.getType({ declension: 'nominative', withPostfix: true, capitalised: true })} с треском рассыпался!`;
   }
 
-  public getReward(): RewardBag {
-    return {
-      gold: getRandomIntInclusive(2, 15),
-    };
+  public getReward(): string {
+    return 'Кости... одни кости';
   }
 }
