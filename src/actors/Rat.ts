@@ -1,5 +1,5 @@
 import { capitalise } from '@utils/capitalise';
-import { returnByChance } from '@utils/returnByChance';
+import { Randomizer } from '@utils/Randomizer';
 
 import { Player } from '@actors/Player';
 import {
@@ -51,7 +51,6 @@ export class Rat extends AbstractActor {
 
   protected _activeWeapon: TeethWeapon | PawsWeapon | EmptyWeapon;
 
-  // @RULE: For real chance, we should sort from low chance to higher
   protected possibleLoot: [rootMeta: RatLootMeta, chance: number][] = [
     [[StrangeFlute, 1, 1], 0.05],
     [[RatTail, 1, 1], 0.6],
@@ -84,9 +83,9 @@ export class Rat extends AbstractActor {
   }
 
   public doAttack(enemy: AbstractActor): AttackResult {
-    this._activeWeapon = returnByChance<TeethWeapon | PawsWeapon | undefined>(
-      [[this._wearingEquipment.hands, 0.5], [this._wearingEquipment.jaws, 1]],
-    )[0] ?? new EmptyWeapon();
+    this._activeWeapon = Randomizer.returnOneFromList<TeethWeapon | PawsWeapon | undefined>(
+      [[this._wearingEquipment.hands, 0.5], [this._wearingEquipment.jaws, 0.5]],
+    ) ?? new EmptyWeapon();
 
     return super.doAttack(enemy);
   }
@@ -111,7 +110,7 @@ export class Rat extends AbstractActor {
   public getReward(player: Player): string {
     const holdWeapon = player.wearingEquipment.rightHand;
     if ('skinning' in holdWeapon?.professions) {
-      const lootMeta: RatLootMeta[] = returnByChance<RatLootMeta>(this.possibleLoot, false);
+      const lootMeta: RatLootMeta[] = Randomizer.returnSomeFromList<RatLootMeta>(this.possibleLoot);
       if (lootMeta.length === 0) return 'Увы, но у вы не смогли ничего добыть из крысы.';
 
       const loot: RatLoot[] = [];

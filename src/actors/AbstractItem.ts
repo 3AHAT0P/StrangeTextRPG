@@ -1,5 +1,5 @@
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
-import { returnByChance } from '@utils/returnByChance';
+import { Randomizer } from '@utils/Randomizer';
 import { MESSAGES } from '@translations/ru';
 
 export const itemRarity = <const>{
@@ -15,13 +15,12 @@ export interface AbstractItemContructor<T extends AbstractItem> {
 }
 
 export abstract class AbstractItem {
-  // @RULE: For real chance, we should sort from low chance to higher
   public static rarityChance: Array<[ItemRarity, number]> = [
     ['DIVINE', 0.02],
     ['LEGENDARY', 0.08],
-    ['EPIC', 0.2],
-    ['RARE', 0.6],
-    ['COMMON', 0.8],
+    ['EPIC', 0.1],
+    ['RARE', 0.2],
+    ['COMMON', 0.6],
   ];
 
   public static create<T extends AbstractItem>(
@@ -29,7 +28,7 @@ export abstract class AbstractItem {
   ): T[] {
     const result = [];
     for (let i = 0; i < getRandomIntInclusive(...amount); i += 1) {
-      const [rarity] = returnByChance<ItemRarity>(this.rarityChance, true);
+      const rarity = Randomizer.returnOneFromList<ItemRarity>(this.rarityChance);
       result.push(new this(rarity));
     }
     return result;
