@@ -6,9 +6,11 @@ import { InteractionNeo4jRepository } from '@db/graph/InteractionNeo4jRepository
 import { ActionNeo4jRepository } from '@db/graph/ActionNeo4jRepository';
 import { MapSpotNeo4jRepository } from '@db/graph/MapSpotNeo4jRepository';
 import { NPCNeo4jRepository } from '@db/graph/NPCNeo4jRepository';
+import { BattleNeo4jRepository } from '@db/graph/BattleNeo4jRepository';
 import { InteractionModel } from '@db/entities/Interaction';
 import { MapSpotModel, MapSpotSubtype } from '@db/entities/MapSpot';
 import { NPCModel, NPCSubtype } from '@db/entities/NPC';
+import { BattleModel, BattleDifficulty } from '@db/entities/Battle';
 import { buildDriver } from '@db';
 
 // const mapPath = path.resolve(__dirname, 'scenario5.location2.city.png');
@@ -24,12 +26,16 @@ const STRUCTURE_TO_COLOR = <const>{
   BANDIT_GUARD: '008000',
   NPC: '00ffff',
   QUEST_NPC: '800080',
-  BATTLE_VERY_EASY: 'ffaaaa',
-  BATTLE_EASY: 'ff8080',
-  BATTLE_MEDIUM: 'ff6060',
-  BATTLE_HARD: 'ff4040',
-  BATTLE_VERY_HARD: 'ff2020',
+  BATTLE_VERY_EASY: 'ffaaaa', // 633636
+  BATTLE_EASY: 'ff8080', // 6b2e2e
+  BATTLE_MEDIUM: 'ff6060', // 732626
+  BATTLE_HARD: 'ff4040', // 7a1f1f
+  BATTLE_VERY_HARD: 'ff2020', // 821717
 };
+
+const isBattleSubtype = (subtype: MapSpotSubtype): subtype is 'BATTLE_VERY_EASY' | 'BATTLE_EASY' | 'BATTLE_MEDIUM' | 'BATTLE_HARD' | 'BATTLE_VERY_HARD' => (
+  ['BATTLE_VERY_EASY', 'BATTLE_EASY', 'BATTLE_MEDIUM', 'BATTLE_HARD', 'BATTLE_VERY_HARD'].includes(subtype)
+);
 
 type Color = typeof STRUCTURE_TO_COLOR[keyof typeof STRUCTURE_TO_COLOR];
 
@@ -69,6 +75,7 @@ const main = async () => {
   const actionRepo = new ActionNeo4jRepository(session);
   const mapSpotRepo = new MapSpotNeo4jRepository(session);
   const NPCRepo = new NPCNeo4jRepository(session);
+  const BattleRepo = new BattleNeo4jRepository(session);
 
   const mapSpots = new Map<string, MapSpotModel>();
 
@@ -115,6 +122,29 @@ const main = async () => {
           type: 'SYSTEM',
         });
         globalNPCIdIndex += 1;
+      } else if (isBattleSubtype(subtype)) {
+        const battle = await BattleRepo.create({
+          scenarioId: 3,
+          locationId: 1,
+          difficult: subtype.slice(7) as BattleDifficulty,
+          chanceOfTriggering: 0.95,
+        });
+        await actionRepo.create({
+          scenarioId: 3,
+          locationId: 1,
+          from: currentSpot.id,
+          to: battle.id,
+          text: '',
+          type: 'AUTO',
+        });
+        await actionRepo.create({
+          scenarioId: 3,
+          locationId: 1,
+          from: battle.id,
+          to: currentSpot.id,
+          text: 'OnBattleEnd',
+          type: 'SYSTEM',
+        });
       }
 
       const above = mapSpots.get(`${x}:${y - 1}`);
