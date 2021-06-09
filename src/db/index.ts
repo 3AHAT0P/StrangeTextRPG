@@ -1,10 +1,12 @@
-import neo4j, { Driver } from 'neo4j-driver';
+import neo4j, { Driver, Session } from 'neo4j-driver';
 
 // import { getConfig } from 'ConfigProvider';
 import { getConfig } from '../ConfigProvider'; // @TODO: Debug only
 import { ScenarioCursor } from './ScenarioCursor';
 
 const config = getConfig();
+
+export { Driver, Session };
 
 export const buildDriver = (): Driver => (
   neo4j.driver(config.NEO4J_URL, neo4j.auth.basic(config.NEO4J_LOGIN, config.NEO4J_PASSWORD))

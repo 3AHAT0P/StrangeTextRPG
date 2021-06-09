@@ -16,10 +16,10 @@ export const isActionRelationship = <T extends Integer>(
 
 export class ActionNeo4jRepository extends AbstractNeo4jRepository<typeof ActionModel, ActionModel, ActionProperties> {
   protected createQuery: string = `
-    MATCH (a: Interaction)
+    MATCH (a)
     WHERE id(a) = $from
 
-    MATCH (b: Interaction)
+    MATCH (b)
     WHERE id(b) = $to
 
     CREATE (a)-[r:Action $params]->(b)

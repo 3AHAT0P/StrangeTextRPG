@@ -1,6 +1,6 @@
 import { AbstractEntity, AbstractModel } from './Abstract';
 
-export type MapSpotSubtype = 'WALL' | 'HOUSE' | 'HOUSE_DOOR'
+export type MapSpotSubtype = 'UNREACHABLE' | 'BREAK' | 'WALL' | 'HOUSE' | 'HOUSE_DOOR'
 | 'EMPTY'
 | 'MERCHANT' | 'NPC' | 'QUEST_NPC'| 'GUARD' | 'BANDIT_GUARD'
 | 'BATTLE_VERY_EASY' | 'BATTLE_EASY' | 'BATTLE_MEDIUM' | 'BATTLE_HARD' | 'BATTLE_VERY_HARD';
@@ -11,6 +11,10 @@ export interface MapSpotEntity extends AbstractEntity {
   subtype: MapSpotSubtype;
   isThroughable: boolean;
 }
+
+export const isThroughable = (subtype: MapSpotSubtype): boolean => (
+  !['UNREACHABLE', 'BREAK', 'WALL', 'HOUSE'].includes(subtype)
+);
 
 export class MapSpotModel extends AbstractModel implements MapSpotEntity {
   public readonly x: number;

@@ -6,6 +6,14 @@ import { POIName, POIIcon, pointsOfInterest } from './PointOfInterest';
 
 export type DIRECTION = 'NORTH' | 'SOUTH' | 'WEST' | 'EAST';
 
+export const MOVE_ACTIONS = <const>{
+  TO_WEST: '👣 ⬅️',
+  TO_EAST: '👣 ➡️',
+  TO_NORTH: '👣 ⬆️',
+  TO_SOUTH: '👣 ⬇️',
+  NO_WAY: '🚷',
+};
+
 export interface AdditionalBagSpotInfo {
   reward: typeof Weapon | typeof Armor;
 }
