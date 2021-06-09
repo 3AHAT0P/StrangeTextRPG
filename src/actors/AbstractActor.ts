@@ -1,5 +1,6 @@
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
-import { Weapon } from './weapon';
+import { Weapon } from '@weapon';
+import { AbstractInventory } from '@actors/AbstractInventory';
 
 export interface AttackResult {
   damage: number;
@@ -59,9 +60,7 @@ export abstract class AbstractActor {
 
   protected _bag: Bag = { healthPoitions: 0 };
 
-  protected abstract _wearingEquipment: unknown;
-
-  public get wearingEquipment() { return this._wearingEquipment; }
+  protected abstract _inventory: AbstractInventory;
 
   get stats() {
     return {

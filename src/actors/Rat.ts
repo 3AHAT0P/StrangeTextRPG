@@ -2,16 +2,17 @@ import { capitalise } from '@utils/capitalise';
 import { Randomizer } from '@utils/Randomizer';
 
 import { Player } from '@actors/Player';
+import { LeatherBodyArmor } from '@armor';
+import {
+  EmptyWeapon, PawsWeapon, TeethWeapon,
+} from '@weapon';
 import {
   RatSkin, RatTail, StrangeFlute,
 } from '@actors/miscellanious';
+import { Inventory } from '@actors/Inventory';
 import {
   AbstractActor, AbstractActorOptions, AttackResult, TypeByDeclensionOfNounOptions,
 } from './AbstractActor';
-import { LeatherBodyArmor } from './armor';
-import {
-  EmptyWeapon, PawsWeapon, TeethWeapon,
-} from './weapon';
 import { AbstractItemContructor } from './AbstractItem';
 
 export const RatDeclensionOfNouns = {
@@ -49,6 +50,8 @@ export type RatLootMeta = [constructor: AbstractItemContructor<RatLoot>, minAmou
 export class Rat extends AbstractActor {
   type = 'крыса';
 
+  _inventory: Inventory<RatEquipmentSlots>;
+
   protected _activeWeapon: TeethWeapon | PawsWeapon | EmptyWeapon;
 
   protected possibleLoot: [rootMeta: RatLootMeta, chance: number][] = [
@@ -57,7 +60,7 @@ export class Rat extends AbstractActor {
     [[RatSkin, 1, 1], 0.7],
   ];
 
-  get armor(): number { return this._wearingEquipment.body?.armor ?? 0; }
+  get armor(): number { return this._inventory.wearingEquipment.body?.armor ?? 0; }
 
   get attackDamage(): number { return this._activeWeapon.attackDamage; }
 
@@ -67,24 +70,26 @@ export class Rat extends AbstractActor {
 
   get accuracy(): number { return this._activeWeapon.accuracy; }
 
-  _wearingEquipment: RatEquipmentSlots = {
-    body: new LeatherBodyArmor(),
-    jaws: new TeethWeapon(),
-    hands: new PawsWeapon(),
-  };
-
   constructor(options: AbstractActorOptions = {}) {
     super(options);
 
     this.maxHealthPoints = 5;
     this.healthPoints = 5;
 
-    this._activeWeapon = this._wearingEquipment.jaws ?? new EmptyWeapon();
+    this._inventory = new Inventory<RatEquipmentSlots>({
+      defaultEquipment: {
+        body: new LeatherBodyArmor(),
+        jaws: new TeethWeapon(),
+        hands: new PawsWeapon(),
+      },
+    });
+
+    this._activeWeapon = this._inventory.wearingEquipment.jaws ?? new EmptyWeapon();
   }
 
   public doAttack(enemy: AbstractActor): AttackResult {
     this._activeWeapon = Randomizer.returnOneFromList<TeethWeapon | PawsWeapon | undefined>(
-      [[this._wearingEquipment.hands, 0.5], [this._wearingEquipment.jaws, 0.5]],
+      [[this._inventory.wearingEquipment.hands, 0.5], [this._inventory.wearingEquipment.jaws, 0.5]],
     ) ?? new EmptyWeapon();
 
     return super.doAttack(enemy);

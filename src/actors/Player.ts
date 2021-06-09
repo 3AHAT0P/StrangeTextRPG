@@ -1,9 +1,5 @@
 import { capitalise } from '@utils/capitalise';
 import { isPresent } from '@utils/check';
-
-import {
-  AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions,
-} from './AbstractActor';
 import {
   HeadArmor,
   NeckArmor,
@@ -14,8 +10,13 @@ import {
   FeetArmor,
   CanvasCoatBodyArmor,
   CanvasTrousersLegsArmor,
-} from './armor';
-import { FistWeapon, Weapon } from './weapon';
+} from '@armor';
+import { FistWeapon, Weapon } from '@weapon';
+import { Inventory } from '@actors/Inventory';
+
+import {
+  AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions,
+} from './AbstractActor';
 
 export const PlayerDeclensionOfNouns = {
   nominative: 'ты',
@@ -43,36 +44,41 @@ interface PeopleEquipmentSlots {
 export class Player extends AbstractActor {
   type = 'player';
 
+  _inventory: Inventory<PeopleEquipmentSlots>;
+
   get armor(): number {
-    return 0
-      + (this._wearingEquipment.head?.armor ?? 0)
-      + (this._wearingEquipment.body?.armor ?? 0)
-      + (this._wearingEquipment.hands?.armor ?? 0)
-      + (this._wearingEquipment.legs?.armor ?? 0)
-      + (this._wearingEquipment.feet?.armor ?? 0);
+    const { wearingEquipment } = this._inventory;
+    return (wearingEquipment.head?.armor ?? 0)
+      + (wearingEquipment.body?.armor ?? 0)
+      + (wearingEquipment.hands?.armor ?? 0)
+      + (wearingEquipment.legs?.armor ?? 0)
+      + (wearingEquipment.feet?.armor ?? 0);
   }
 
-  get attackDamage(): number { return this._wearingEquipment.rightHand?.attackDamage ?? 0; }
+  get attackDamage(): number { return this._inventory.wearingEquipment.rightHand?.attackDamage ?? 0; }
 
-  get criticalChance(): number { return this._wearingEquipment.rightHand?.criticalChance ?? 0; }
+  get criticalChance(): number { return this._inventory.wearingEquipment.rightHand?.criticalChance ?? 0; }
 
-  get criticalDamageModifier(): number { return this._wearingEquipment.rightHand?.criticalDamageModifier ?? 0; }
+  get criticalDamageModifier(): number {
+    return this._inventory.wearingEquipment.rightHand?.criticalDamageModifier ?? 0;
+  }
 
-  get accuracy(): number { return this._wearingEquipment.rightHand?.accuracy ?? 0; }
+  get accuracy(): number { return this._inventory.wearingEquipment.rightHand?.accuracy ?? 0; }
 
-  _wearingEquipment: PeopleEquipmentSlots = {
-    body: new CanvasCoatBodyArmor(),
-    rightHand: new FistWeapon(),
-    legs: new CanvasTrousersLegsArmor(),
-  };
-
-  public get wearingEquipment() { return this._wearingEquipment; }
+  public get wearingEquipment(): PeopleEquipmentSlots { return this._inventory.wearingEquipment; }
 
   constructor(options: AbstractActorOptions = {}) {
     super(options);
 
     this.maxHealthPoints = 10;
     this.healthPoints = 8;
+    this._inventory = new Inventory<PeopleEquipmentSlots>({
+      defaultEquipment: {
+        body: new CanvasCoatBodyArmor(),
+        rightHand: new FistWeapon(),
+        legs: new CanvasTrousersLegsArmor(),
+      },
+    });
   }
 
   public getType({ declension, capitalised = false }: TypeByDeclensionOfNounOptions): string {
@@ -90,8 +96,8 @@ export class Player extends AbstractActor {
   }
 
   public equipWeapon(weapon: Weapon, hand: 'LEFT' | 'RIGHT' = 'RIGHT'): boolean {
-    if (hand === 'LEFT') this._wearingEquipment.leftHand = weapon;
-    else this._wearingEquipment.rightHand = weapon;
+    if (hand === 'LEFT') this._inventory.wearingEquipment.leftHand = weapon;
+    else this._inventory.wearingEquipment.rightHand = weapon;
 
     return true;
   }
