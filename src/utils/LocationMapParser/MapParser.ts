@@ -4,7 +4,7 @@ import { createCanvas, loadImage, ImageData } from 'node-canvas';
 import { InteractionModel } from '@db/entities/Interaction';
 import { isThroughable, MapSpotModel, MapSpotSubtype } from '@db/entities/MapSpot';
 import { NPCModel, NPCSubtype } from '@db/entities/NPC';
-import { BattleModel, BattleDifficulty } from '@db/entities/Battle';
+import { BattleModel, BattleDifficulty, parseBattleSubtype, isBattleSubtype } from '@db/entities/Battle';
 import { MOVE_ACTIONS } from '@locations/AreaMap';
 import { Matcher } from '@utils/Matcher';
 
@@ -14,8 +14,8 @@ import { DBService } from './DBService';
 export type MatcherContext = { currentSpot: MapSpotModel, subtype: MapSpotSubtype };
 
 export interface MapInfo {
-  scenarioId: 3,
-  locationId: 1,
+  scenarioId: number,
+  locationId: number,
 }
 
 export class MapParser {
@@ -54,7 +54,6 @@ export class MapParser {
       isThroughable: isThroughable(subtype),
     });
     this._mapSpotMap.set(`${x}:${y}`, currentSpot);
-    console.log(currentSpot);
 
     return currentSpot;
   }
@@ -87,10 +86,13 @@ export class MapParser {
   }
 
   private async _createBattle({ currentSpot, subtype }: MatcherContext) {
+    if (!isBattleSubtype(subtype)) return console.error('Subtype mismatch');
+
+    const [difficult, chanceOfTriggering] = parseBattleSubtype(subtype);
     const battle = await this._dbService.repositories.battleRepo.create({
       ...this._mapInfo,
-      difficult: subtype.slice(7) as BattleDifficulty,
-      chanceOfTriggering: 0.95,
+      difficult,
+      chanceOfTriggering,
     });
     await this._dbService.repositories.actionRepo.create({
       ...this._mapInfo,

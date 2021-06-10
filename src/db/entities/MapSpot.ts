@@ -1,9 +1,11 @@
+/* eslint-disable no-multi-spaces */
 import { AbstractEntity, AbstractModel } from './Abstract';
+import type { BattleSpotSubtype } from './Battle';
 
-export type MapSpotSubtype = 'UNREACHABLE' | 'BREAK' | 'WALL' | 'HOUSE' | 'HOUSE_DOOR'
+export type MapSpotSubtype = 'UNREACHABLE' | 'BREAK' | 'WALL' | 'LOCATION_EXIT' | 'HOUSE' | 'HOUSE_DOOR'
 | 'EMPTY'
 | 'MERCHANT' | 'NPC' | 'QUEST_NPC'| 'GUARD' | 'BANDIT_GUARD'
-| 'BATTLE_VERY_EASY' | 'BATTLE_EASY' | 'BATTLE_MEDIUM' | 'BATTLE_HARD' | 'BATTLE_VERY_HARD';
+| BattleSpotSubtype;
 
 export interface MapSpotEntity extends AbstractEntity {
   x: number;
