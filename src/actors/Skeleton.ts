@@ -2,12 +2,13 @@ import { capitalise } from '@utils/capitalise';
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import { truncate } from '@utils/math';
 import { Randomizer } from '@utils/Randomizer';
+import { BrokenShieldArmor, StrongBonesBodyArmor } from '@armor';
+import { EmptyWeapon, RustedAxeWeapon, RustedSwordWeapon } from '@weapon';
+import { Inventory } from '@actors/Inventory';
 
 import {
-  AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions,
+  AbstractActor, AbstractActorOptions, TypeByDeclensionOfNounOptions,
 } from './AbstractActor';
-import { BrokenShieldArmor, StrongBonesBodyArmor } from './armor';
-import { EmptyWeapon, RustedAxeWeapon, RustedSwordWeapon } from './weapon';
 
 export const SkeletonDeclensionOfNouns = {
   nominative: 'скелет',
@@ -41,29 +42,35 @@ interface SkeletonEquipmentSlots {
 export class Skeleton extends AbstractActor {
   public type = 'скелет';
 
+  readonly _inventory: Inventory<SkeletonEquipmentSlots>;
+
   get armor(): number {
-    return truncate((this._wearingEquipment.body?.armor ?? 0) + (this._wearingEquipment.leftHand?.armor ?? 0), 2);
+    return truncate(
+      (this._inventory.wearingEquipment.body?.armor ?? 0) + (this._inventory.wearingEquipment.leftHand?.armor ?? 0),
+      2,
+    );
   }
 
-  get attackDamage(): number { return this._wearingEquipment.rightHand.attackDamage; }
+  get attackDamage(): number { return this._inventory.wearingEquipment.rightHand.attackDamage; }
 
-  get criticalChance(): number { return this._wearingEquipment.rightHand.criticalChance; }
+  get criticalChance(): number { return this._inventory.wearingEquipment.rightHand.criticalChance; }
 
-  get criticalDamageModifier(): number { return this._wearingEquipment.rightHand.criticalDamageModifier; }
+  get criticalDamageModifier(): number { return this._inventory.wearingEquipment.rightHand.criticalDamageModifier; }
 
-  get accuracy(): number { return this._wearingEquipment.rightHand.accuracy; }
-
-  _wearingEquipment: SkeletonEquipmentSlots = {
-    body: new StrongBonesBodyArmor(),
-    leftHand: Randomizer.returnOneFromList([[new BrokenShieldArmor(), 0.5], [void 0, 0.5]]),
-    rightHand: Randomizer.returnOneFromList<RustedSwordWeapon | RustedAxeWeapon | EmptyWeapon>(
-      [[new RustedAxeWeapon(), 0.3], [new RustedSwordWeapon(), 0.5], [new EmptyWeapon(), 0.2]],
-    ),
-  };
+  get accuracy(): number { return this._inventory.wearingEquipment.rightHand.accuracy; }
 
   constructor(options: AbstractActorOptions = {}) {
     super(options);
 
+    this._inventory = new Inventory({
+      defaultEquipment: {
+        body: new StrongBonesBodyArmor(),
+        leftHand: Randomizer.returnOneFromList([[new BrokenShieldArmor(), 0.5], [void 0, 0.5]]),
+        rightHand: Randomizer.returnOneFromList<RustedSwordWeapon | RustedAxeWeapon | EmptyWeapon>(
+          [[new RustedAxeWeapon(), 0.3], [new RustedSwordWeapon(), 0.5], [new EmptyWeapon(), 0.2]],
+        ),
+      },
+    });
     this.maxHealthPoints = 7;
     // Когда скелеты восстают из могил, или откуда там они восстают
     // У них хп не полные. Зависит от стеени разложения, количества местных собак и т.д.

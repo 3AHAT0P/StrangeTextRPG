@@ -48,9 +48,9 @@ export type RatLoot = RatSkin | RatTail | StrangeFlute;
 export type RatLootMeta = [constructor: AbstractItemContructor<RatLoot>, minAmount: number, maxAmount: number];
 
 export class Rat extends AbstractActor {
-  type = 'крыса';
+  public type = 'крыса';
 
-  _inventory: Inventory<RatEquipmentSlots>;
+  readonly _inventory: Inventory<RatEquipmentSlots>;
 
   protected _activeWeapon: TeethWeapon | PawsWeapon | EmptyWeapon;
 

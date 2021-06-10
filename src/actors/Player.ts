@@ -42,9 +42,9 @@ interface PeopleEquipmentSlots {
 }
 
 export class Player extends AbstractActor {
-  type = 'player';
+  public type = 'player';
 
-  _inventory: Inventory<PeopleEquipmentSlots>;
+  readonly _inventory: Inventory<PeopleEquipmentSlots>;
 
   get armor(): number {
     const { wearingEquipment } = this._inventory;
