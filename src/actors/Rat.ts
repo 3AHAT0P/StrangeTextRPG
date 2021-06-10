@@ -2,18 +2,20 @@ import { capitalise } from '@utils/capitalise';
 import { Randomizer } from '@utils/Randomizer';
 
 import { Player } from '@actors/Player';
-import { LeatherBodyArmor } from '@armor';
+import { Armor, LeatherBodyArmor } from '@armor';
 import {
-  EmptyWeapon, PawsWeapon, TeethWeapon,
+  EmptyWeapon, PawsWeapon, TeethWeapon, Weapon,
 } from '@weapon';
 import {
+  Miscellaneous,
   RatSkin, RatTail, StrangeFlute,
-} from '@actors/miscellanious';
+} from '@actors/miscellaneous';
 import { Inventory } from '@actors/Inventory';
+import { Potion } from '@actors/potions';
 import {
   AbstractActor, AbstractActorOptions, AttackResult, TypeByDeclensionOfNounOptions,
 } from './AbstractActor';
-import { AbstractItemContructor } from './AbstractItem';
+import { AbstractItem, AbstractItemContructor } from './AbstractItem';
 
 export const RatDeclensionOfNouns = {
   nominative: 'крыса',
@@ -50,7 +52,7 @@ export type RatLootMeta = [constructor: AbstractItemContructor<RatLoot>, minAmou
 export class Rat extends AbstractActor {
   public type = 'крыса';
 
-  readonly _inventory: Inventory<RatEquipmentSlots>;
+  public inventory: Inventory<RatEquipmentSlots>;
 
   protected _activeWeapon: TeethWeapon | PawsWeapon | EmptyWeapon;
 
@@ -60,7 +62,7 @@ export class Rat extends AbstractActor {
     [[RatSkin, 1, 1], 0.7],
   ];
 
-  get armor(): number { return this._inventory.wearingEquipment.body?.armor ?? 0; }
+  get armor(): number { return this.inventory.wearingEquipment.body?.armor ?? 0; }
 
   get attackDamage(): number { return this._activeWeapon.attackDamage; }
 
@@ -73,10 +75,11 @@ export class Rat extends AbstractActor {
   constructor(options: AbstractActorOptions = {}) {
     super(options);
 
-    this.maxHealthPoints = 5;
-    this.healthPoints = 5;
+    // TODO set healthPoints and maxHealthPoints equal to 5 as it was before
+    this.maxHealthPoints = 0.1;
+    this.healthPoints = 0.1;
 
-    this._inventory = new Inventory<RatEquipmentSlots>({
+    this.inventory = new Inventory<RatEquipmentSlots>({
       defaultEquipment: {
         body: new LeatherBodyArmor(),
         jaws: new TeethWeapon(),
@@ -84,12 +87,12 @@ export class Rat extends AbstractActor {
       },
     });
 
-    this._activeWeapon = this._inventory.wearingEquipment.jaws ?? new EmptyWeapon();
+    this._activeWeapon = this.inventory.wearingEquipment.jaws ?? new EmptyWeapon();
   }
 
   public doAttack(enemy: AbstractActor): AttackResult {
     this._activeWeapon = Randomizer.returnOneFromList<TeethWeapon | PawsWeapon | undefined>(
-      [[this._inventory.wearingEquipment.hands, 0.5], [this._inventory.wearingEquipment.jaws, 0.5]],
+      [[this.inventory.wearingEquipment.hands, 0.5], [this.inventory.wearingEquipment.jaws, 0.5]],
     ) ?? new EmptyWeapon();
 
     return super.doAttack(enemy);
@@ -122,7 +125,16 @@ export class Rat extends AbstractActor {
 
       for (const [constructor, ...amount] of lootMeta) loot.push(...constructor.create(amount));
 
-      return `Вы получили: ${loot.map((item) => `${item.name} `).join(', ')}! Увы у вас дырявые карманцы и всё выпало по дороге.`;
+      const rewards = loot.map((item: AbstractItem) => {
+        if (item instanceof Weapon) this.inventory.collectWeapon(item);
+        if (item instanceof Armor) this.inventory.collectArmor(item);
+        if (item instanceof Miscellaneous) this.inventory.collectMiscellaneous(item);
+        if (item instanceof Potion) this.inventory.collectPotion(item);
+        return item.name;
+      });
+
+      return `Вы получили: ${rewards.join(', ')}!`;
+      // return `Вы получили: ${loot.map((item) => `${item.name} `).join(', ')}!`;
     }
     return 'Увы, но у крысы нету карманов.';
   }

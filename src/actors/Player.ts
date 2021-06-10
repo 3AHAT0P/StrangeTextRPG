@@ -11,7 +11,7 @@ import {
   CanvasCoatBodyArmor,
   CanvasTrousersLegsArmor,
 } from '@armor';
-import { FistWeapon, Weapon } from '@weapon';
+import { FistWeapon, KnifeWeapon, Weapon } from '@weapon';
 import { Inventory } from '@actors/Inventory';
 
 import {
@@ -44,10 +44,10 @@ interface PeopleEquipmentSlots {
 export class Player extends AbstractActor {
   public type = 'player';
 
-  readonly _inventory: Inventory<PeopleEquipmentSlots>;
+  public inventory: Inventory<PeopleEquipmentSlots>;
 
   get armor(): number {
-    const { wearingEquipment } = this._inventory;
+    const { wearingEquipment } = this.inventory;
     return (wearingEquipment.head?.armor ?? 0)
       + (wearingEquipment.body?.armor ?? 0)
       + (wearingEquipment.hands?.armor ?? 0)
@@ -55,29 +55,31 @@ export class Player extends AbstractActor {
       + (wearingEquipment.feet?.armor ?? 0);
   }
 
-  get attackDamage(): number { return this._inventory.wearingEquipment.rightHand?.attackDamage ?? 0; }
+  get attackDamage(): number { return this.inventory.wearingEquipment.rightHand?.attackDamage ?? 0; }
 
-  get criticalChance(): number { return this._inventory.wearingEquipment.rightHand?.criticalChance ?? 0; }
+  get criticalChance(): number { return this.inventory.wearingEquipment.rightHand?.criticalChance ?? 0; }
 
   get criticalDamageModifier(): number {
-    return this._inventory.wearingEquipment.rightHand?.criticalDamageModifier ?? 0;
+    return this.inventory.wearingEquipment.rightHand?.criticalDamageModifier ?? 0;
   }
 
-  get accuracy(): number { return this._inventory.wearingEquipment.rightHand?.accuracy ?? 0; }
+  get accuracy(): number { return this.inventory.wearingEquipment.rightHand?.accuracy ?? 0; }
 
-  public get wearingEquipment(): PeopleEquipmentSlots { return this._inventory.wearingEquipment; }
+  public get wearingEquipment(): PeopleEquipmentSlots { return this.inventory.wearingEquipment; }
 
   constructor(options: AbstractActorOptions = {}) {
     super(options);
 
     this.maxHealthPoints = 10;
     this.healthPoints = 8;
-    this._inventory = new Inventory<PeopleEquipmentSlots>({
+    this.inventory = new Inventory<PeopleEquipmentSlots>({
       defaultEquipment: {
         body: new CanvasCoatBodyArmor(),
-        rightHand: new FistWeapon(),
+        // TODO set rightHand equal to a FistWeapon as it was before
+        rightHand: new KnifeWeapon(),
         legs: new CanvasTrousersLegsArmor(),
       },
+      gold: 100,
     });
   }
 
@@ -91,13 +93,14 @@ export class Player extends AbstractActor {
     return `${this.getType({ declension: 'nominative', capitalised: true })} умер!`;
   }
 
+  // TODO still needed or can be reduced to one method collectGold?
   public collectReward(reward: RewardBag): void {
-    if (isPresent<number>(reward.gold)) this._gold += reward.gold;
+    if (isPresent<number>(reward.gold)) this.inventory.collectGold(reward.gold);
   }
 
   public equipWeapon(weapon: Weapon, hand: 'LEFT' | 'RIGHT' = 'RIGHT'): boolean {
-    if (hand === 'LEFT') this._inventory.wearingEquipment.leftHand = weapon;
-    else this._inventory.wearingEquipment.rightHand = weapon;
+    if (hand === 'LEFT') this.inventory.wearingEquipment.leftHand = weapon;
+    else this.inventory.wearingEquipment.rightHand = weapon;
 
     return true;
   }

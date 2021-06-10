@@ -19,6 +19,7 @@ import { AbstractLocation } from '../AbstractLocation';
 
 import { map, mapSize, additionalMapInfo } from './map';
 import { descriptions } from '../LocationDescriptions';
+import {AbstractItem} from '@actors/AbstractItem';
 
 export const RUIN_LOCATION_ACTIONS = {
   PLAYER_DIED: 'onPlayerDied',
@@ -74,7 +75,9 @@ export class RuinLocation extends AbstractLocation {
   private async doBattle(player: AbstractActor, enemies: AbstractActor[]): Promise<boolean> {
     const battle = new BattleInteraction({ ui: this.ui, player, enemies });
     const onDiedInteraction = this.actions.getInteractionByAction('onDied');
+    const nullInteraction = new Interaction({ ui: this.ui, async activate() { return null; } });
     if (onDiedInteraction != null) battle.addAction(BATTLE_FINAL_ACTIONS.PLAYER_DIED, onDiedInteraction);
+    battle.addAction(BATTLE_FINAL_ACTIONS.PLAYER_WIN, nullInteraction);
     await battle.interact();
 
     return player.isAlive;
@@ -125,6 +128,31 @@ export class RuinLocation extends AbstractLocation {
     return equipment.join('\n');
   }
 
+  private async showInventory(): Promise<void> {
+    const player = this.state.player as Player;
+    const choosedAction = await this.ui.interactWithUser(
+      new ActionsLayout({ columns: 2 })
+        .addRow('Оружие', 'Броня')
+        .addRow('Зелья', 'Разное'),
+    );
+    let items: AbstractItem;
+    // TODO
+    // if (choosedAction === 'Оружие') {
+    //   items = player.inventory.weapons;
+    //
+    // } else if (choosedAction === 'Броня') {
+    //   items = player.inventory.armors;
+    // } else if (choosedAction === 'Зелья') {
+    //   items = player.inventory.potions;
+    // } else {
+    //   items = player.inventory.miscellaneous;
+    //   await this.ui.interactWithUser(
+    //     new ActionsLayout({ columns: 1 })
+    //       .addRow('Оружие', 'Броня')
+    //   );
+    // }
+  }
+
   private async lookYourself(): Promise<void> {
     const player = this.state.player as Player;
 
@@ -155,7 +183,7 @@ export class RuinLocation extends AbstractLocation {
       new ActionsLayout({ columns: 4 }).addRow('❓', 'Открыть инвертарь'),
       (action) => {
         if (action === '❓') void this.printFAQ();
-        else if (action === 'Открыть инвертарь') console.log('Inventory open');
+        else if (action === 'Открыть инвертарь') void this.showInventory();
         else if (action === 'Посмотреть на себя в лужу') void this.lookYourself();
       },
     );

@@ -60,7 +60,7 @@ export abstract class AbstractActor {
 
   protected _bag: Bag = { healthPoitions: 0 };
 
-  protected abstract _inventory: AbstractInventory;
+  protected abstract inventory: AbstractInventory;
 
   get stats() {
     return {
@@ -145,6 +145,10 @@ export abstract class AbstractActor {
   }
 
   public getReward(player: AbstractActor): string { return ''; } // @TODO: Update return type when Inventory will be completed
+
+  public collectRewards(): void {
+
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public collectReward(reward: RewardBag): void { /* pass */ }

@@ -42,27 +42,27 @@ interface SkeletonEquipmentSlots {
 export class Skeleton extends AbstractActor {
   public type = 'скелет';
 
-  readonly _inventory: Inventory<SkeletonEquipmentSlots>;
+  public inventory: Inventory<SkeletonEquipmentSlots>;
 
   get armor(): number {
     return truncate(
-      (this._inventory.wearingEquipment.body?.armor ?? 0) + (this._inventory.wearingEquipment.leftHand?.armor ?? 0),
+      (this.inventory.wearingEquipment.body?.armor ?? 0) + (this.inventory.wearingEquipment.leftHand?.armor ?? 0),
       2,
     );
   }
 
-  get attackDamage(): number { return this._inventory.wearingEquipment.rightHand.attackDamage; }
+  get attackDamage(): number { return this.inventory.wearingEquipment.rightHand.attackDamage; }
 
-  get criticalChance(): number { return this._inventory.wearingEquipment.rightHand.criticalChance; }
+  get criticalChance(): number { return this.inventory.wearingEquipment.rightHand.criticalChance; }
 
-  get criticalDamageModifier(): number { return this._inventory.wearingEquipment.rightHand.criticalDamageModifier; }
+  get criticalDamageModifier(): number { return this.inventory.wearingEquipment.rightHand.criticalDamageModifier; }
 
-  get accuracy(): number { return this._inventory.wearingEquipment.rightHand.accuracy; }
+  get accuracy(): number { return this.inventory.wearingEquipment.rightHand.accuracy; }
 
   constructor(options: AbstractActorOptions = {}) {
     super(options);
 
-    this._inventory = new Inventory({
+    this.inventory = new Inventory({
       defaultEquipment: {
         body: new StrongBonesBodyArmor(),
         leftHand: Randomizer.returnOneFromList([[new BrokenShieldArmor(), 0.5], [void 0, 0.5]]),
