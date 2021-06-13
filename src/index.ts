@@ -1,15 +1,22 @@
 import { Player } from '@actors/Player';
+import { DBService } from '@db/DBService';
+import { InteractionModel } from '@db/entities';
+import { Cursor } from '@db/Cursor';
 import { AbstractInteraction } from '@interactions/AbstractInteraction';
 import { SimpleInteraction } from '@interactions/SimpleInteraction';
 import { buildZeroLocation } from '@scenarios';
 import {
   AbstractUI, AbstractSessionUI,
   AdditionalSessionInfo,
-  NodeUI, TelegramBotUi,
+  NodeUI, TelegramBotUi, ActionsLayout,
 } from '@ui';
 import { TelegramBotInlineUi } from '@ui/TelegramBotInlineUI';
 import { DropSessionError } from '@utils/Error/DropSessionError';
 import { getConfig } from 'ConfigProvider';
+import { IntroScenario } from '@scenarios/IntroScenario';
+import { DemoBaseScenario } from '@scenarios/DemoBaseScenario';
+import { DemoBattleScenario } from '@scenarios/DemoBattleScenario';
+import { AbstractScenario } from '@scenarios/AbstractScenario';
 
 import { SessionState } from './SessionState';
 
@@ -17,6 +24,8 @@ class App {
   private ui: AbstractUI | AbstractSessionUI;
 
   private sessionStateMap: Map<string, SessionState> = new Map<string, SessionState>();
+
+  private dbService = new DBService();
 
   private async treeTraversal(state: SessionState): Promise<void> {
     try {
@@ -43,7 +52,7 @@ class App {
     this.sessionStateMap.delete(sessionId);
   }
 
-  private async runSession(
+  private async _runSession(
     sessionId: string,
     ui: AbstractUI,
     additionalInfo: AdditionalSessionInfo,
@@ -74,8 +83,62 @@ class App {
     }
   }
 
+  private async runSession(
+    sessionId: string,
+    ui: AbstractUI,
+    additionalInfo: AdditionalSessionInfo,
+  ): Promise<void> {
+    try {
+      if (this.sessionStateMap.get(sessionId) != null) {
+        await ui.sendToUser('У тебя уже начата игровая сессия. Если хочешь начать с начала нажми на кнопку "Finish", а затем "Start" в закрепленном сообщении');
+        return;
+      }
+      const state: SessionState = {
+        sessionId,
+        additionalInfo,
+        player: new Player(),
+        currentInteraction: new SimpleInteraction({ ui, message: 'Hi\n' }),
+        finishSession: this.closeSession.bind(null, sessionId, ui),
+        status: 'ALIVE',
+        ui,
+        persistActionsContainers: [],
+      };
+      this.sessionStateMap.set(sessionId, state);
+
+      const scenarioMap = new Map<number, AbstractScenario>();
+
+      const cursor = new Cursor(this.dbService);
+
+      const onChangeScenario = async (scenarioId: number) => {
+        const nextScenario = scenarioMap.get(scenarioId);
+        if (nextScenario != null) {
+          nextScenario.run();
+        } else if (scenarioId === 900) {
+          const newScenario = new DemoBaseScenario(cursor, state, { onChangeScenario, onExit: state.finishSession });
+          scenarioMap.set(newScenario.scenarioId, newScenario);
+          await newScenario.init();
+          newScenario.run();
+        } else if (scenarioId === 901) {
+          const newScenario = new DemoBattleScenario(cursor, state, { onChangeScenario, onExit: state.finishSession });
+          scenarioMap.set(newScenario.scenarioId, newScenario);
+          await newScenario.init();
+          newScenario.run();
+        }
+      };
+
+      const introScenario = new IntroScenario(cursor, state, { onChangeScenario, onExit: state.finishSession });
+      scenarioMap.set(introScenario.scenarioId, introScenario);
+
+      await introScenario.init();
+      introScenario.run();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   private onExit(event: string | number) {
     void this.ui.onExit(Array.from(this.sessionStateMap.keys()), event.toString());
+    void this.dbService.destructor();
   }
 
   constructor(type: 'NODE' | 'TELEGRAM' | 'TELEGRAM_INLINE') {

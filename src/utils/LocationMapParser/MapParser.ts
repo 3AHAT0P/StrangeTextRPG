@@ -1,15 +1,15 @@
 /* eslint-disable no-await-in-loop */
 import { createCanvas, loadImage, ImageData } from 'node-canvas';
 
+import { DBService } from '@db/DBService';
 import { InteractionModel } from '@db/entities/Interaction';
 import { isThroughable, MapSpotModel, MapSpotSubtype } from '@db/entities/MapSpot';
 import { NPCModel, NPCSubtype } from '@db/entities/NPC';
-import { BattleModel, BattleDifficulty, parseBattleSubtype, isBattleSubtype } from '@db/entities/Battle';
+import { BattleModel, parseBattleSubtype, isBattleSubtype } from '@db/entities/Battle';
 import { MOVE_ACTIONS } from '@locations/AreaMap';
 import { Matcher } from '@utils/Matcher';
 
 import { Palette } from './Palette';
-import { DBService } from './DBService';
 
 export type MatcherContext = { currentSpot: MapSpotModel, subtype: MapSpotSubtype };
 
@@ -159,7 +159,7 @@ export class MapParser {
     await this.loadImageData();
 
     this._mapSpotSubtypeMatcher
-      .addMatcher((event) => (event.startsWith('BATTLE_') ? 'BATTLE' : null));
+      .addMatcher((event) => (event.startsWith('BATTLE#') ? 'BATTLE' : null));
 
     this._mapSpotSubtypeMatcher
       .on('BATTLE', this._createBattle.bind(this))

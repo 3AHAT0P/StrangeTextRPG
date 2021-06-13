@@ -27,6 +27,8 @@ export class MapSpotNeo4jRepository extends AbstractNeo4jRepository<
 
   protected findRelatedActionsQuery: string = 'MATCH (a:MapSpot)-[r:Action]->(b) WHERE id(a) = $id RETURN r';
 
+  public readonly type: string = 'MapSpot';
+
   protected buildFindByPropsQuery(params: Partial<MapSpotProperties>): string {
     const keys = Object.keys(params);
     let query = 'MATCH (a:MapSpot';

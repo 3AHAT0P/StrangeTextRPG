@@ -27,6 +27,8 @@ export abstract class AbstractNeo4jRepository<
 
   protected findByIdQuery: string = 'MATCH (a) WHERE id(a) = $id RETURN a';
 
+  public abstract readonly type: string;
+
   protected extractFromNode(node: Node | Relationship): AbstractEntity {
     if (!isNode(node)) throw new Error('Record isn\'t Node');
 
@@ -52,7 +54,7 @@ export abstract class AbstractNeo4jRepository<
     this.modelClass = modelClass;
   }
 
-  public fromRecord(node: Node): TModel {
+  public fromRecord(node: Node | Relationship): TModel {
     const data = this.extractFromNode(node);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return

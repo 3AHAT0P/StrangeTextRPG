@@ -29,6 +29,8 @@ export class ActionNeo4jRepository extends AbstractNeo4jRepository<typeof Action
 
   protected findByIdQuery: string = 'MATCH ()-[r:Action]->() WHERE id(r) = $id RETURN r';
 
+  public readonly type: string = 'Action';
+
   protected extractFromNode(node: Relationship): ActionEntity {
     if (!isRelationship(node)) throw new Error('Record isn\'t Relationship');
     if (!isActionRelationship(node)) throw new Error('Record isn\'t ActionRelationship');

@@ -1,13 +1,16 @@
 import {
-  Node, Relationship, Record as Neo4jRecord, Integer,
+  Driver, Node, Relationship, Record as Neo4jRecord, Integer,
 } from 'neo4j-driver';
 
 import {
-  isNode, isRelationship, isInt, Session,
+  isNode as _isNode, isRelationship as _isRelationship, isInt, Session,
 } from 'neo4j-driver-core';
 
+const isNode: (value: any) => value is Node = _isNode as any;
+const isRelationship: (value: any) => value is Relationship = _isRelationship as any;
+
 export {
-  Node, Relationship, Neo4jRecord, Integer, isNode, isRelationship, isInt, Session,
+  Node, Relationship, Neo4jRecord, Integer, isNode, isRelationship, isInt, Driver, Session,
 };
 
 export const getIntValue = (value: number | Integer): number => (
