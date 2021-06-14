@@ -75,7 +75,7 @@ export class StrongBonesBodyArmor extends BodyArmor {
   public readonly armor = 0.1;
 }
 
-export class CanvasCoatBodyArmor extends Armor {
+export class CanvasCoatBodyArmor extends BodyArmor {
   protected readonly baseName = 'поношеная куртка из грубой парусины';
 
   public readonly type = 'COAT';

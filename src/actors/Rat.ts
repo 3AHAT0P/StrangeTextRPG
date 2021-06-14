@@ -126,10 +126,7 @@ export class Rat extends AbstractActor {
       for (const [constructor, ...amount] of lootMeta) loot.push(...constructor.create(amount));
 
       const rewards = loot.map((item: AbstractItem) => {
-        if (item instanceof Weapon) this.inventory.collectWeapon(item);
-        if (item instanceof Armor) this.inventory.collectArmor(item);
-        if (item instanceof Miscellaneous) this.inventory.collectMiscellaneous(item);
-        if (item instanceof Potion) this.inventory.collectPotion(item);
+        player.inventory.collectItem(item);
         return item.name;
       });
 

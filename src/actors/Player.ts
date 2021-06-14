@@ -9,7 +9,7 @@ import {
   LegsArmor,
   FeetArmor,
   CanvasCoatBodyArmor,
-  CanvasTrousersLegsArmor,
+  CanvasTrousersLegsArmor, Armor, InHandArmor,
 } from '@armor';
 import { FistWeapon, KnifeWeapon, Weapon } from '@weapon';
 import { Inventory } from '@actors/Inventory';
@@ -17,6 +17,7 @@ import { Inventory } from '@actors/Inventory';
 import {
   AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions,
 } from './AbstractActor';
+import {AbstractItem} from '@actors/AbstractItem';
 
 export const PlayerDeclensionOfNouns = {
   nominative: 'ты',
@@ -35,10 +36,11 @@ interface PeopleEquipmentSlots {
   body?: BodyArmor; // Chests, cuirass, jacket, coat
   hands?: HandsArmor; // Gloves, Gauntlets
   fingers?: FingersArmor; // Ring
-  leftHand?: Weapon; // Shield
+  leftHand?: Weapon | InHandArmor; // Shield
   rightHand: Weapon; // Knife, sword, ...
   legs?: LegsArmor; // trousers
   feet?: FeetArmor; // Boots, sabatons
+  [key: string]: AbstractItem | undefined;
 }
 
 export class Player extends AbstractActor {
@@ -103,5 +105,56 @@ export class Player extends AbstractActor {
     else this.inventory.wearingEquipment.rightHand = weapon;
 
     return true;
+  }
+
+  public compareWithEquipped(fullName: string, itemType: 'armor' | 'weapon'): string {
+    if (itemType === 'armor') {
+      const fromInventory = this.inventory.armors.find((item: Armor) => item.name === fullName);
+      if (fromInventory == null) {
+        console.log('Player::compareWithEquipped', 'fromInventory is null');
+        return 'Упс...что-то сломалось';
+      }
+      let fromEquipment;
+      if (fromInventory instanceof BodyArmor) fromEquipment = this.inventory.wearingEquipment.body;
+      else if (fromInventory instanceof HeadArmor) fromEquipment = this.inventory.wearingEquipment.head;
+      else if (fromInventory instanceof NeckArmor) fromEquipment = this.inventory.wearingEquipment.neck;
+      else if (fromInventory instanceof HandsArmor) fromEquipment = this.inventory.wearingEquipment.hands;
+      else if (fromInventory instanceof FingersArmor) fromEquipment = this.inventory.wearingEquipment.fingers;
+      else if (fromInventory instanceof LegsArmor) fromEquipment = this.inventory.wearingEquipment.legs;
+      else if (fromInventory instanceof FeetArmor) fromEquipment = this.inventory.wearingEquipment.feet;
+      else if (fromInventory instanceof InHandArmor) fromEquipment = this.inventory.wearingEquipment.leftHand;
+      const equippedStats = fromEquipment == null ? 'На вас ничего не надето.' : `Надето\n${this.inventory.getStats(fromEquipment)}`;
+      return `${equippedStats}\n${this.inventory.getStats(fromInventory)}`;
+    }
+    if (itemType === 'weapon') {
+      const fromInventory = this.inventory.weapons.find((item: Weapon) => item.name === fullName);
+      const fromEquipment = this.wearingEquipment.rightHand;
+      if (fromInventory == null) {
+        console.log('Player::compareWithEquipped', 'fromInventory is null');
+        return 'Упс...что-то сломалось';
+      }
+      const equippedStats = fromEquipment == null ? 'На вас ничего не надето.' : `Надето\n${this.inventory.getStats(fromEquipment)}`;
+      return `${equippedStats}\n${this.inventory.getStats(fromInventory)}`;
+    }
+    return '';
+  }
+
+  public equipArmor(armor: Armor): void {
+    let slot;
+    if (armor instanceof BodyArmor) slot = 'body';
+    else if (armor instanceof HeadArmor) slot = 'head';
+    else if (armor instanceof NeckArmor) slot = 'neck';
+    else if (armor instanceof HandsArmor) slot = 'hands';
+    else if (armor instanceof FingersArmor) slot = 'fingers';
+    else if (armor instanceof LegsArmor) slot = 'legs';
+    else if (armor instanceof FeetArmor) slot = 'feet';
+    else if (armor instanceof InHandArmor) slot = 'leftHand';
+    else {
+      console.log('Player::equipArmor', 'Slot is null');
+      return;
+    }
+    this.inventory.dropItem(armor.name, 'armor');
+    const equippedItem = this.inventory.wearingEquipment[slot];
+    if (equippedItem != null) this.inventory.collectItem(equippedItem);
   }
 }

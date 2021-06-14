@@ -13,7 +13,7 @@ export interface AbstractItemContructor<T extends AbstractItem> {
   new(rarity: ItemRarity): T;
   create(this: AbstractItemContructor<T>, amount: [number, number]): T[];
 }
-
+// TODO add description
 export abstract class AbstractItem {
   public static rarityChance: Array<[ItemRarity, number]> = [
     ['DIVINE', 0.02],
