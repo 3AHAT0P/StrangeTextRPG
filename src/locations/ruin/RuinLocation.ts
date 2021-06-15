@@ -20,7 +20,7 @@ import { AbstractLocation } from '../AbstractLocation';
 import { map, mapSize, additionalMapInfo } from './map';
 import { descriptions } from '../LocationDescriptions';
 import {AbstractItem} from '@actors/AbstractItem';
-import {Miscellaneous} from '@actors/miscellaneous';
+import { Miscellaneous } from '@actors/miscellaneous';
 
 export const RUIN_LOCATION_ACTIONS = {
   PLAYER_DIED: 'onPlayerDied',
@@ -222,7 +222,7 @@ export class RuinLocation extends AbstractLocation {
           selectedSection = null;
           continue;
         }
-        await this.ui.sendToUser(`Был выбран ${choosedItem}`);
+        await this.ui.sendToUser(choosedItem);
         choosedActionOnItem = await this.ui.interactWithUser(
           new ActionsLayout({ columns: 1 })
             .addRow('Выбросить')
@@ -344,7 +344,7 @@ export class RuinLocation extends AbstractLocation {
               await this.ui.sendToUser(
                 'Крыса, как крыса. Но в боку у нее торчит нож. О, теперь будет чем отбиваться от этих тварей!',
               );
-              player.equipWeapon(new KnifeWeapon());
+              player.inventory.collectItem(new KnifeWeapon());
             };
           }
         } else if (currentSpot.type === 'MERCHANT') {

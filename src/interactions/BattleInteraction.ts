@@ -68,7 +68,7 @@ export class BattleInteraction extends AbstractInteraction {
     while (!this.battleFinished()) {
       const actions: Set<ACTION_VALUES> = new Set([ACTIONS.attack, ACTIONS.examine]);
 
-      if (this._player.healthPoitions > 0) actions.add(ACTIONS.useHealthPoition);
+      if (this._player.inventory.healthPotions > 0) actions.add(ACTIONS.useHealthPoition);
 
       if (choosedAction === null) {
         choosedAction = await this.ui.interactWithUser(new ActionsLayout<ACTION_VALUES>().addRow(...actions));

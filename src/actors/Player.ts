@@ -9,15 +9,20 @@ import {
   LegsArmor,
   FeetArmor,
   CanvasCoatBodyArmor,
-  CanvasTrousersLegsArmor, Armor, InHandArmor,
+  CanvasTrousersLegsArmor,
+  Armor,
+  InHandArmor,
 } from '@armor';
-import { FistWeapon, KnifeWeapon, Weapon } from '@weapon';
+import { FistWeapon, Weapon } from '@weapon';
 import { Inventory } from '@actors/Inventory';
+import { AbstractItem } from '@actors/AbstractItem';
 
 import {
-  AbstractActor, AbstractActorOptions, RewardBag, TypeByDeclensionOfNounOptions,
+  AbstractActor,
+  AbstractActorOptions,
+  RewardBag,
+  TypeByDeclensionOfNounOptions,
 } from './AbstractActor';
-import {AbstractItem} from '@actors/AbstractItem';
 
 export const PlayerDeclensionOfNouns = {
   nominative: 'ты',
@@ -48,7 +53,7 @@ export class Player extends AbstractActor {
 
   public inventory: Inventory<PeopleEquipmentSlots>;
 
-  get armor(): number {
+  public get armor(): number {
     const { wearingEquipment } = this.inventory;
     return (wearingEquipment.head?.armor ?? 0)
       + (wearingEquipment.body?.armor ?? 0)
@@ -57,17 +62,19 @@ export class Player extends AbstractActor {
       + (wearingEquipment.feet?.armor ?? 0);
   }
 
-  get attackDamage(): number { return this.inventory.wearingEquipment.rightHand?.attackDamage ?? 0; }
+  public get attackDamage(): number { return this.inventory.wearingEquipment.rightHand?.attackDamage ?? 0; }
 
-  get criticalChance(): number { return this.inventory.wearingEquipment.rightHand?.criticalChance ?? 0; }
+  public get criticalChance(): number { return this.inventory.wearingEquipment.rightHand?.criticalChance ?? 0; }
 
-  get criticalDamageModifier(): number {
+  public get criticalDamageModifier(): number {
     return this.inventory.wearingEquipment.rightHand?.criticalDamageModifier ?? 0;
   }
 
-  get accuracy(): number { return this.inventory.wearingEquipment.rightHand?.accuracy ?? 0; }
+  public get accuracy(): number { return this.inventory.wearingEquipment.rightHand?.accuracy ?? 0; }
 
   public get wearingEquipment(): PeopleEquipmentSlots { return this.inventory.wearingEquipment; }
+
+  public get gold(): number { return this.inventory.gold; }
 
   constructor(options: AbstractActorOptions = {}) {
     super(options);
@@ -77,10 +84,10 @@ export class Player extends AbstractActor {
     this.inventory = new Inventory<PeopleEquipmentSlots>({
       defaultEquipment: {
         body: new CanvasCoatBodyArmor(),
-        // TODO set rightHand equal to a FistWeapon as it was before
-        rightHand: new KnifeWeapon(),
+        rightHand: new FistWeapon(),
         legs: new CanvasTrousersLegsArmor(),
       },
+      // TODO remove
       gold: 100,
     });
   }
@@ -101,9 +108,16 @@ export class Player extends AbstractActor {
   }
 
   public equipWeapon(weapon: Weapon, hand: 'LEFT' | 'RIGHT' = 'RIGHT'): boolean {
-    if (hand === 'LEFT') this.inventory.wearingEquipment.leftHand = weapon;
-    else this.inventory.wearingEquipment.rightHand = weapon;
-
+    let equippedItem;
+    if (hand === 'LEFT') {
+      equippedItem = this.inventory.wearingEquipment.leftHand;
+      this.inventory.wearingEquipment.leftHand = weapon;
+    } else {
+      equippedItem = this.inventory.wearingEquipment.rightHand;
+      this.inventory.wearingEquipment.rightHand = weapon;
+    }
+    this.inventory.dropItem(weapon.name, 'weapon');
+    if (equippedItem != null) this.inventory.collectItem(equippedItem);
     return true;
   }
 
@@ -156,5 +170,21 @@ export class Player extends AbstractActor {
     this.inventory.dropItem(armor.name, 'armor');
     const equippedItem = this.inventory.wearingEquipment[slot];
     if (equippedItem != null) this.inventory.collectItem(equippedItem);
+  }
+
+  public useHealthPotion(name: string): false | number {
+    if (this.inventory.healthPotions === 0) return false;
+
+    const potion = this.inventory.getPotionByName(name);
+    if (potion == null) {
+      console.log('Player::useHealthPotion', 'Potion is null');
+      return false;
+    }
+    this.healthPoints += potion.quantity;
+    this.inventory.dropItem(name, 'potion');
+
+    if (this.healthPoints > this.maxHealthPoints) this.healthPoints = this.maxHealthPoints;
+
+    return potion.quantity;
   }
 }

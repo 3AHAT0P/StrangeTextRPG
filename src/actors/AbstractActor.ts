@@ -9,10 +9,10 @@ export interface AttackResult {
   isMiss: boolean;
 }
 
-export interface Bag {
-  healthPoitions: number;
-}
-
+// export interface Bag {
+//   healthPoitions: number;
+// }
+//
 export interface RewardBag {
   gold?: number;
 }
@@ -56,9 +56,9 @@ export abstract class AbstractActor {
 
   protected abstract accuracy: number;
 
-  protected _gold: number = 0;
+  // protected _gold: number = 0;
 
-  protected _bag: Bag = { healthPoitions: 0 };
+  // protected _bag: Bag = { healthPoitions: 0 };
 
   protected abstract inventory: AbstractInventory;
 
@@ -73,14 +73,14 @@ export abstract class AbstractActor {
       accuracy: this.accuracy,
     };
   }
+  //
+  // get gold(): number {
+  //   return this._gold;
+  // }
 
-  get gold(): number {
-    return this._gold;
-  }
-
-  get healthPoitions(): number {
-    return this._bag.healthPoitions;
-  }
+  // get healthPoitions(): number {
+  //   return this._bag.healthPoitions;
+  // }
 
   public get isAlive(): boolean { return this.healthPoints > 0; }
 
@@ -121,38 +121,38 @@ export abstract class AbstractActor {
     };
   }
 
-  public useHealthPoition(): false | number {
-    if (this._bag.healthPoitions === 0) return false;
-
-    this._bag.healthPoitions -= 1;
-    const healVolume = getRandomIntInclusive(2, 5);
-    this.healthPoints += healVolume;
-
-    if (this.healthPoints > this.maxHealthPoints) this.healthPoints = this.maxHealthPoints;
-
-    return healVolume;
-  }
-
-  public exchangeGoldToItem(goldCount: number, bag: Partial<Bag>): boolean {
-    if (this._gold < goldCount) return false;
-
-    this._gold -= goldCount;
-    for (const [item, count] of Object.entries(bag) as Array<[keyof Bag, number]>) {
-      this._bag[item] += count;
-    }
-
-    return true;
-  }
+  // public useHealthPoition(): false | number {
+  //   if (this._bag.healthPoitions === 0) return false;
+  //
+  //   this._bag.healthPoitions -= 1;
+  //   const healVolume = getRandomIntInclusive(2, 5);
+  //   this.healthPoints += healVolume;
+  //
+  //   if (this.healthPoints > this.maxHealthPoints) this.healthPoints = this.maxHealthPoints;
+  //
+  //   return healVolume;
+  // }
+  //
+  // public exchangeGoldToItem(goldCount: number, bag: Partial<Bag>): boolean {
+  //   if (this._gold < goldCount) return false;
+  //
+  //   this._gold -= goldCount;
+  //   for (const [item, count] of Object.entries(bag) as Array<[keyof Bag, number]>) {
+  //     this._bag[item] += count;
+  //   }
+  //
+  //   return true;
+  // }
 
   public getReward(player: AbstractActor): string { return ''; } // @TODO: Update return type when Inventory will be completed
-
-  public collectRewards(): void {
-
-  }
+  //
+  // public collectRewards(): void {
+  //
+  // }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public collectReward(reward: RewardBag): void { /* pass */ }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public equipWeapon(weapon: Weapon, hand: 'LEFT' | 'RIGHT' = 'RIGHT'): boolean { return true; }
+  public equipWeapon(weapon: Weapon, hand: 'LEFT' | 'RIGHT' = 'RIGHT'): void { /* pass */ }
 }

@@ -53,10 +53,12 @@ export class Inventory<T> extends AbstractInventory {
   constructor({ defaultEquipment, gold }: { defaultEquipment: T, gold?: number }) {
     super();
     this._wearingEquipment = defaultEquipment;
-    if (gold != null) this._gold = gold;
+    this._gold = gold ?? 0;
   }
 
   public get wearingEquipment(): T { return this._wearingEquipment; }
+
+  public get gold(): number { return this._gold; }
 
   public getStats(item: AbstractItem): string {
     if (item instanceof Armor) {

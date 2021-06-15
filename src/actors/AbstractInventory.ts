@@ -1,5 +1,5 @@
-import {Armor, BrokenShieldArmor, CanvasCoatBodyArmor, CanvasTrousersLegsArmor, StrongBonesBodyArmor} from '@armor';
-import {RustedSwordWeapon, Weapon} from '@weapon';
+import { Armor } from '@armor';
+import { Weapon } from '@weapon';
 import { AbstractItem } from '@actors/AbstractItem';
 import { Miscellaneous } from '@actors/miscellaneous';
 import { Potion } from '@actors/potions';
@@ -7,12 +7,11 @@ import { Potion } from '@actors/potions';
 export abstract class AbstractInventory {
   protected _gold: number = 0;
 
-  // TODO make it empty as it was before
-  protected _armors: Armor[] = [new StrongBonesBodyArmor(), new CanvasTrousersLegsArmor(), new BrokenShieldArmor()];
+  protected _armors: Armor[] = [];
 
-  protected _weapons: Weapon[] = [new RustedSwordWeapon()];
+  protected _weapons: Weapon[] = [];
 
-  protected _potions: AbstractItem[] = [];
+  protected _potions: Potion[] = [];
 
   protected _miscellaneous: Miscellaneous[] = [];
 
@@ -25,6 +24,8 @@ export abstract class AbstractInventory {
   public get potions(): AbstractItem[] { return this._potions; }
 
   public get miscellaneous(): Miscellaneous[] { return this._miscellaneous; }
+
+  public get healthPotions(): number { return this._potions.filter((item) => item.type === 'HEALTH').length; }
 
   public collectGold(amount: number): void { this._gold += amount; }
 
@@ -55,5 +56,9 @@ export abstract class AbstractInventory {
 
   public getWeaponByName(fullName: string): Weapon | undefined {
     return this._weapons.find((item) => item.name === fullName);
+  }
+
+  public getPotionByName(fullName: string): Potion | undefined {
+    return this._potions.find((item) => item.name === fullName);
   }
 }
