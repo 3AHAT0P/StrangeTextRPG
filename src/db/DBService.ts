@@ -83,4 +83,12 @@ export class DBService {
 
     return repo.fromRecord(record);
   }
+
+  public async getRelatedActions(id: number) {
+    const result = await this._session.readTransaction(
+      (transaction) => transaction.run('MATCH (a)-[r:Action]->(b) WHERE id(a) = $id RETURN r', { id }),
+    );
+
+    return result.records.map((item) => this.repositories.actionRepo.fromRecord(item.get(0)));
+  }
 }

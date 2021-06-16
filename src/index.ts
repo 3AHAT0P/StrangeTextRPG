@@ -19,6 +19,7 @@ import { DemoBattleScenario } from '@scenarios/DemoBattleScenario';
 import { AbstractScenario } from '@scenarios/AbstractScenario';
 
 import { SessionState } from './SessionState';
+import { DemoMerchantScenario } from '@scenarios/DemoMerchantScenario';
 
 class App {
   private ui: AbstractUI | AbstractSessionUI;
@@ -120,6 +121,13 @@ class App {
           newScenario.run();
         } else if (scenarioId === 901) {
           const newScenario = new DemoBattleScenario(cursor, state, { onChangeScenario, onExit: state.finishSession });
+          scenarioMap.set(newScenario.scenarioId, newScenario);
+          await newScenario.init();
+          newScenario.run();
+        } else if (scenarioId === 902) {
+          const newScenario = new DemoMerchantScenario(
+            cursor, state, { onChangeScenario, onExit: state.finishSession },
+          );
           scenarioMap.set(newScenario.scenarioId, newScenario);
           await newScenario.init();
           newScenario.run();

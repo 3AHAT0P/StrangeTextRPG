@@ -40,7 +40,7 @@ export class Cursor {
 
   getActions(): Promise<ActionModel[]> {
     const { id } = this.getNode();
-    return this._dbService.repositories.interactionRepo.getRelatedActions(id);
+    return this._dbService.getRelatedActions(id);
   }
 
   async getNextNode(action: ActionModel): Promise<OneOFNodeModel> {
