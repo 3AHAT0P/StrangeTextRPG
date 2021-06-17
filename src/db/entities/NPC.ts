@@ -7,7 +7,7 @@ export interface NPCEntity extends AbstractEntity {
   subtype: NPCSubtype;
 }
 
-export class NPCModel extends AbstractModel implements NPCEntity {
+export class NPCModel extends AbstractModel {
   public readonly NPCId: number;
 
   public readonly subtype: NPCSubtype;

@@ -1,4 +1,3 @@
-// eslint-disable-next-line max-classes-per-file
 import EventEmitter from 'events';
 import { Telegraf, Markup } from 'telegraf';
 import {

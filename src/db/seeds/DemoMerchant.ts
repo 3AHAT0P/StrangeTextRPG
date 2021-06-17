@@ -22,6 +22,12 @@ export const demoMerchantSeedRun = async (dbService: DBService): Promise<DemoMer
     subtype: 'MERCHANT',
   });
 
+  const i0 = await interactionRepo.create({
+    ...baseInfo,
+    interactionId: 0,
+    text: '⚙️ Завернув за угол, ты увидел человека за прилавком со всякими склянками.',
+  });
+
   const i1 = await interactionRepo.create({
     ...baseInfo,
     interactionId: 1,
@@ -31,7 +37,7 @@ export const demoMerchantSeedRun = async (dbService: DBService): Promise<DemoMer
   const i2 = await interactionRepo.create({
     ...baseInfo,
     interactionId: 2,
-    text: '💬 [Торговец]: Извини, за столь скудный выбор.\n{{printGoodList .goods}}',
+    text: '💬 [Торговец]: Извини, за столь скудный выбор.\n{{#each goods}}{{trueIndex @index}}: {{this.displayName}} = {{this.price}} золотых (📀)\n{{/each}}',
   });
 
   const i3 = await interactionRepo.create({
@@ -43,13 +49,13 @@ export const demoMerchantSeedRun = async (dbService: DBService): Promise<DemoMer
   const i4 = await interactionRepo.create({
     ...baseInfo,
     interactionId: 4,
-    text: '💬 [Торговец]: К сожалению, у {{actorType .player (declension=\'genitive\')}} не хватает золота.',
+    text: '💬 [Торговец]: К сожалению, у {{actorType player declension="genitive"}} не хватает золота.',
   });
 
   const i5 = await interactionRepo.create({
     ...baseInfo,
     interactionId: 5,
-    text: '⚙️ У {{actorType .player (declension=\'genitive\')}} осталось {{get .player \'gold\'}} золота',
+    text: '⚙️ У {{actorType player declension="genitive"}} осталось {{get player "gold"}} золота (📀)',
   });
 
   const i6 = await interactionRepo.create({
@@ -61,9 +67,18 @@ export const demoMerchantSeedRun = async (dbService: DBService): Promise<DemoMer
   await actionRepo.create({
     ...baseInfo,
     from: merchant1.id,
-    to: i1.id,
+    to: i0.id,
     text: 'Talk',
     type: 'AUTO',
+  });
+
+  await actionRepo.create({
+    ...baseInfo,
+    from: i0.id,
+    to: i1.id,
+    text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Привет!',
+    type: 'CUSTOM',
+    isPrintable: true,
   });
 
   await actionRepo.create({
@@ -102,8 +117,9 @@ export const demoMerchantSeedRun = async (dbService: DBService): Promise<DemoMer
     ...baseInfo,
     from: i3.id,
     to: i6.id,
-    text: '💬 [{{actorType .player (declension=\'nominative\', capitalised)}}]: Ничего, спасибо.',
+    text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Ничего, спасибо.',
     type: 'CUSTOM',
+    isPrintable: true,
   });
 
   await actionRepo.create({
@@ -124,7 +140,7 @@ export const demoMerchantSeedRun = async (dbService: DBService): Promise<DemoMer
 
   return <const>{
     async inboundOnStart(connect: ConnectorTo) {
-      await connect(merchant1, '💬 [{{actorType .player (declension=\'nominative\', capitalised)}}]: Привет!');
+      await connect(merchant1, 'Попробовать демо торговца');
     },
     async outboundToReturn(returnInteraction: AbstractModel) {
       await actionRepo.create({

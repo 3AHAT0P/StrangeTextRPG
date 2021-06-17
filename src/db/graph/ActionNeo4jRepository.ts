@@ -8,6 +8,7 @@ import { AbstractProperties, AbstractNeo4jRepository, DBConnectionOptions } from
 export interface ActionProperties extends AbstractProperties {
   text: string;
   type: 'SYSTEM' | 'AUTO' | 'CUSTOM';
+  isPrintable?: boolean;
 }
 
 export const isActionRelationship = <T extends Integer>(
@@ -43,6 +44,7 @@ export class ActionNeo4jRepository extends AbstractNeo4jRepository<typeof Action
       toInteractionId: node.end.toNumber(),
       text: node.properties.text,
       type: node.properties.type,
+      isPrintable: node.properties.isPrintable ?? false,
     };
   }
 
@@ -54,6 +56,7 @@ export class ActionNeo4jRepository extends AbstractNeo4jRepository<typeof Action
     params: ActionProperties & { from: number, to: number }, options?: DBConnectionOptions,
   ): Promise<ActionModel> {
     const { from, to, ...otherParams } = params;
+    otherParams.isPrintable = otherParams.isPrintable ?? false;
     const result = await this.runQuery(this.createQuery, { from, to, params: otherParams }, true, options);
 
     return this.fromRecord(result.records[0].get(0));

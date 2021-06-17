@@ -1,6 +1,8 @@
 import { Cursor } from '@db/Cursor';
 import { OneOFNodeModel, InteractionModel } from '@db/entities';
+import { ActionModel } from '@db/entities/Action';
 import { ActionsLayout } from '@ui';
+import { Template } from '@utils/Template';
 import { SessionState } from 'SessionState';
 
 interface ScenarioCallbacks {
@@ -21,39 +23,57 @@ export abstract class AbstractScenario {
 
   public get scenarioId(): number { return this._scenarioId; }
 
-  protected async _runner() {
-    if (this.currentNode == null) {
-      console.log('AbstractScenario::_runner', 'currentNode is null');
-      return;
-    }
+  private async _run(): Promise<void> {
+    if (!(await this._beforeRun())) return;
+    await this._runner();
+    await this._afterRun();
+  }
 
-    if (this.currentNode instanceof InteractionModel) await this._state.ui.sendToUser(this.currentNode.text);
+  protected async _beforeRun(): Promise<boolean> {
+    if (this.currentNode == null) {
+      console.log('AbstractScenario::_beforeRun', 'currentNode is null');
+      return false;
+    }
+    return true;
+  }
+
+  protected async _runner(): Promise<void> {
+    if (this.currentNode instanceof InteractionModel) await this._sendTemplateToUser(this.currentNode.text);
 
     const actions = await this._cursor.getActions();
     if (actions.length === 1 && actions[0].type === 'AUTO') {
       this.currentNode = await this._cursor.getNextNode(actions[0]);
     } else {
-      const actionText = await this._state.ui.interactWithUser(
-        new ActionsLayout().addRow(...actions.map((action) => action.text)),
-      );
-
-      const choosedAction = actions.find((action) => action.text === actionText);
-
-      if (choosedAction == null) throw new Error('choosedAction is null');
+      const choosedAction = await this._interactWithUser(actions, {});
       this.currentNode = await this._cursor.getNextNode(choosedAction);
     }
-
-    this._runNextIteration();
   }
 
-  protected _runNextIteration() {
+  protected async _afterRun(): Promise<void> {
     if (this.currentNode == null) {
-      console.log('AbstractScenario::_runNextIteration', 'currentNode is null');
+      console.log('AbstractScenario::_afterRun', 'currentNode is null');
       return;
     }
     if (this.currentNode.scenarioId !== this._scenarioId) {
       this._callbacks.onChangeScenario(this.currentNode.scenarioId);
-    } else setTimeout(this._runner, 16);
+    } else setTimeout(this._run, 16);
+  }
+
+  protected async _sendTemplateToUser(template: Template, context: any = this._state): Promise<void> {
+    await this._state.ui.sendToUser(template.useContext(context).value);
+  }
+
+  protected async _interactWithUser(actions: ActionModel[], context: any = this._state): Promise<ActionModel> {
+    const actionText = await this._state.ui.interactWithUser(
+      new ActionsLayout().addRow(...actions.map(({ text }) => text.useContext(context).value)),
+    );
+
+    const choosedAction = actions.find(({ text }) => text.isEqualTo(actionText));
+
+    if (choosedAction == null) throw new Error('choosedAction is null');
+    if (choosedAction.isPrintable) await this._sendTemplateToUser(choosedAction.text, context);
+
+    return choosedAction;
   }
 
   constructor(cursor: Cursor, state: SessionState, callbacks: ScenarioCallbacks) {
@@ -61,10 +81,10 @@ export abstract class AbstractScenario {
     this._state = state;
     this._callbacks = callbacks;
 
-    this._runner = this._runner.bind(this);
+    this._run = this._run.bind(this);
   }
 
-  public async init() {
+  public async init(): Promise<void> {
     if (this._cursor.isInitiated) {
       const node = this._cursor.getNode();
       if (node.scenarioId === this._scenarioId && node.locationId === 1) {
@@ -77,8 +97,8 @@ export abstract class AbstractScenario {
     this.currentNode = this._cursor.getNode();
   }
 
-  public run() {
+  public run(): void {
     this.currentNode = this._cursor.getNode();
-    void this._runner();
+    void this._run();
   }
 }

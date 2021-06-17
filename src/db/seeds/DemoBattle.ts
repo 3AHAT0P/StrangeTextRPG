@@ -82,7 +82,7 @@ export const demoBattleSeedRun = async (dbService: DBService): Promise<DemoBattl
 
   return <const>{
     async inboundOnStart(connect: ConnectorTo) {
-      await connect(i1, 'Попробовать демо сюжет');
+      await connect(b1, 'Попробовать демо бой');
     },
     async outboundToReturn(returnInteraction: AbstractModel) {
       await actionRepo.create({
