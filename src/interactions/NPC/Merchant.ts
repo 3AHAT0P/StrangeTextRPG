@@ -2,6 +2,7 @@ import {
   AbstractInteraction,
   SimpleInteraction, Interaction,
 } from '@interactions';
+import { AbstractItem } from '@actors/AbstractItem';
 
 import { AbstractNPCOptions, AbstractNPC } from './AbstractNPC';
 
@@ -10,6 +11,7 @@ export interface GoodItem {
   message: string;
   action: string;
   price: number;
+  item: AbstractItem;
 }
 
 export interface MerchantNPCOptions extends AbstractNPCOptions {
@@ -51,12 +53,14 @@ export class MerchantNPC extends AbstractNPC {
       const i3 = new Interaction({
         ui,
         async activate() {
-          const result = player.exchangeGoldToItem(goodItem.price, { [goodItem.name]: 1 });
+          const result = player.exchangeGoldToItem(goodItem.price, [goodItem.item]);
           if (!result) return notEnoughtMoneyInteraction;
+
+          const playerGold = player.inventory.gold;
 
           const i4 = new SimpleInteraction({
             ui,
-            message: `⚙️ У ${player.getType({ declension: 'genitive' })} осталось ${player.gold} золота`,
+            message: `⚙️ У ${player.getType({ declension: 'genitive' })} осталось ${playerGold} золота`,
           });
 
           i4.addAutoAction(i2);
@@ -64,7 +68,7 @@ export class MerchantNPC extends AbstractNPC {
           return i4;
         },
       });
-      i2.addAction(goodItem.action, i3);
+      i2.addAction(`${goodItem.action} ${goodItem.item.baseName}`, i3);
     }
 
     const epilogInteraction = new SimpleInteraction({ ui, message: '💬 [Торговец]: Приходи еще :)' });

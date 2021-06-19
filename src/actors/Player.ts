@@ -16,6 +16,7 @@ import {
 import { FistWeapon, Weapon } from '@weapon';
 import { Inventory } from '@actors/Inventory';
 import { AbstractItem } from '@actors/AbstractItem';
+import { HealthPotion, Potion } from '@actors/potions';
 
 import {
   AbstractActor,
@@ -87,8 +88,6 @@ export class Player extends AbstractActor {
         rightHand: new FistWeapon(),
         legs: new CanvasTrousersLegsArmor(),
       },
-      // TODO remove
-      gold: 100,
     });
   }
 
@@ -186,5 +185,31 @@ export class Player extends AbstractActor {
     if (this.healthPoints > this.maxHealthPoints) this.healthPoints = this.maxHealthPoints;
 
     return potion.quantity;
+  }
+
+  public usePotion(potion: Potion): false | number {
+    if (potion instanceof HealthPotion) {
+      if (this.inventory.healthPotions === 0) return false;
+
+      if (potion == null) {
+        console.log('Player::useHealthPotion', 'Potion is null');
+        return false;
+      }
+      this.healthPoints += potion.quantity;
+      this.inventory.dropItem(potion.baseName, 'potion');
+
+      if (this.healthPoints > this.maxHealthPoints) this.healthPoints = this.maxHealthPoints;
+
+      return potion.quantity;
+    }
+    return false;
+  }
+
+  public exchangeGoldToItem(goldCount: number, items: AbstractItem[]): boolean {
+    if (this.inventory.gold < goldCount) return false;
+
+    this.inventory.exchangeGold(goldCount);
+    items.forEach((item) => this.inventory.collectItem(item));
+    return true;
   }
 }

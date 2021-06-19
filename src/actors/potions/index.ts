@@ -10,6 +10,10 @@ export type HealthStatusEffects = 'RESTORE' | 'INCREASE' | 'REGENERATION';
 export type PotionStatusEffects = HealthStatusEffects;
 
 export abstract class Potion extends AbstractItem {
+  public abstract baseName: string;
+
+  public abstract description: string;
+
   public abstract type: PotionTypes;
 
   public abstract subtype: PotionSubtypes;
@@ -19,7 +23,9 @@ export abstract class Potion extends AbstractItem {
   public abstract quantity: number;
 }
 
-export class SmallHealthPotion extends Potion {
+export abstract class HealthPotion extends Potion {}
+
+export class SmallHealthPotion extends HealthPotion {
   public readonly baseName = 'малое зелье лечения';
 
   public readonly type = 'HEALTH';
@@ -29,4 +35,6 @@ export class SmallHealthPotion extends Potion {
   public readonly statusEffect = 'RESTORE';
 
   public readonly quantity = 2;
+
+  public readonly description = `Маленькая баночка с красным, мутным зельем.\nЕсли выпить, восстановит ${this.quantity} ОЗ`;
 }

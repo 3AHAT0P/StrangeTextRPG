@@ -1,6 +1,6 @@
 import { AbstractInventory } from '@actors/AbstractInventory';
 import { Weapon } from '@weapon';
-import { Armor, BodyArmor } from '@armor';
+import { Armor } from '@armor';
 import { AbstractItem } from '@actors/AbstractItem';
 
 const armorSubtypes = <const>{
@@ -9,42 +9,42 @@ const armorSubtypes = <const>{
 };
 
 const armorTypes = <const>{
-  HELMET: 'HELMET',
-  HOOD: 'HOOD',
-  HAT: 'HAT',
-  NECKLE: 'NECKLE',
-  GLOVES: 'GLOVES',
-  GAUNTLETS: 'GAUNTLETS',
-  RING: 'RING',
-  TROUSERS: 'TROUSERS',
-  BOOTS: 'BOOTS',
-  SABATONS: 'SABATONS',
-  SHIELD: 'SHIELD',
-  CHEST: 'CHEST',
-  CUIRASS: 'CUIRASS',
-  JACKET: 'JACKET',
-  COAT: 'COAT',
-  LEATHER: 'LEATHER',
-  SKELETON: 'SKELETON',
+  HELMET: 'Шлем',
+  HOOD: 'Капюшон',
+  HAT: 'Шляпа',
+  NECKLE: 'Ожерелье',
+  GLOVES: 'Перчатки',
+  GAUNTLETS: 'Латные перчатки',
+  RING: 'Кольцо',
+  TROUSERS: 'Брюки',
+  BOOTS: 'Ботинки',
+  SABATONS: 'Латные ботинки',
+  SHIELD: 'Щит',
+  CHEST: 'Нагрудник',
+  CUIRASS: 'Кираса',
+  JACKET: 'Пиджак',
+  COAT: 'Куртка',
+  LEATHER: 'Шкура',
+  SKELETON: 'Кости', // ?
 };
 
 const weaponTypes = <const>{
-  FIST: 'FIST',
-  KNIFE: 'KNIFE',
-  STONE: 'STONE',
-  SHIELD: 'SHIELD',
-  SWORD: 'SWORD',
-  AXE: 'AXE',
-  TEETH: 'TEETH',
-  PAWS: 'PAWS',
-  NONE: 'NONE',
+  FIST: 'Кулак',
+  KNIFE: 'Нож',
+  STONE: 'Камень',
+  SHIELD: 'Щит',
+  SWORD: 'Меч',
+  AXE: 'Топор',
+  TEETH: 'Клыки',
+  PAWS: 'Лапы',
+  NONE: '-',
 };
 
 const weaponSubtypes = <const>{
-  ONE_HAND: 'ONE_HAND',
-  TWO_HAND: 'TWO_HAND',
-  THROWABLE: 'THROWABLE',
-  ESPECIAL: 'ESPECIAL',
+  ONE_HAND: 'Одноручное',
+  TWO_HAND: 'Двуручное',
+  THROWABLE: 'Метательное',
+  ESPECIAL: 'Особое',
 };
 
 export class Inventory<T> extends AbstractInventory {
@@ -57,8 +57,6 @@ export class Inventory<T> extends AbstractInventory {
   }
 
   public get wearingEquipment(): T { return this._wearingEquipment; }
-
-  public get gold(): number { return this._gold; }
 
   public getStats(item: AbstractItem): string {
     if (item instanceof Armor) {

@@ -21,7 +21,7 @@ export abstract class Weapon extends AbstractItem {
 }
 
 export class EmptyWeapon extends Weapon {
-  protected readonly baseName = 'ничего';
+  public readonly baseName = 'ничего';
 
   public readonly type = 'NONE';
 
@@ -37,7 +37,7 @@ export class EmptyWeapon extends Weapon {
 }
 
 export class TeethWeapon extends Weapon {
-  protected readonly baseName = 'острые зубы';
+  public readonly baseName = 'острые зубы';
 
   public readonly type = 'TEETH';
 
@@ -54,7 +54,7 @@ export class TeethWeapon extends Weapon {
 
 // add attack number (2 for this)
 export class PawsWeapon extends Weapon {
-  protected readonly baseName = 'острые когти';
+  public readonly baseName = 'острые когти';
 
   public readonly type = 'PAWS';
 
@@ -70,7 +70,7 @@ export class PawsWeapon extends Weapon {
 }
 
 export class FistWeapon extends Weapon {
-  protected readonly baseName = 'кулаки';
+  public readonly baseName = 'кулаки';
 
   public readonly type = 'FIST';
 
@@ -86,7 +86,7 @@ export class FistWeapon extends Weapon {
 }
 
 export class KnifeWeapon extends Weapon {
-  protected readonly baseName: string = 'нож';
+  public readonly baseName: string = 'нож';
 
   public readonly professions = <const>{ skinning: 1 };
 
@@ -111,7 +111,7 @@ export class KnifeWeapon extends Weapon {
 }
 
 export class RustedSwordWeapon extends Weapon {
-  protected readonly baseName: string = 'ржавый меч';
+  public readonly baseName: string = 'ржавый меч';
 
   readonly type = 'SWORD';
 
@@ -133,7 +133,7 @@ export class RustedSwordWeapon extends Weapon {
 }
 
 export class RustedAxeWeapon extends Weapon {
-  protected readonly baseName: string = 'ржавый топор';
+  public readonly baseName: string = 'ржавый топор';
 
   readonly type = 'AXE';
 

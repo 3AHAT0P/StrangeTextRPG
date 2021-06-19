@@ -29,6 +29,10 @@ export abstract class AbstractInventory {
 
   public collectGold(amount: number): void { this._gold += amount; }
 
+  public get gold(): number { return this._gold; }
+
+  public exchangeGold(amount: number): void { this._gold -= amount; }
+
   public collectItem(item: AbstractItem): void {
     if (item instanceof Weapon) this._weapons.push(item);
     if (item instanceof Armor) this._armors.push(item);

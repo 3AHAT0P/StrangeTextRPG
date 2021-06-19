@@ -38,7 +38,6 @@ interface SkeletonEquipmentSlots {
   rightHand: RustedAxeWeapon | RustedSwordWeapon | EmptyWeapon;
 }
 
-// TODO:
 export class Skeleton extends AbstractActor {
   public type = 'скелет';
 

@@ -13,14 +13,14 @@ import {
 import { ActionsLayout } from '@ui/ActionsLayout';
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import { capitalise } from '@utils/capitalise';
+import { Miscellaneous } from '@actors/miscellaneous';
+import { SmallHealthPotion } from '@actors/potions';
 
 import { AreaMap } from '../AreaMap';
 import { AbstractLocation } from '../AbstractLocation';
+import { descriptions } from '../LocationDescriptions';
 
 import { map, mapSize, additionalMapInfo } from './map';
-import { descriptions } from '../LocationDescriptions';
-import {AbstractItem} from '@actors/AbstractItem';
-import { Miscellaneous } from '@actors/miscellaneous';
 
 export const RUIN_LOCATION_ACTIONS = {
   PLAYER_DIED: 'onPlayerDied',
@@ -206,6 +206,42 @@ export class RuinLocation extends AbstractLocation {
             continue;
           }
           player.equipWeapon(inventoryItem);
+        }
+      } else if ('Зелья') {
+        const items = player.inventory.potions;
+        if (items.length === 0) await this.ui.sendToUser('Увы, в этом кармане пусто');
+        const choosedItem = await this.ui.interactWithUser(
+          new ActionsLayout({ columns: 1 })
+            .addRow(...items.map((item: Miscellaneous, index: number) => `${index + 1}. ${item.name}`))
+            .addRow('Назад')
+            .addRow('Закрыть инвентарь'),
+        );
+        if (choosedItem === 'Закрыть инвентарь') break;
+        if (choosedItem === 'Назад') {
+          selectedSection = null;
+          continue;
+        }
+        const [, itemName] = choosedItem.split('. ');
+        const item = player.inventory.getPotionByName(itemName);
+        if (item == null) {
+          await this.ui.sendToUser('Снова это чувство, как когда забыл зачем пришел...');
+          console.log('RuinLocation::showInventory', 'inventoryItem is null');
+          continue;
+        }
+        await this.ui.sendToUser(`${itemName}\n${item.description}`);
+        choosedActionOnItem = await this.ui.interactWithUser(
+          new ActionsLayout({ columns: 2 })
+            .addRow('Выпить', 'Выбросить')
+            .addRow('Назад', 'Закрыть инвентарь'),
+        );
+        if (choosedActionOnItem === 'Выбросить') {
+          const dropMessage = player.inventory.dropItem(itemName, 'potion');
+          await this.ui.sendToUser(dropMessage);
+        } else if (choosedActionOnItem === 'Выпить') {
+          const restored = player.usePotion(item);
+          if (restored) {
+            await this.ui.sendToUser(`Оно восстанавливает ${player.getType({ declension: 'dative' })} ${restored} ОЗ(❤️). Всего у ${player.getType({ declension: 'genitive' })} ${player.stats.healthPoints} из ${player.stats.maxHealthPoints} ОЗ(❤️)`);
+          }
         }
       } else if (selectedSection === 'Разное') {
         const items = player.inventory.miscellaneous;
@@ -415,10 +451,11 @@ export class RuinLocation extends AbstractLocation {
       } else if (choosedAction === SITUATIONAL_ACTIONS.TALK_WITH_MERCHANT) {
         const merchantGoods = new Set([
           {
-            name: 'healthPoitions',
-            message: 'Зелье лечения = 10 золотых (📀)',
-            action: 'Купить зелье лечения',
+            name: 'healthPotions',
+            message: 'Малое зелье лечения = 10 золотых (📀)',
+            action: 'Купить',
             price: 10,
+            item: new SmallHealthPotion(),
           },
         ]);
 

@@ -1,19 +1,24 @@
 import { capitalise } from '@utils/capitalise';
 import { Randomizer } from '@utils/Randomizer';
-
 import { Player } from '@actors/Player';
-import { Armor, LeatherBodyArmor } from '@armor';
+import { LeatherBodyArmor } from '@armor';
 import {
-  EmptyWeapon, PawsWeapon, TeethWeapon, Weapon,
+  EmptyWeapon,
+  PawsWeapon,
+  TeethWeapon,
 } from '@weapon';
 import {
-  Miscellaneous,
-  RatSkin, RatTail, StrangeFlute,
+  RatSkin,
+  RatTail,
+  StrangeFlute,
 } from '@actors/miscellaneous';
 import { Inventory } from '@actors/Inventory';
-import { Potion } from '@actors/potions';
+
 import {
-  AbstractActor, AbstractActorOptions, AttackResult, TypeByDeclensionOfNounOptions,
+  AbstractActor,
+  AbstractActorOptions,
+  AttackResult,
+  TypeByDeclensionOfNounOptions,
 } from './AbstractActor';
 import { AbstractItem, AbstractItemContructor } from './AbstractItem';
 
@@ -75,9 +80,8 @@ export class Rat extends AbstractActor {
   constructor(options: AbstractActorOptions = {}) {
     super(options);
 
-    // TODO set healthPoints and maxHealthPoints equal to 5 as it was before
-    this.maxHealthPoints = 0.1;
-    this.healthPoints = 0.1;
+    this.maxHealthPoints = 5;
+    this.healthPoints = 5;
 
     this.inventory = new Inventory<RatEquipmentSlots>({
       defaultEquipment: {
@@ -131,7 +135,6 @@ export class Rat extends AbstractActor {
       });
 
       return `Вы получили: ${rewards.join(', ')}!`;
-      // return `Вы получили: ${loot.map((item) => `${item.name} `).join(', ')}!`;
     }
     return 'Увы, но у крысы нету карманов.';
   }
