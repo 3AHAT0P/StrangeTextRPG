@@ -72,14 +72,6 @@ export class BattleInteraction extends AbstractInteraction {
         choosedAction = await this.ui.interactWithUser(new ActionsLayout<ACTION_VALUES>().addRow(...actions));
       }
 
-      // if (choosedAction === ACTIONS.useHealthPoition) {
-      //   const healVolume = this._player.useHealthPotion();
-      //   if (healVolume) {
-      //     await this.ui.sendToUser(`${this._player.getType({ declension: 'nominative', capitalised: true })} используешь зелье лечения.`);
-      //     await this.ui.sendToUser(`Оно восстанавливает ${this._player.getType({ declension: 'dative' })} ${healVolume} ОЗ(❤️). Всего у ${this._player.getType({ declension: 'genitive' })} ${this._player.stats.healthPoints} из ${this._player.stats.maxHealthPoints} ОЗ(❤️)`);
-      //   }
-      //   choosedAction = null;
-      // }
       if (choosedAction === ACTIONS.examine) {
         const examineActions = this._aliveEnemies.map((enemy) => `Осмотреть ${enemy.getType({ declension: 'accusative', withPostfix: true })}`);
         const choosedExamineAction = await this.ui.interactWithUser(
