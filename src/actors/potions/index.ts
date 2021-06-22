@@ -10,7 +10,7 @@ export type HealthStatusEffects = 'RESTORE' | 'INCREASE' | 'REGENERATION';
 export type PotionStatusEffects = HealthStatusEffects;
 
 export abstract class Potion extends AbstractItem {
-  public abstract baseName: string;
+  protected abstract baseName: string;
 
   public abstract description: string;
 
@@ -26,7 +26,7 @@ export abstract class Potion extends AbstractItem {
 export abstract class HealthPotion extends Potion {}
 
 export class SmallHealthPotion extends HealthPotion {
-  public readonly baseName = 'малое зелье лечения';
+  protected readonly baseName = 'малое зелье лечения';
 
   public readonly type = 'HEALTH';
 

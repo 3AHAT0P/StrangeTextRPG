@@ -56,7 +56,7 @@ export abstract class InHandArmor extends Armor {
 }
 
 export class LeatherBodyArmor extends BodyArmor {
-  public readonly baseName = 'шкура';
+  protected readonly baseName = 'шкура';
 
   public readonly type = 'LEATHER';
 
@@ -66,7 +66,7 @@ export class LeatherBodyArmor extends BodyArmor {
 }
 
 export class StrongBonesBodyArmor extends BodyArmor {
-  public readonly baseName = 'твердые кости';
+  protected readonly baseName = 'твердые кости';
 
   public readonly type = 'SKELETON';
 
@@ -76,7 +76,7 @@ export class StrongBonesBodyArmor extends BodyArmor {
 }
 
 export class CanvasCoatBodyArmor extends BodyArmor {
-  public readonly baseName = 'поношеная куртка из грубой парусины';
+  protected readonly baseName = 'поношеная куртка из грубой парусины';
 
   public readonly type = 'COAT';
 
@@ -86,7 +86,7 @@ export class CanvasCoatBodyArmor extends BodyArmor {
 }
 
 export class CanvasTrousersLegsArmor extends LegsArmor {
-  public readonly baseName = 'поношеные штаны из грубой парусины';
+  protected readonly baseName = 'поношеные штаны из грубой парусины';
 
   public readonly type = 'TROUSERS';
 
@@ -96,7 +96,7 @@ export class CanvasTrousersLegsArmor extends LegsArmor {
 }
 
 export class BrokenShieldArmor extends InHandArmor {
-  public readonly baseName = 'старый сломаный щит';
+  protected readonly baseName = 'старый сломаный щит';
 
   public readonly type = 'SHIELD';
 

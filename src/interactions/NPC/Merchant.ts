@@ -68,7 +68,7 @@ export class MerchantNPC extends AbstractNPC {
           return i4;
         },
       });
-      i2.addAction(`${goodItem.action} ${goodItem.item.baseName}`, i3);
+      i2.addAction(`${goodItem.action} ${goodItem.item.name}`, i3);
     }
 
     const epilogInteraction = new SimpleInteraction({ ui, message: '💬 [Торговец]: Приходи еще :)' });

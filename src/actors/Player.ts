@@ -196,7 +196,7 @@ export class Player extends AbstractActor {
         return false;
       }
       this.healthPoints += potion.quantity;
-      this.inventory.dropItem(potion.baseName, 'potion');
+      this.inventory.dropItem(potion.name, 'potion');
 
       if (this.healthPoints > this.maxHealthPoints) this.healthPoints = this.maxHealthPoints;
 

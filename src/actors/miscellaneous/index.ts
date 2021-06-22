@@ -6,11 +6,11 @@ export abstract class Miscellaneous extends AbstractItem {
 }
 
 export class RatSkin extends Miscellaneous {
-  public readonly baseName: string = 'крысья шкура';
+  protected readonly baseName: string = 'крысья шкура';
 }
 
 export class RatTail extends Miscellaneous {
-  public readonly baseName: string = 'крысиный хвост';
+  protected readonly baseName: string = 'крысиный хвост';
 }
 
 export class StrangeFlute extends Miscellaneous {
@@ -18,7 +18,7 @@ export class StrangeFlute extends Miscellaneous {
     ['DIVINE', 1],
   ];
 
-  public readonly baseName = 'странная погрызенная флейта';
+  protected readonly baseName = 'странная погрызенная флейта';
 
   constructor() {
     super('DIVINE');

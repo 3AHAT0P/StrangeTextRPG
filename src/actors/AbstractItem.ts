@@ -34,7 +34,7 @@ export abstract class AbstractItem {
     return result;
   }
 
-  abstract baseName: string;
+  protected abstract baseName: string;
 
   public readonly rarity: ItemRarity = 'COMMON';
 
