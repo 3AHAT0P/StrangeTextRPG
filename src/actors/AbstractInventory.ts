@@ -2,7 +2,8 @@ import { Armor } from '@armor';
 import { Weapon } from '@weapon';
 import { AbstractItem } from '@actors/AbstractItem';
 import { Miscellaneous } from '@actors/miscellaneous';
-import { Potion } from '@actors/potions';
+import { HealthPotion, Potion } from '@actors/potions';
+import type { AbstractActor } from '@actors/AbstractActor';
 
 export abstract class AbstractInventory {
   protected _gold: number = 0;
@@ -64,5 +65,18 @@ export abstract class AbstractInventory {
 
   public getPotionByName(fullName: string): Potion | undefined {
     return this._potions.find((item) => item.name === fullName);
+  }
+
+  public useItem(item: AbstractItem, target: AbstractActor): string {
+    if (item instanceof HealthPotion) {
+      if (target.inventory.healthPotions === 0) {
+        console.log('Potions::HealthPotion', 'No potions to be used');
+        return 'Скользкая баночка ускользает из ваших рук и звонко разбивается о землю. Это было последнее зелье...';
+      }
+      const message = item.usePotion(target);
+      this.dropItem(item.name, 'potion');
+      return message;
+    }
+    return 'Кажется, это нельзя использовать';
   }
 }

@@ -1,5 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import { AbstractItem } from '@actors/AbstractItem';
+import type { AbstractActor } from '@actors';
 
 export type PotionTypes = 'HEALTH' | 'ATTACK_DAMAGE' | 'CRITICAL_CHANCE' | 'ARMOR';
 
@@ -21,9 +22,16 @@ export abstract class Potion extends AbstractItem {
   public abstract statusEffect: PotionStatusEffects;
 
   public abstract quantity: number;
+
+  public abstract usePotion(player: AbstractActor): string;
 }
 
-export abstract class HealthPotion extends Potion {}
+export abstract class HealthPotion extends Potion {
+  usePotion(player: AbstractActor): string {
+    player.heal(this.quantity);
+    return `Оно восстанавливает ${player.getType({ declension: 'dative' })} ${this.quantity} ОЗ(❤️). Всего у ${player.getType({ declension: 'genitive' })} ${player.stats.healthPoints} из ${player.stats.maxHealthPoints} ОЗ(❤️)`;
+  }
+}
 
 export class SmallHealthPotion extends HealthPotion {
   protected readonly baseName = 'малое зелье лечения';

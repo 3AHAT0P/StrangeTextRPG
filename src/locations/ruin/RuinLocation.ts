@@ -238,10 +238,8 @@ export class RuinLocation extends AbstractLocation {
           const dropMessage = player.inventory.dropItem(itemName, 'potion');
           await this.ui.sendToUser(dropMessage);
         } else if (choosedActionOnItem === 'Выпить') {
-          const restored = player.usePotion(item);
-          if (restored) {
-            await this.ui.sendToUser(`Оно восстанавливает ${player.getType({ declension: 'dative' })} ${restored} ОЗ(❤️). Всего у ${player.getType({ declension: 'genitive' })} ${player.stats.healthPoints} из ${player.stats.maxHealthPoints} ОЗ(❤️)`);
-          }
+          const message = player.inventory.useItem(item, player);
+          await this.ui.sendToUser(message);
         }
       } else if (selectedSection === 'Разное') {
         const items = player.inventory.miscellaneous;
@@ -477,7 +475,7 @@ export class RuinLocation extends AbstractLocation {
         const reward = getRandomIntInclusive(1, 10);
         localActions.delete(SITUATIONAL_ACTIONS.PICK_UP_GOLD);
         ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
-        player.collectReward({ gold: reward });
+        player.inventory.collectGold(reward);
         await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} подбираешь ${reward} золота.`);
       } else if (choosedAction === SITUATIONAL_ACTIONS.EXAMINE_CORPSE) {
         await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} осматриваешь труп крысы.`);

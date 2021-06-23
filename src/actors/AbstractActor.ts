@@ -1,16 +1,12 @@
 import { Weapon } from '@weapon';
-import { AbstractInventory } from '@actors/AbstractInventory';
-import { AbstractItem } from '@actors/AbstractItem';
+import type { AbstractInventory } from '@actors/AbstractInventory';
+import type { AbstractItem } from '@actors/AbstractItem';
 
 export interface AttackResult {
   damage: number;
   isAlive: boolean;
   isCritical: boolean;
   isMiss: boolean;
-}
-
-export interface RewardBag {
-  gold?: number;
 }
 
 export interface AbstractActorOptions {
@@ -112,8 +108,10 @@ export abstract class AbstractActor {
   public getReward(player: AbstractActor): string { return ''; }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public collectReward(reward: RewardBag): void { /* pass */ }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public equipWeapon(weapon: Weapon, hand: 'LEFT' | 'RIGHT' = 'RIGHT'): void { /* pass */ }
+
+  public heal(quantity: number): void {
+    this.healthPoints += quantity;
+    if (this.healthPoints > this.maxHealthPoints) this.healthPoints = this.maxHealthPoints;
+  }
 }

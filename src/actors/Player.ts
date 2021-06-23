@@ -1,5 +1,4 @@
 import { capitalise } from '@utils/capitalise';
-import { isPresent } from '@utils/check';
 import {
   HeadArmor,
   NeckArmor,
@@ -16,12 +15,10 @@ import {
 import { FistWeapon, Weapon } from '@weapon';
 import { Inventory } from '@actors/Inventory';
 import { AbstractItem } from '@actors/AbstractItem';
-import { HealthPotion, Potion } from '@actors/potions';
 
 import {
   AbstractActor,
   AbstractActorOptions,
-  RewardBag,
   TypeByDeclensionOfNounOptions,
 } from './AbstractActor';
 
@@ -101,11 +98,6 @@ export class Player extends AbstractActor {
     return `${this.getType({ declension: 'nominative', capitalised: true })} умер!`;
   }
 
-  // TODO still needed or can be reduced to one method collectGold?
-  public collectReward(reward: RewardBag): void {
-    if (isPresent<number>(reward.gold)) this.inventory.collectGold(reward.gold);
-  }
-
   public equipWeapon(weapon: Weapon, hand: 'LEFT' | 'RIGHT' = 'RIGHT'): boolean {
     let equippedItem;
     if (hand === 'LEFT') {
@@ -169,40 +161,6 @@ export class Player extends AbstractActor {
     this.inventory.dropItem(armor.name, 'armor');
     const equippedItem = this.inventory.wearingEquipment[slot];
     if (equippedItem != null) this.inventory.collectItem(equippedItem);
-  }
-
-  public useHealthPotion(name: string): false | number {
-    if (this.inventory.healthPotions === 0) return false;
-
-    const potion = this.inventory.getPotionByName(name);
-    if (potion == null) {
-      console.log('Player::useHealthPotion', 'Potion is null');
-      return false;
-    }
-    this.healthPoints += potion.quantity;
-    this.inventory.dropItem(name, 'potion');
-
-    if (this.healthPoints > this.maxHealthPoints) this.healthPoints = this.maxHealthPoints;
-
-    return potion.quantity;
-  }
-
-  public usePotion(potion: Potion): false | number {
-    if (potion instanceof HealthPotion) {
-      if (this.inventory.healthPotions === 0) return false;
-
-      if (potion == null) {
-        console.log('Player::useHealthPotion', 'Potion is null');
-        return false;
-      }
-      this.healthPoints += potion.quantity;
-      this.inventory.dropItem(potion.name, 'potion');
-
-      if (this.healthPoints > this.maxHealthPoints) this.healthPoints = this.maxHealthPoints;
-
-      return potion.quantity;
-    }
-    return false;
   }
 
   public exchangeGoldToItem(goldCount: number, items: AbstractItem[]): boolean {
