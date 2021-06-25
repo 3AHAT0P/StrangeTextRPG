@@ -1,8 +1,11 @@
 /* eslint-disable max-classes-per-file */
 import { AbstractItem, ItemRarity } from '@actors/AbstractItem';
+import type { AbstractActor } from '@actors';
 
 export abstract class Miscellaneous extends AbstractItem {
-
+  // maybe one day Miscellaneous can be used...
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public use(player: AbstractActor) { return ''; }
 }
 
 export class RatSkin extends Miscellaneous {

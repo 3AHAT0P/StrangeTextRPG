@@ -1,5 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import { AbstractItem } from '@actors/AbstractItem';
+import { MESSAGES } from '@translations/ru';
 import type { AbstractActor } from '@actors';
 
 export type PotionTypes = 'HEALTH' | 'ATTACK_DAMAGE' | 'CRITICAL_CHANCE' | 'ARMOR';
@@ -13,36 +14,43 @@ export type PotionStatusEffects = HealthStatusEffects;
 export abstract class Potion extends AbstractItem {
   protected abstract baseName: string;
 
-  public abstract description: string;
-
   public abstract type: PotionTypes;
-
-  public abstract subtype: PotionSubtypes;
 
   public abstract statusEffect: PotionStatusEffects;
 
+  public abstract get description(): string;
+
   public abstract quantity: number;
 
-  public abstract usePotion(player: AbstractActor): string;
-}
+  public subtype: PotionSubtypes = 'SMALL';
 
-export abstract class HealthPotion extends Potion {
-  usePotion(player: AbstractActor): string {
-    player.heal(this.quantity);
-    return `Оно восстанавливает ${player.getType({ declension: 'dative' })} ${this.quantity} ОЗ(❤️). Всего у ${player.getType({ declension: 'genitive' })} ${player.stats.healthPoints} из ${player.stats.maxHealthPoints} ОЗ(❤️)`;
+  public get name(): string {
+    return `${this.baseName} [${MESSAGES.potions[this.subtype]}]`;
   }
 }
 
-export class SmallHealthPotion extends HealthPotion {
-  protected readonly baseName = 'малое зелье лечения';
+export class HealthPotion extends Potion {
+  protected readonly baseName = 'зелье лечения';
 
   public readonly type = 'HEALTH';
 
-  public readonly subtype = 'SMALL';
-
   public readonly statusEffect = 'RESTORE';
 
-  public readonly quantity = 2;
+  public get description() {
+    return `Баночка с красным, мутным зельем.\nЕсли выпить, восстановит ${this.quantity} ОЗ`;
+  }
 
-  public readonly description = `Маленькая баночка с красным, мутным зельем.\nЕсли выпить, восстановит ${this.quantity} ОЗ`;
+  public quantity = 2;
+
+  constructor(options: { subtype: PotionSubtypes } = { subtype: 'SMALL' }) {
+    super();
+    this.subtype = options.subtype;
+    if (options.subtype === 'MEDIUM') this.quantity = 3;
+    if (options.subtype === 'BIG') this.quantity = 5;
+  }
+
+  use(player: AbstractActor): string {
+    player.heal(this.quantity);
+    return `Оно восстанавливает ${player.getType({ declension: 'dative' })} ${this.quantity} ОЗ(❤️). Всего у ${player.getType({ declension: 'genitive' })} ${player.stats.healthPoints} из ${player.stats.maxHealthPoints} ОЗ(❤️)`;
+  }
 }

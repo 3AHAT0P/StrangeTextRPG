@@ -1,6 +1,6 @@
-import { Weapon } from '@weapon';
 import type { AbstractInventory } from '@actors/AbstractInventory';
 import type { AbstractItem } from '@actors/AbstractItem';
+import type { Weapon } from '@weapon';
 
 export interface AttackResult {
   damage: number;

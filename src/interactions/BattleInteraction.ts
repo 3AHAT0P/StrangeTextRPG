@@ -12,7 +12,6 @@ export interface BattleInteractionOptions extends AbstractInteractionOptions{
 const ACTIONS = {
   attack: 'Атаковать 🗡',
   examine: 'Осмотреть 👀',
-  // useHealthPoition: 'Использовать зелье лечения',
   back: 'Назад',
 } as const;
 

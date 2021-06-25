@@ -1,9 +1,9 @@
 import { Armor } from '@armor';
 import { Weapon } from '@weapon';
-import { AbstractItem } from '@actors/AbstractItem';
 import { Miscellaneous } from '@actors/miscellaneous';
-import { HealthPotion, Potion } from '@actors/potions';
+import {HealthPotion, Potion} from '@actors/potions';
 import type { AbstractActor } from '@actors/AbstractActor';
+import type { AbstractItem } from '@actors/AbstractItem';
 
 export abstract class AbstractInventory {
   protected _gold: number = 0;
@@ -17,6 +17,20 @@ export abstract class AbstractInventory {
   protected _miscellaneous: Miscellaneous[] = [];
 
   protected _wearingEquipment: unknown;
+
+  protected checkExists(item: AbstractItem) {
+    let searchSection;
+    if (item instanceof Weapon) searchSection = this._weapons;
+    if (item instanceof Armor) searchSection = this._armors;
+    if (item instanceof Miscellaneous) searchSection = this._miscellaneous;
+    if (item instanceof Potion) searchSection = this._potions;
+    if (searchSection == null) {
+      console.log('AbstractInventory::checkExists', 'Unknown item type');
+      return false;
+    }
+    // TODO change to check id when items will have an id
+    return searchSection.some((inventoryItem) => inventoryItem.name === item.name);
+  }
 
   public get armors(): Armor[] { return this._armors; }
 
@@ -41,15 +55,20 @@ export abstract class AbstractInventory {
     if (item instanceof Potion) this._potions.push(item);
   }
 
-  public dropItem(fullName: string, type: 'weapon' | 'armor' | 'potion' | 'miscellaneous' = 'miscellaneous'): string {
-    let inventorySection = this._miscellaneous;
-    if (type === 'weapon') inventorySection = this._weapons;
-    if (type === 'armor') inventorySection = this._armors;
-    if (type === 'potion') inventorySection = this._potions;
-    const index = inventorySection.findIndex((item: AbstractItem) => item.name === fullName);
+  public dropItem(item: AbstractItem): string {
+    let inventorySection;
+    if (item instanceof Weapon) inventorySection = this._weapons;
+    if (item instanceof Armor) inventorySection = this._armors;
+    if (item instanceof Potion) inventorySection = this._potions;
+    if (item instanceof Miscellaneous) inventorySection = this._miscellaneous;
+    if (inventorySection == null) {
+      console.log('AbstractInventory::dropItem', 'unknown instance of item');
+      return 'Вы никак не можете найти нужный карман';
+    }
+    const index = inventorySection.findIndex((inventoryItem: AbstractItem) => inventoryItem.name === item.name);
     if (index >= 0) {
       inventorySection.splice(index, 1);
-      return `Вы выкинули ${fullName}. Идти становится легче`;
+      return `Вы выкинули ${item.name}. Идти становится легче`;
     }
     console.log('AbstractInventory::dropItem', 'Item not found');
     return 'Странно, но вы не можете снова найти этот предмет...Возможно, его и не было?';
@@ -67,16 +86,18 @@ export abstract class AbstractInventory {
     return this._potions.find((item) => item.name === fullName);
   }
 
+  public getMiscellaneousByName(fullName: string): Miscellaneous | undefined {
+    return this._miscellaneous.find((item) => item.name === fullName);
+  }
+
   public useItem(item: AbstractItem, target: AbstractActor): string {
-    if (item instanceof HealthPotion) {
-      if (target.inventory.healthPotions === 0) {
-        console.log('Potions::HealthPotion', 'No potions to be used');
-        return 'Скользкая баночка ускользает из ваших рук и звонко разбивается о землю. Это было последнее зелье...';
-      }
-      const message = item.usePotion(target);
-      this.dropItem(item.name, 'potion');
-      return message;
+    const isExist = this.checkExists(item);
+    if (!isExist) {
+      console.log('AbstractInventory::useItem', 'No item to be used');
+      return 'Кажется, вы забыли, как это использовать';
     }
-    return 'Кажется, это нельзя использовать';
+    const message = item.use(target);
+    this.dropItem(item);
+    return message;
   }
 }

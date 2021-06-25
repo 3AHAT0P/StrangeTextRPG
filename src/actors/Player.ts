@@ -107,7 +107,7 @@ export class Player extends AbstractActor {
       equippedItem = this.inventory.wearingEquipment.rightHand;
       this.inventory.wearingEquipment.rightHand = weapon;
     }
-    this.inventory.dropItem(weapon.name, 'weapon');
+    this.inventory.dropItem(weapon);
     if (equippedItem != null) this.inventory.collectItem(equippedItem);
     return true;
   }
@@ -158,7 +158,7 @@ export class Player extends AbstractActor {
       console.log('Player::equipArmor', 'Slot is null');
       return;
     }
-    this.inventory.dropItem(armor.name, 'armor');
+    this.inventory.dropItem(armor);
     const equippedItem = this.inventory.wearingEquipment[slot];
     if (equippedItem != null) this.inventory.collectItem(equippedItem);
   }

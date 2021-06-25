@@ -14,7 +14,7 @@ import { ActionsLayout } from '@ui/ActionsLayout';
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import { capitalise } from '@utils/capitalise';
 import { Miscellaneous } from '@actors/miscellaneous';
-import { SmallHealthPotion } from '@actors/potions';
+import { HealthPotion } from '@actors/potions';
 
 import { AreaMap } from '../AreaMap';
 import { AbstractLocation } from '../AbstractLocation';
@@ -163,7 +163,12 @@ export class RuinLocation extends AbstractLocation {
             .addRow('Назад', 'Закрыть инвентарь'),
         );
         if (choosedActionOnItem === 'Выбросить') {
-          const dropMessage = player.inventory.dropItem(itemName, 'armor');
+          const item = player.inventory.getArmorByName(itemName);
+          if (item == null) {
+            await this.ui.sendToUser('Снова это чувство, как когда забыл зачем пришел...');
+            break;
+          }
+          const dropMessage = player.inventory.dropItem(item);
           await this.ui.sendToUser(dropMessage);
         } else if (choosedActionOnItem === 'Надеть') {
           const inventoryItem = player.inventory.getArmorByName(itemName);
@@ -196,7 +201,12 @@ export class RuinLocation extends AbstractLocation {
             .addRow('Назад', 'Закрыть инвентарь'),
         );
         if (choosedActionOnItem === 'Выбросить') {
-          const dropMessage = player.inventory.dropItem(itemName, 'weapon');
+          const item = player.inventory.getWeaponByName(itemName);
+          if (item == null) {
+            await this.ui.sendToUser('Снова это чувство, как когда забыл зачем пришел...');
+            break;
+          }
+          const dropMessage = player.inventory.dropItem(item);
           await this.ui.sendToUser(dropMessage);
         } else if (choosedActionOnItem === 'Надеть') {
           const inventoryItem = player.inventory.getWeaponByName(itemName);
@@ -235,7 +245,7 @@ export class RuinLocation extends AbstractLocation {
             .addRow('Назад', 'Закрыть инвентарь'),
         );
         if (choosedActionOnItem === 'Выбросить') {
-          const dropMessage = player.inventory.dropItem(itemName, 'potion');
+          const dropMessage = player.inventory.dropItem(item);
           await this.ui.sendToUser(dropMessage);
         } else if (choosedActionOnItem === 'Выпить') {
           const message = player.inventory.useItem(item, player);
@@ -265,7 +275,12 @@ export class RuinLocation extends AbstractLocation {
         );
         if (choosedActionOnItem === 'Выбросить') {
           const [, itemName] = choosedItem.split('. ');
-          const dropMessage = player.inventory.dropItem(itemName, 'miscellaneous');
+          const item = player.inventory.getMiscellaneousByName(itemName);
+          if (item == null) {
+            await this.ui.sendToUser('Снова это чувство, как когда забыл зачем пришел...');
+            break;
+          }
+          const dropMessage = player.inventory.dropItem(item);
           await this.ui.sendToUser(dropMessage);
         }
       }
@@ -453,7 +468,7 @@ export class RuinLocation extends AbstractLocation {
             message: 'Малое зелье лечения = 10 золотых (📀)',
             action: 'Купить',
             price: 10,
-            item: new SmallHealthPotion(),
+            item: new HealthPotion(),
           },
         ]);
 

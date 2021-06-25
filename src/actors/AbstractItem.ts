@@ -1,6 +1,7 @@
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import { Randomizer } from '@utils/Randomizer';
 import { MESSAGES } from '@translations/ru';
+import type { AbstractActor } from '@actors/AbstractActor';
 
 export const itemRarity = <const>{
   COMMON: 1, RARE: 2, EPIC: 3, LEGENDARY: 4, DIVINE: 5,
@@ -47,4 +48,6 @@ export abstract class AbstractItem {
   constructor(rarity: ItemRarity = 'COMMON') {
     this.rarity = rarity;
   }
+
+  public abstract use(player: AbstractActor): string;
 }
