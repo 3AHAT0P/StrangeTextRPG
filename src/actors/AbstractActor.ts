@@ -1,19 +1,12 @@
-import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
-import { Weapon } from './weapon';
+import type { AbstractInventory } from '@actors/AbstractInventory';
+import type { AbstractItem } from '@actors/AbstractItem';
+import type { Weapon } from '@weapon';
 
 export interface AttackResult {
   damage: number;
   isAlive: boolean;
   isCritical: boolean;
   isMiss: boolean;
-}
-
-export interface Bag {
-  healthPoitions: number;
-}
-
-export interface RewardBag {
-  gold?: number;
 }
 
 export interface AbstractActorOptions {
@@ -55,13 +48,7 @@ export abstract class AbstractActor {
 
   protected abstract accuracy: number;
 
-  protected _gold: number = 0;
-
-  protected _bag: Bag = { healthPoitions: 0 };
-
-  protected abstract _wearingEquipment: unknown;
-
-  public get wearingEquipment() { return this._wearingEquipment; }
+  abstract inventory: AbstractInventory;
 
   get stats() {
     return {
@@ -75,14 +62,6 @@ export abstract class AbstractActor {
     };
   }
 
-  get gold(): number {
-    return this._gold;
-  }
-
-  get healthPoitions(): number {
-    return this._bag.healthPoitions;
-  }
-
   public get isAlive(): boolean { return this.healthPoints > 0; }
 
   constructor(options: AbstractActorOptions = {}) {
@@ -92,6 +71,9 @@ export abstract class AbstractActor {
   public abstract getType(options: TypeByDeclensionOfNounOptions): string;
 
   public abstract getDeathMessage(): string;
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public exchangeGoldToItem(goldCount: number, items: AbstractItem[]) { return false; }
 
   public doAttack(enemy: AbstractActor): AttackResult {
     if (Math.random() >= (1 - this.accuracy)) { // мы попали
@@ -122,34 +104,14 @@ export abstract class AbstractActor {
     };
   }
 
-  public useHealthPoition(): false | number {
-    if (this._bag.healthPoitions === 0) return false;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public getReward(player: AbstractActor): string { return ''; }
 
-    this._bag.healthPoitions -= 1;
-    const healVolume = getRandomIntInclusive(2, 5);
-    this.healthPoints += healVolume;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public equipWeapon(weapon: Weapon, hand: 'LEFT' | 'RIGHT' = 'RIGHT'): void { /* pass */ }
 
+  public heal(quantity: number): void {
+    this.healthPoints += quantity;
     if (this.healthPoints > this.maxHealthPoints) this.healthPoints = this.maxHealthPoints;
-
-    return healVolume;
   }
-
-  public exchangeGoldToItem(goldCount: number, bag: Partial<Bag>): boolean {
-    if (this._gold < goldCount) return false;
-
-    this._gold -= goldCount;
-    for (const [item, count] of Object.entries(bag) as Array<[keyof Bag, number]>) {
-      this._bag[item] += count;
-    }
-
-    return true;
-  }
-
-  public getReward(player: AbstractActor): string { return ''; } // @TODO: Update return type when Inventory will be completed
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public collectReward(reward: RewardBag): void { /* pass */ }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public equipWeapon(weapon: Weapon, hand: 'LEFT' | 'RIGHT' = 'RIGHT'): boolean { return true; }
 }

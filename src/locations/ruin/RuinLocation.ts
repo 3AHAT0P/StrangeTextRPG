@@ -13,12 +13,14 @@ import {
 import { ActionsLayout } from '@ui/ActionsLayout';
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import { capitalise } from '@utils/capitalise';
+import { Miscellaneous } from '@actors/miscellaneous';
+import { HealthPotion } from '@actors/potions';
 
 import { AreaMap } from '../AreaMap';
 import { AbstractLocation } from '../AbstractLocation';
+import { descriptions } from '../LocationDescriptions';
 
 import { map, mapSize, additionalMapInfo } from './map';
-import { descriptions } from '../LocationDescriptions';
 
 export const RUIN_LOCATION_ACTIONS = {
   PLAYER_DIED: 'onPlayerDied',
@@ -74,7 +76,9 @@ export class RuinLocation extends AbstractLocation {
   private async doBattle(player: AbstractActor, enemies: AbstractActor[]): Promise<boolean> {
     const battle = new BattleInteraction({ ui: this.ui, player, enemies });
     const onDiedInteraction = this.actions.getInteractionByAction('onDied');
+    const nullInteraction = new Interaction({ ui: this.ui, async activate() { return null; } });
     if (onDiedInteraction != null) battle.addAction(BATTLE_FINAL_ACTIONS.PLAYER_DIED, onDiedInteraction);
+    battle.addAction(BATTLE_FINAL_ACTIONS.PLAYER_WIN, nullInteraction);
     await battle.interact();
 
     return player.isAlive;
@@ -125,6 +129,165 @@ export class RuinLocation extends AbstractLocation {
     return equipment.join('\n');
   }
 
+  private async showInventory(): Promise<void> {
+    const player = this.state.player as Player;
+    let choosedActionOnItem;
+    let selectedSection;
+    while (true) {
+      selectedSection = selectedSection || await this.ui.interactWithUser(
+        new ActionsLayout({ columns: 2 })
+          .addRow('Оружие', 'Броня')
+          .addRow('Зелья', 'Разное')
+          .addRow('Закрыть инвентарь'),
+      );
+      if (selectedSection === 'Закрыть инвентарь') break;
+      if (selectedSection === 'Броня') {
+        const items = player.inventory.armors;
+        if (items.length === 0) await this.ui.sendToUser('Увы, в этом кармане пусто');
+        const choosedItem = await this.ui.interactWithUser(
+          new ActionsLayout({ columns: 1 })
+            .addRow(...items.map((item: Miscellaneous, index: number) => `${index + 1}. ${item.name}`))
+            .addRow('Назад')
+            .addRow('Закрыть инвентарь'),
+        );
+        if (choosedItem === 'Закрыть инвентарь') break;
+        if (choosedItem === 'Назад') {
+          selectedSection = null;
+          continue;
+        }
+        const [, itemName] = choosedItem.split('. ');
+        await this.ui.sendToUser(player.compareWithEquipped(itemName, 'armor'));
+        choosedActionOnItem = await this.ui.interactWithUser(
+          new ActionsLayout({ columns: 2 })
+            .addRow('Надеть', 'Выбросить')
+            .addRow('Назад', 'Закрыть инвентарь'),
+        );
+        if (choosedActionOnItem === 'Выбросить') {
+          const item = player.inventory.getArmorByName(itemName);
+          if (item == null) {
+            await this.ui.sendToUser('Снова это чувство, как когда забыл зачем пришел...');
+            break;
+          }
+          const dropMessage = player.inventory.dropItem(item);
+          await this.ui.sendToUser(dropMessage);
+        } else if (choosedActionOnItem === 'Надеть') {
+          const inventoryItem = player.inventory.getArmorByName(itemName);
+          if (inventoryItem == null) {
+            await this.ui.sendToUser('Снова это чувство, как когда забыл зачем пришел...');
+            console.log('RuinLocation::showInventory', 'inventoryItem is null');
+            continue;
+          }
+          player.equipArmor(inventoryItem);
+        }
+      } else if (selectedSection === 'Оружие') {
+        const items = player.inventory.weapons;
+        if (items.length === 0) await this.ui.sendToUser('Увы, в этом кармане пусто');
+        const choosedItem = await this.ui.interactWithUser(
+          new ActionsLayout({ columns: 1 })
+            .addRow(...items.map((item: Miscellaneous, index: number) => `${index + 1}. ${item.name}`))
+            .addRow('Назад')
+            .addRow('Закрыть инвентарь'),
+        );
+        if (choosedItem === 'Закрыть инвентарь') break;
+        if (choosedItem === 'Назад') {
+          selectedSection = null;
+          continue;
+        }
+        const [, itemName] = choosedItem.split('. ');
+        await this.ui.sendToUser(player.compareWithEquipped(itemName, 'weapon'));
+        choosedActionOnItem = await this.ui.interactWithUser(
+          new ActionsLayout({ columns: 2 })
+            .addRow('Надеть', 'Выбросить')
+            .addRow('Назад', 'Закрыть инвентарь'),
+        );
+        if (choosedActionOnItem === 'Выбросить') {
+          const item = player.inventory.getWeaponByName(itemName);
+          if (item == null) {
+            await this.ui.sendToUser('Снова это чувство, как когда забыл зачем пришел...');
+            break;
+          }
+          const dropMessage = player.inventory.dropItem(item);
+          await this.ui.sendToUser(dropMessage);
+        } else if (choosedActionOnItem === 'Надеть') {
+          const inventoryItem = player.inventory.getWeaponByName(itemName);
+          if (inventoryItem == null) {
+            await this.ui.sendToUser('Снова это чувство, как когда забыл зачем пришел...');
+            console.log('RuinLocation::showInventory', 'inventoryItem is null');
+            continue;
+          }
+          player.equipWeapon(inventoryItem);
+        }
+      } else if ('Зелья') {
+        const items = player.inventory.potions;
+        if (items.length === 0) await this.ui.sendToUser('Увы, в этом кармане пусто');
+        const choosedItem = await this.ui.interactWithUser(
+          new ActionsLayout({ columns: 1 })
+            .addRow(...items.map((item: Miscellaneous, index: number) => `${index + 1}. ${item.name}`))
+            .addRow('Назад')
+            .addRow('Закрыть инвентарь'),
+        );
+        if (choosedItem === 'Закрыть инвентарь') break;
+        if (choosedItem === 'Назад') {
+          selectedSection = null;
+          continue;
+        }
+        const [, itemName] = choosedItem.split('. ');
+        const item = player.inventory.getPotionByName(itemName);
+        if (item == null) {
+          await this.ui.sendToUser('Снова это чувство, как когда забыл зачем пришел...');
+          console.log('RuinLocation::showInventory', 'inventoryItem is null');
+          continue;
+        }
+        await this.ui.sendToUser(`${itemName}\n${item.description}`);
+        choosedActionOnItem = await this.ui.interactWithUser(
+          new ActionsLayout({ columns: 2 })
+            .addRow('Выпить', 'Выбросить')
+            .addRow('Назад', 'Закрыть инвентарь'),
+        );
+        if (choosedActionOnItem === 'Выбросить') {
+          const dropMessage = player.inventory.dropItem(item);
+          await this.ui.sendToUser(dropMessage);
+        } else if (choosedActionOnItem === 'Выпить') {
+          const message = player.inventory.useItem(item, player);
+          await this.ui.sendToUser(message);
+        }
+      } else if (selectedSection === 'Разное') {
+        const items = player.inventory.miscellaneous;
+        if (items.length === 0) await this.ui.sendToUser('Увы, в этом кармане пусто');
+        const choosedItem = await this.ui.interactWithUser(
+          new ActionsLayout({ columns: 1 })
+            .addRow(...items.map((item: Miscellaneous, index: number) => `${index + 1}. ${item.name}`))
+            .addRow('Назад')
+            .addRow('Закрыть инвентарь'),
+        );
+        // TODO add miscellaneous description
+        if (choosedItem === 'Закрыть инвентарь') break;
+        if (choosedItem === 'Назад') {
+          selectedSection = null;
+          continue;
+        }
+        await this.ui.sendToUser(choosedItem);
+        choosedActionOnItem = await this.ui.interactWithUser(
+          new ActionsLayout({ columns: 1 })
+            .addRow('Выбросить')
+            .addRow('Назад')
+            .addRow('Закрыть инвентарь'),
+        );
+        if (choosedActionOnItem === 'Выбросить') {
+          const [, itemName] = choosedItem.split('. ');
+          const item = player.inventory.getMiscellaneousByName(itemName);
+          if (item == null) {
+            await this.ui.sendToUser('Снова это чувство, как когда забыл зачем пришел...');
+            break;
+          }
+          const dropMessage = player.inventory.dropItem(item);
+          await this.ui.sendToUser(dropMessage);
+        }
+      }
+      if (choosedActionOnItem === 'Закрыть инвентарь') break;
+    }
+  }
+
   private async lookYourself(): Promise<void> {
     const player = this.state.player as Player;
 
@@ -155,7 +318,7 @@ export class RuinLocation extends AbstractLocation {
       new ActionsLayout({ columns: 4 }).addRow('❓', 'Открыть инвертарь'),
       (action) => {
         if (action === '❓') void this.printFAQ();
-        else if (action === 'Открыть инвертарь') console.log('Inventory open');
+        else if (action === 'Открыть инвертарь') void this.showInventory();
         else if (action === 'Посмотреть на себя в лужу') void this.lookYourself();
       },
     );
@@ -230,7 +393,7 @@ export class RuinLocation extends AbstractLocation {
               await this.ui.sendToUser(
                 'Крыса, как крыса. Но в боку у нее торчит нож. О, теперь будет чем отбиваться от этих тварей!',
               );
-              player.equipWeapon(new KnifeWeapon());
+              player.inventory.collectItem(new KnifeWeapon());
             };
           }
         } else if (currentSpot.type === 'MERCHANT') {
@@ -301,10 +464,11 @@ export class RuinLocation extends AbstractLocation {
       } else if (choosedAction === SITUATIONAL_ACTIONS.TALK_WITH_MERCHANT) {
         const merchantGoods = new Set([
           {
-            name: 'healthPoitions',
-            message: 'Зелье лечения = 10 золотых (📀)',
-            action: 'Купить зелье лечения',
+            name: 'healthPotions',
+            message: 'Малое зелье лечения = 10 золотых (📀)',
+            action: 'Купить',
             price: 10,
+            item: new HealthPotion(),
           },
         ]);
 
@@ -326,7 +490,7 @@ export class RuinLocation extends AbstractLocation {
         const reward = getRandomIntInclusive(1, 10);
         localActions.delete(SITUATIONAL_ACTIONS.PICK_UP_GOLD);
         ruinAreaMap.updateSpot(ruinAreaMap.playerPosition, 'CLEAN');
-        player.collectReward({ gold: reward });
+        player.inventory.collectGold(reward);
         await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} подбираешь ${reward} золота.`);
       } else if (choosedAction === SITUATIONAL_ACTIONS.EXAMINE_CORPSE) {
         await this.ui.sendToUser(`${player.getType({ declension: 'nominative', capitalised: true })} осматриваешь труп крысы.`);

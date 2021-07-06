@@ -12,7 +12,6 @@ export interface BattleInteractionOptions extends AbstractInteractionOptions{
 const ACTIONS = {
   attack: 'Атаковать 🗡',
   examine: 'Осмотреть 👀',
-  useHealthPoition: 'Использовать зелье лечения',
   back: 'Назад',
 } as const;
 
@@ -68,20 +67,11 @@ export class BattleInteraction extends AbstractInteraction {
     while (!this.battleFinished()) {
       const actions: Set<ACTION_VALUES> = new Set([ACTIONS.attack, ACTIONS.examine]);
 
-      if (this._player.healthPoitions > 0) actions.add(ACTIONS.useHealthPoition);
-
       if (choosedAction === null) {
         choosedAction = await this.ui.interactWithUser(new ActionsLayout<ACTION_VALUES>().addRow(...actions));
       }
 
-      if (choosedAction === ACTIONS.useHealthPoition) {
-        const healVolume = this._player.useHealthPoition();
-        if (healVolume) {
-          await this.ui.sendToUser(`${this._player.getType({ declension: 'nominative', capitalised: true })} используешь зелье лечения.`);
-          await this.ui.sendToUser(`Оно восстанавливает ${this._player.getType({ declension: 'dative' })} ${healVolume} ОЗ(❤️). Всего у ${this._player.getType({ declension: 'genitive' })} ${this._player.stats.healthPoints} из ${this._player.stats.maxHealthPoints} ОЗ(❤️)`);
-        }
-        choosedAction = null;
-      } else if (choosedAction === ACTIONS.examine) {
+      if (choosedAction === ACTIONS.examine) {
         const examineActions = this._aliveEnemies.map((enemy) => `Осмотреть ${enemy.getType({ declension: 'accusative', withPostfix: true })}`);
         const choosedExamineAction = await this.ui.interactWithUser(
           new ActionsLayout().addRow(...examineActions.concat([ACTIONS.back])),

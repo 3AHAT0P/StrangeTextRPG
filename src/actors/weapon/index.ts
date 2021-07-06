@@ -1,5 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import { AbstractItem, itemRarity, ItemRarity } from '@actors/AbstractItem';
+import type { AbstractActor } from '@actors';
 
 export type WeaponType = 'FIST' | 'KNIFE' | 'STONE' | 'SHIELD' | 'SWORD' | 'AXE' | 'TEETH' | 'PAWS' | 'NONE';
 export type WeaponSubtype = 'ONE_HAND' | 'TWO_HAND' | 'THROWABLE' | 'ESPECIAL';
@@ -18,6 +19,10 @@ export abstract class Weapon extends AbstractItem {
   public abstract criticalChance: number;
 
   public abstract criticalDamageModifier: number;
+
+  // TODO make equip weapon
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public use(player: AbstractActor) { return ''; }
 }
 
 export class EmptyWeapon extends Weapon {

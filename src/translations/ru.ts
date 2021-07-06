@@ -22,4 +22,10 @@ export const MESSAGES = {
   EPIC_F: 'Эпическая',
   LEGENDARY_F: 'Легендарная',
   DIVINE_F: 'Божественная',
+
+  potions: {
+    SMALL: 'Малое',
+    MEDIUM: 'Среднее',
+    BIG: 'Большое',
+  },
 };

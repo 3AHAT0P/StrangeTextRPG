@@ -1,5 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import { AbstractItem } from '@actors/AbstractItem';
+import type { AbstractActor } from '@actors';
 
 export type HeadArmorType = 'HELMET' | 'HOOD' | 'HAT';
 export type NeckArmorType = 'NECKLE';
@@ -21,6 +22,10 @@ export abstract class Armor extends AbstractItem {
   public abstract subtype: ArmorSubtype;
 
   public abstract armor: number;
+
+  // TODO make equip armor
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public use(player: AbstractActor) { return ''; }
 }
 
 export abstract class HeadArmor extends Armor {
@@ -75,7 +80,7 @@ export class StrongBonesBodyArmor extends BodyArmor {
   public readonly armor = 0.1;
 }
 
-export class CanvasCoatBodyArmor extends Armor {
+export class CanvasCoatBodyArmor extends BodyArmor {
   protected readonly baseName = 'поношеная куртка из грубой парусины';
 
   public readonly type = 'COAT';
