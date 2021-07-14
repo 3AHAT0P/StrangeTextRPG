@@ -8,6 +8,7 @@ import { AbstractProperties, AbstractNeo4jRepository, DBConnectionOptions } from
 export interface ActionProperties extends AbstractProperties {
   text: string;
   type: 'SYSTEM' | 'AUTO' | 'CUSTOM';
+  condition?: string;
   isPrintable?: boolean;
 }
 
@@ -44,6 +45,7 @@ export class ActionNeo4jRepository extends AbstractNeo4jRepository<typeof Action
       toInteractionId: node.end.toNumber(),
       text: node.properties.text,
       type: node.properties.type,
+      condition: node.properties.condition,
       isPrintable: node.properties.isPrintable ?? false,
     };
   }

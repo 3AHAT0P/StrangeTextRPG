@@ -12,7 +12,7 @@ export class Template {
   public get value(): string {
     if (this._result != null) return this._result;
     if (this._ctx == null) throw new Error('Context is null');
-
+    console.log(this._raw, this._ctx);
     this._result = this._compiled(this._ctx);
 
     return this._result;

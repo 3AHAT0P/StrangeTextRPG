@@ -13,6 +13,8 @@ import { ActionNeo4jRepository, isActionRelationship } from './graph/ActionNeo4j
 import { isMapSpotNode, MapSpotNeo4jRepository } from './graph/MapSpotNeo4jRepository';
 import { isNPCNode, NPCNeo4jRepository } from './graph/NPCNeo4jRepository';
 import { BattleNeo4jRepository, isBattleNode } from './graph/BattleNeo4jRepository';
+import { ActionModel } from './entities/Action';
+import { OneOFNodeModel } from './entities';
 
 const config = getConfig();
 
@@ -70,7 +72,7 @@ export class DBService {
     await this._driver.close();
   }
 
-  public async getNodeById(id: number) {
+  public async getNodeById(id: number): Promise<OneOFNodeModel> {
     const result = await this._session.readTransaction(
       (transaction) => transaction.run('MATCH (a) WHERE id(a) = $id RETURN a', { id }),
     );
@@ -79,16 +81,24 @@ export class DBService {
 
     const repo = this.getRepoByRecordItem(record);
 
-    if (repo === null) throw new Error('Type of node is incorrect');
+    if (repo === null || repo instanceof ActionNeo4jRepository) throw new Error('Type of node is incorrect');
 
     return repo.fromRecord(record);
   }
 
-  public async getRelatedActions(id: number) {
+  public async getRelatedActions(id: number): Promise<ActionModel[]> {
     const result = await this._session.readTransaction(
       (transaction) => transaction.run('MATCH (a)-[r:Action]->(b) WHERE id(a) = $id RETURN r', { id }),
     );
 
     return result.records.map((item) => this.repositories.actionRepo.fromRecord(item.get(0)));
+  }
+
+  public async runRawQuery(query: string, params: any) {
+    const result = await this._session.readTransaction(
+      (transaction) => transaction.run(query, params),
+    );
+
+    return result.records;
   }
 }

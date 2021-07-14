@@ -17,9 +17,10 @@ import { IntroScenario } from '@scenarios/IntroScenario';
 import { DemoBaseScenario } from '@scenarios/DemoBaseScenario';
 import { DemoBattleScenario } from '@scenarios/DemoBattleScenario';
 import { AbstractScenario } from '@scenarios/AbstractScenario';
+import { DemoMerchantScenario } from '@scenarios/DemoMerchantScenario';
+import { ScenarioNo5 } from '@scenarios/Scenario5';
 
 import { SessionState } from './SessionState';
-import { DemoMerchantScenario } from '@scenarios/DemoMerchantScenario';
 
 class App {
   private ui: AbstractUI | AbstractSessionUI;
@@ -72,6 +73,9 @@ class App {
         status: 'ALIVE',
         ui,
         persistActionsContainers: [],
+        events: {},
+        merchants: {},
+        npcList: {},
       };
       this.sessionStateMap.set(sessionId, state);
 
@@ -103,6 +107,9 @@ class App {
         status: 'ALIVE',
         ui,
         persistActionsContainers: [],
+        events: {},
+        merchants: {},
+        npcList: {},
       };
       this.sessionStateMap.set(sessionId, state);
 
@@ -126,6 +133,13 @@ class App {
           newScenario.run();
         } else if (scenarioId === 902) {
           const newScenario = new DemoMerchantScenario(
+            cursor, state, { onChangeScenario, onExit: state.finishSession },
+          );
+          scenarioMap.set(newScenario.scenarioId, newScenario);
+          await newScenario.init();
+          newScenario.run();
+        } else if (scenarioId === 5) {
+          const newScenario = new ScenarioNo5(
             cursor, state, { onChangeScenario, onExit: state.finishSession },
           );
           scenarioMap.set(newScenario.scenarioId, newScenario);

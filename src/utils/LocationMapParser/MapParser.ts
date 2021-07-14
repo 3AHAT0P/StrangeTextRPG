@@ -18,12 +18,19 @@ export interface MapInfo {
   locationId: number,
 }
 
+export interface CustomInteractions {
+  exit?: InteractionModel;
+  onPlayerDied?: InteractionModel;
+}
+
 export class MapParser {
   private _mapImagePath: string;
 
   private _imageData: ImageData | null = null;
 
   private _mapInfo: MapInfo;
+
+  private _customInteractions: CustomInteractions;
 
   private _mapSpotMap = new Map<string, MapSpotModel>();
 
@@ -33,6 +40,7 @@ export class MapParser {
 
   private _sequences = {
     npcId: 1,
+    interactionId: 1,
   };
 
   private async loadImageData() {
@@ -75,14 +83,26 @@ export class MapParser {
       text: `💬 Поговорить с торговцем (#${this._sequences.npcId})`,
       type: 'CUSTOM',
     });
+    this._sequences.npcId += 1;
+  }
+
+  private async _createLocationExit({ currentSpot }: MatcherContext) {
+    let { exit } = this._customInteractions;
+
+    if (exit == null) {
+      exit = await this._dbService.repositories.interactionRepo.create({
+        ...this._mapInfo,
+        interactionId: 9000,
+        text: 'Ты вырался из этого лабиринта живым. Хе, могло быть и хуже.',
+      });
+    }
     await this._dbService.repositories.actionRepo.create({
       ...this._mapInfo,
-      from: npc.id,
-      to: currentSpot.id,
-      text: 'OnDialogEnd',
-      type: 'SYSTEM',
+      from: currentSpot.id,
+      to: exit.id,
+      text: '',
+      type: 'AUTO',
     });
-    this._sequences.npcId += 1;
   }
 
   private async _createBattle({ currentSpot, subtype }: MatcherContext) {
@@ -101,11 +121,31 @@ export class MapParser {
       text: '',
       type: 'AUTO',
     });
+    const onWinInteraction = await this._dbService.repositories.interactionRepo.create({
+      ...this._mapInfo,
+      interactionId: this._sequences.interactionId,
+      text: 'Больше тут ничего и никого нет.',
+    });
+    this._sequences.interactionId += 1;
     await this._dbService.repositories.actionRepo.create({
       ...this._mapInfo,
       from: battle.id,
+      to: onWinInteraction.id,
+      text: 'OnWin',
+      type: 'SYSTEM',
+    });
+    await this._dbService.repositories.actionRepo.create({
+      ...this._mapInfo,
+      from: onWinInteraction.id,
       to: currentSpot.id,
-      text: 'OnBattleEnd',
+      text: '',
+      type: 'AUTO',
+    });
+    await this._dbService.repositories.actionRepo.create({
+      ...this._mapInfo,
+      from: battle.id,
+      to: this._customInteractions.onPlayerDied == null ? currentSpot.id : this._customInteractions.onPlayerDied.id,
+      text: 'OnLose',
       type: 'SYSTEM',
     });
   }
@@ -150,9 +190,10 @@ export class MapParser {
     }
   }
 
-  constructor(mapImagePath: string, mapInfo: MapInfo) {
+  constructor(mapImagePath: string, mapInfo: MapInfo, customInteractions: CustomInteractions = {}) {
     this._mapImagePath = mapImagePath;
     this._mapInfo = mapInfo;
+    this._customInteractions = customInteractions;
   }
 
   public async init(): Promise<void> {
@@ -163,6 +204,7 @@ export class MapParser {
 
     this._mapSpotSubtypeMatcher
       .on('BATTLE', this._createBattle.bind(this))
+      .on('LOCATION_EXIT', this._createLocationExit.bind(this))
       .on('MERCHANT', this._createMerchant.bind(this));
   }
 

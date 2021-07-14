@@ -11,6 +11,9 @@ export interface SessionState {
   status: 'ALIVE' | 'DEAD';
   ui: AbstractUI;
   persistActionsContainers: PersistActionsContainer<string>[];
+  events: Record<number, any>;
+  merchants: Record<number, any>;
+  npcList: Record<number, any>;
 }
 
 export {};
