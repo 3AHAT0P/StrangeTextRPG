@@ -18,7 +18,7 @@ import { DemoBaseScenario } from '@scenarios/DemoBaseScenario';
 import { DemoBattleScenario } from '@scenarios/DemoBattleScenario';
 import { AbstractScenario } from '@scenarios/AbstractScenario';
 import { DemoMerchantScenario } from '@scenarios/DemoMerchantScenario';
-import { ScenarioNo5 } from '@scenarios/Scenario5';
+import { ScenarioNo5 } from '@scenarios/Scenario5/index';
 
 import { SessionState } from './SessionState';
 
@@ -73,7 +73,7 @@ class App {
         status: 'ALIVE',
         ui,
         persistActionsContainers: [],
-        events: {},
+        events: { 1: 0 },
         merchants: {},
         npcList: {},
       };
@@ -107,7 +107,7 @@ class App {
         status: 'ALIVE',
         ui,
         persistActionsContainers: [],
-        events: {},
+        events: { 1: 0 },
         merchants: {},
         npcList: {},
       };

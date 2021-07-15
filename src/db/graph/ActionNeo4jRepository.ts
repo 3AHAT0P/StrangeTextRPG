@@ -9,6 +9,7 @@ export interface ActionProperties extends AbstractProperties {
   text: string;
   type: 'SYSTEM' | 'AUTO' | 'CUSTOM';
   condition?: string;
+  operation?: string;
   isPrintable?: boolean;
 }
 
@@ -46,6 +47,7 @@ export class ActionNeo4jRepository extends AbstractNeo4jRepository<typeof Action
       text: node.properties.text,
       type: node.properties.type,
       condition: node.properties.condition,
+      operation: node.properties.operation,
       isPrintable: node.properties.isPrintable ?? false,
     };
   }

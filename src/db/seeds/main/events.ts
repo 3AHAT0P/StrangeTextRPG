@@ -1,5 +1,6 @@
 import { RepositoriesHash } from '@db/DBService';
 import { MapSpotModel } from '@db/entities';
+import { eventId as event1Id, eventStates as event1States } from '@scenarios/Scenario5/events/1';
 
 interface EventBuilderOptions {
   spot: MapSpotModel;
@@ -12,12 +13,6 @@ interface EventBuilderOptions {
 
 const events: Record<number, (options: EventBuilderOptions) => Promise<void>> = {
   async 1({ spot, repositories, baseInfo }: EventBuilderOptions) {
-    const eventId = 1;
-    const eventStates = <const>{
-      INITIAL: 0,
-      READY_TO_INTERACT: 1,
-      FINISHED: 2,
-    };
     const { interactionRepo, actionRepo } = repositories;
     const event1Interaction = await interactionRepo.create({
       ...baseInfo,
@@ -30,7 +25,7 @@ const events: Record<number, (options: EventBuilderOptions) => Promise<void>> = 
       from: spot.id,
       to: event1Interaction.id,
       text: '',
-      condition: `{{isLTE (get events ${eventId}) ${eventStates.READY_TO_INTERACT}}}`,
+      condition: `{{eventStateIsEQ ${event1Id} ${event1States.INITIAL}}}`,
       type: 'AUTO',
     });
 
@@ -39,7 +34,7 @@ const events: Record<number, (options: EventBuilderOptions) => Promise<void>> = 
       from: event1Interaction.id,
       to: spot.id,
       text: '',
-      operation: `{{set events ${eventId} ${eventStates.READY_TO_INTERACT}}}`,
+      operation: `{{updateEventState ${event1Id} ${event1States.READY_TO_INTERACT}}}`,
       type: 'AUTO',
     });
 
@@ -54,7 +49,7 @@ const events: Record<number, (options: EventBuilderOptions) => Promise<void>> = 
       from: spot.id,
       to: event1LookupInteraction.id,
       text: '👀 Осмотреть труп',
-      condition: `{{isEQ (get events ${eventId}) ${eventStates.READY_TO_INTERACT}}}`,
+      condition: `{{eventStateIsEQ ${event1Id} ${event1States.READY_TO_INTERACT}}}`,
       type: 'CUSTOM',
       isPrintable: true,
     });
@@ -64,7 +59,7 @@ const events: Record<number, (options: EventBuilderOptions) => Promise<void>> = 
       from: event1LookupInteraction.id,
       to: spot.id,
       text: '',
-      operation: `{{set events ${eventId} ${eventStates.FINISHED}}}`,
+      operation: `{{updateEventState ${event1Id} ${event1States.FINISHED}}}`,
       type: 'AUTO',
     });
   },

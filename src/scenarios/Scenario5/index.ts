@@ -1,9 +1,15 @@
-import { InteractionModel, NPCModel } from '@db/entities';
+import { Rat } from '@actors/Rat';
+import { BattleModel, InteractionModel, NPCModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
-import { ActionsLayout } from '@ui';
+import { BattleInteraction, BATTLE_FINAL_ACTIONS } from '@interactions/BattleInteraction';
+import { Interaction } from '@interactions/Interaction';
+import { MOVE_ACTIONS } from '@locations/AreaMap';
+import { ActionsLayout, AdditionalSessionInfo } from '@ui';
 import { filterBy, findBy } from '@utils/ArrayUtils';
 import { Template } from '@utils/Template';
-import { AbstractScenario } from './AbstractScenario';
+import { AbstractScenario } from '../AbstractScenario';
+import { ScenarioContext } from './@types';
+import { buildScenarioEvent as buildScenarioEvent1 } from './events/1';
 
 interface MerchantProduct {
   internalName: string;
@@ -57,16 +63,14 @@ const findActionByTextRaw = (
 export class ScenarioNo5 extends AbstractScenario {
   protected _scenarioId: number = 5;
 
+  protected _context: ScenarioContext | null = null;
+
   protected async _runner() {
-    const context = {
-      state: this._state,
-      additionalInfo: this._state.additionalInfo,
-      player: this._state.player,
-      events: this._state.events,
-    };
+    if (this._context === null) throw new Error('Context is null');
+    console.log(this.currentNode);
     try {
       if (this.currentNode instanceof InteractionModel) {
-        await this._sendTemplateToUser(this.currentNode.text, context);
+        await this._sendTemplateToUser(this.currentNode.text, this._context);
       }
 
       if (this.currentNode instanceof NPCModel) {
@@ -75,19 +79,31 @@ export class ScenarioNo5 extends AbstractScenario {
         }
       }
 
-      const actions = (await this._cursor.getActions())
+      if (this.currentNode instanceof BattleModel) {
+        if (this.currentNode.chanceOfTriggering > Math.random()) {
+          if (await this._interactWithBattle(this.currentNode)) return;
+        }
+      }
+
+      const allActions = await this._cursor.getActions();
+      const actions = allActions
         .filter((action) => {
           if (action.condition === null) return true;
-          action.condition.useContext(context);
-          return action.condition.value === 'true';
+          action.condition.useContext(this._context);
+          return action.condition.isEqualTo('true');
         });
-      if (actions.length === 1 && actions[0].type === 'AUTO') {
-        this.currentNode = await this._cursor.getNextNode(actions[0]);
+      const autoAction = actions.find((action) => action.type === 'AUTO');
+
+      if (autoAction != null) {
+        autoAction.operation?.useContext(this._context)?.forceBuild();
+        this.currentNode = await this._cursor.getNextNode(autoAction);
       } else {
-        if (actions.some((action) => action.type === 'AUTO')) {
-          // @TODO: я хз че делать дальше
-        }
-        const choosedAction = await this._interactWithUser(actions, context);
+        const choosedAction = await this._interactWithUser(actions, this._context);
+        if (choosedAction.text.isEqualToRaw(MOVE_ACTIONS.NO_WAY)) return;
+        if (choosedAction.text.isEqualToRaw(MOVE_ACTIONS.TO_NORTH)) await this._state.ui.sendToUser('Ты идешь на север');
+        if (choosedAction.text.isEqualToRaw(MOVE_ACTIONS.TO_SOUTH)) await this._state.ui.sendToUser('Ты идешь на юг');
+        if (choosedAction.text.isEqualToRaw(MOVE_ACTIONS.TO_WEST)) await this._state.ui.sendToUser('Ты идешь на запад');
+        if (choosedAction.text.isEqualToRaw(MOVE_ACTIONS.TO_EAST)) await this._state.ui.sendToUser('Ты идешь на восток');
         this.currentNode = await this._cursor.getNextNode(choosedAction);
       }
     } catch (error) {
@@ -145,5 +161,52 @@ export class ScenarioNo5 extends AbstractScenario {
       return true;
     }
     return false;
+  }
+
+  private async _interactWithBattle(node: BattleModel): Promise<boolean> {
+    console.log('BATTLE difficult', node.difficult);
+    const enemies = [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' })];
+    const battleInteraction = new BattleInteraction({ ui: this._state.ui, player: this._state.player, enemies });
+
+    const winInteraction = new Interaction({
+      ui: this._state.ui,
+      async activate() {
+        return null;
+      },
+    });
+    const loseInteraction = new Interaction({
+      ui: this._state.ui,
+      async activate() {
+        return null;
+      },
+    });
+
+    battleInteraction.addSystemAction(BATTLE_FINAL_ACTIONS.PLAYER_WIN, winInteraction);
+    battleInteraction.addSystemAction(BATTLE_FINAL_ACTIONS.PLAYER_DIED, loseInteraction);
+    const nextInteraction = await battleInteraction.interact();
+    const actions = await this._cursor.getActions();
+
+    if (nextInteraction === winInteraction) {
+      const winAction = actions.find((action) => action.text.isEqualToRaw('OnWin'));
+      if (winAction == null) throw new Error('winAction is null');
+      this.currentNode = await this._cursor.getNextNode(winAction);
+    } else if (nextInteraction === loseInteraction) {
+      const loseAction = actions.find((action) => action.text.isEqualToRaw('OnLose'));
+      if (loseAction == null) throw new Error('loseAction is null');
+      this.currentNode = await this._cursor.getNextNode(loseAction);
+    } else throw new Error('Something went wrong!');
+    return true;
+  }
+
+  public async init() {
+    await super.init();
+
+    this._context = {
+      additionalInfo: this._state.additionalInfo,
+      player: this._state.player,
+      events: { },
+    };
+
+    this._context.events[1] = buildScenarioEvent1(this._context);
   }
 }

@@ -7,6 +7,7 @@ export interface ActionEntity extends AbstractEntity {
   text: string;
   type: 'SYSTEM' | 'AUTO' | 'CUSTOM';
   condition?: string;
+  operation?: string;
   isPrintable?: boolean;
 }
 
@@ -21,6 +22,8 @@ export class ActionModel extends AbstractModel {
 
   public readonly condition: Template | null;
 
+  public readonly operation: Template | null;
+
   public readonly isPrintable: boolean;
 
   constructor(data: ActionEntity) {
@@ -30,6 +33,7 @@ export class ActionModel extends AbstractModel {
     this.text = new Template(data.text);
     this.type = data.type;
     this.condition = data.condition == null ? null : new Template(data.condition);
+    this.operation = data.operation == null ? null : new Template(data.operation);
     this.isPrintable = data.isPrintable ?? false;
   }
 }

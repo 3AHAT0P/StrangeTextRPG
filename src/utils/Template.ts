@@ -11,8 +11,13 @@ export class Template {
 
   public get value(): string {
     if (this._result != null) return this._result;
+
+    return this._build();
+  }
+
+  private _build(): string {
     if (this._ctx == null) throw new Error('Context is null');
-    console.log(this._raw, this._ctx);
+    // console.log(this._raw, this._ctx);
     this._result = this._compiled(this._ctx);
 
     return this._result;
@@ -36,6 +41,10 @@ export class Template {
   }
 
   public isEqualTo(value: string): boolean {
-    return this._result === value;
+    return this.value === value;
+  }
+
+  public forceBuild(): void {
+    this._build();
   }
 }

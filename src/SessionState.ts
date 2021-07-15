@@ -1,10 +1,10 @@
-import { AbstractActor } from '@actors';
+import { Player } from '@actors';
 import { AbstractUI, AdditionalSessionInfo, PersistActionsContainer } from '@ui';
 import type { AbstractInteraction } from '@interactions';
 
 export interface SessionState {
   sessionId: string;
-  player: AbstractActor;
+  player: Player;
   currentInteraction: AbstractInteraction;
   additionalInfo: AdditionalSessionInfo;
   finishSession(): Promise<void>;

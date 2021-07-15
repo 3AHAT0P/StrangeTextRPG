@@ -2,15 +2,44 @@ import Handlebars from 'handlebars';
 
 export type TemplateDelegate<TContext> = Handlebars.TemplateDelegate<TContext>;
 
+const logWrapper = (cb: any) => (
+  (...args: any[]) => {
+    const res = cb(...args);
+    console.log([...args], res);
+    return res;
+  });
+
 // Define helpers
 Handlebars.registerHelper('actorType', (actor, options) => actor.getType(options.hash));
 
 Handlebars.registerHelper(
   'get',
-  <TKey extends string | number>(target: Record<TKey, any>, key: TKey) => Reflect.get(target, key),
+  logWrapper(<TKey extends string | number>(target: Record<TKey, any>, key: TKey) => Reflect.get(target, key)),
+);
+
+Handlebars.registerHelper(
+  'set',
+  <TKey extends string | number>(target: Record<TKey, any>, key: TKey, value: any) => Reflect.set(target, key, value),
 );
 
 Handlebars.registerHelper('trueIndex', (index: number) => (index + 1).toString());
+
+Handlebars.registerHelper('isLTE', logWrapper((leftOperand: any, rightOperand: any) => leftOperand <= rightOperand));
+Handlebars.registerHelper('isGTE', logWrapper((leftOperand: any, rightOperand: any) => leftOperand >= rightOperand));
+Handlebars.registerHelper('isEQ', logWrapper((leftOperand: any, rightOperand: any) => leftOperand === rightOperand));
+
+Handlebars.registerHelper(
+  'updateEventState',
+  (eventId: number, value: number, ctx: any) => {
+    Reflect.get(ctx.globalState.events, eventId).state = value;
+    return true;
+  },
+);
+
+Handlebars.registerHelper(
+  'eventStateIsEQ',
+  (eventId: number, value: number, ctx: any) => Reflect.get(ctx.globalState.events, eventId).state === value,
+);
 
 // Define Handlebars config
 const handlebarsOptions = <const>{
