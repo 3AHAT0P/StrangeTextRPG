@@ -4,6 +4,7 @@ export type TemplateDelegate<TContext> = Handlebars.TemplateDelegate<TContext>;
 
 const logWrapper = (cb: any) => (
   (...args: any[]) => {
+    console.log([...args], args[args.length - 1].data.root);
     const res = cb(...args);
     console.log([...args], res);
     return res;
@@ -30,15 +31,15 @@ Handlebars.registerHelper('isEQ', logWrapper((leftOperand: any, rightOperand: an
 
 Handlebars.registerHelper(
   'updateEventState',
-  (eventId: number, value: number, ctx: any) => {
-    Reflect.get(ctx.events, eventId).state = value;
+  logWrapper((eventId: number, value: number, ctx: any) => {
+    Reflect.get(ctx.data.root.events, eventId).state = value;
     return true;
-  },
+  }),
 );
 
 Handlebars.registerHelper(
   'eventStateIsEQ',
-  (eventId: number, value: number, ctx: any) => Reflect.get(ctx.events, eventId).state === value,
+  logWrapper((eventId: number, value: number, ctx: any) => Reflect.get(ctx.data.root.events, eventId).state === value),
 );
 
 // Define Handlebars config
