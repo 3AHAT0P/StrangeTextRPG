@@ -31,14 +31,14 @@ Handlebars.registerHelper('isEQ', logWrapper((leftOperand: any, rightOperand: an
 Handlebars.registerHelper(
   'updateEventState',
   (eventId: number, value: number, ctx: any) => {
-    Reflect.get(ctx.globalState.events, eventId).state = value;
+    Reflect.get(ctx.events, eventId).state = value;
     return true;
   },
 );
 
 Handlebars.registerHelper(
   'eventStateIsEQ',
-  (eventId: number, value: number, ctx: any) => Reflect.get(ctx.globalState.events, eventId).state === value,
+  (eventId: number, value: number, ctx: any) => Reflect.get(ctx.events, eventId).state === value,
 );
 
 // Define Handlebars config
