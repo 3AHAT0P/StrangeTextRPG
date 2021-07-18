@@ -9,7 +9,7 @@
 Если тебе это интересно пиши мне в телеграм [@ikostyakov](https://t.me/ikostyakov) или на почту [i.a.kostyakov@gmail.com](mailto:i.a.kostyakov@gmail.com)
 
 
-![Strange Text RPG Discord](https://discordapp.com/api/guilds/846656069177573408/widget.png?style=banner4)
+[![Strange Text RPG Discord](https://discordapp.com/api/guilds/846656069177573408/widget.png?style=banner4)](https://discord.gg/NXWxjtyT8n)
 
 [Strange Text RPG Discord Invite Link](https://discord.gg/NXWxjtyT8n)
 
