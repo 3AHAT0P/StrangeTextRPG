@@ -72,6 +72,7 @@ export abstract class AbstractScenario {
 
     if (choosedAction == null) throw new Error('choosedAction is null');
     if (choosedAction.isPrintable) await this._sendTemplateToUser(choosedAction.text, context);
+    choosedAction.operation?.useContext(context)?.forceBuild();
 
     return choosedAction;
   }

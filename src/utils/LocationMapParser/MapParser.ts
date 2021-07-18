@@ -81,6 +81,7 @@ export class MapParser {
       from: currentSpot.id,
       to: npc.id,
       text: `💬 Поговорить с торговцем (#${this._sequences.npcId})`,
+      operation: `{{loadMerchantInfo ${this._sequences.npcId}}}`,
       type: 'CUSTOM',
     });
     this._sequences.npcId += 1;
@@ -119,6 +120,7 @@ export class MapParser {
       from: currentSpot.id,
       to: battle.id,
       text: '',
+      condition: `{{canBattleTrigger ${battle.id} ${chanceOfTriggering}}}`,
       type: 'AUTO',
     });
     const onWinInteraction = await this._dbService.repositories.interactionRepo.create({
@@ -139,6 +141,7 @@ export class MapParser {
       from: onWinInteraction.id,
       to: currentSpot.id,
       text: '',
+      operation: `{{updateBattleImmune ${battle.id} 10}}`,
       type: 'AUTO',
     });
     await this._dbService.repositories.actionRepo.create({

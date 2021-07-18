@@ -12,11 +12,11 @@ import { eventBuilder } from './events';
 import { npcInteractionBuilder } from './npcs';
 
 const parseMap = async (exitInteraction: InteractionModel, onDied: InteractionModel) => {
-  const mapPath = path.resolve(__dirname, '..', '..', '..', '..', 'assets', 'scenario5.location1.ruin.png');
+  const mapPath = path.resolve(__dirname, '..', '..', '..', '..', 'assets', 'test.location.png');
   const mapParser = new MapParser(
     mapPath,
     {
-      scenarioId: 5,
+      scenarioId: 10001,
       locationId: 1,
     },
     {
@@ -33,7 +33,7 @@ const parseMap = async (exitInteraction: InteractionModel, onDied: InteractionMo
 };
 
 export const baseInfo = <const>{
-  scenarioId: 5,
+  scenarioId: 10001,
   locationId: 1,
 };
 
@@ -48,7 +48,6 @@ const getSpotAndRelatedMerchant = async (
   dbService: DBService, x: number, y: number,
 ): Promise<{ spot: MapSpotModel, npc: NPCModel }> => {
   const records = await dbService.runRawQuery(getMerchantOnTheSpotQuery, { x, y });
-
   const spotData = records[0].get(0);
   const merchantData = records[0].get(1);
 
@@ -65,7 +64,7 @@ const getActionsToSpot = async (
   return records.map((item) => dbService.repositories.actionRepo.fromRecord(item.get(0)));
 };
 
-export const scenario5Location1SeedRun = async (dbService: DBService): Promise<Scenario5Location1Connectors> => {
+export const scenarioTestLocation1SeedRun = async (dbService: DBService): Promise<Scenario5Location1Connectors> => {
   const {
     battleRepo, interactionRepo, npcRepo, mapSpotRepo, actionRepo,
   } = dbService.repositories;
@@ -98,7 +97,7 @@ export const scenario5Location1SeedRun = async (dbService: DBService): Promise<S
 
   await parseMap(exitInteraction, onDied);
 
-  const startSpot = await mapSpotRepo.findByParams({ ...baseInfo, x: 1, y: 5 });
+  const startSpot = await mapSpotRepo.findByParams({ ...baseInfo, x: 3, y: 3 });
 
   const builderOptionsTemplate = <const>{
     repositories: dbService.repositories,
@@ -106,23 +105,7 @@ export const scenario5Location1SeedRun = async (dbService: DBService): Promise<S
   };
 
   await npcInteractionBuilder(
-    'default', { ...builderOptionsTemplate, ...await getSpotAndRelatedMerchant(dbService, 1, 10) },
-  );
-
-  await npcInteractionBuilder(
-    'default', { ...builderOptionsTemplate, ...await getSpotAndRelatedMerchant(dbService, 6, 14) },
-  );
-
-  await npcInteractionBuilder(
-    'default', { ...builderOptionsTemplate, ...await getSpotAndRelatedMerchant(dbService, 14, 8) },
-  );
-
-  await npcInteractionBuilder(
-    'default', { ...builderOptionsTemplate, ...await getSpotAndRelatedMerchant(dbService, 22, 2) },
-  );
-
-  await npcInteractionBuilder(
-    'default', { ...builderOptionsTemplate, ...await getSpotAndRelatedMerchant(dbService, 23, 13) },
+    'default', { ...builderOptionsTemplate, ...await getSpotAndRelatedMerchant(dbService, 1, 3) },
   );
 
   await actionRepo.create({
@@ -142,7 +125,7 @@ export const scenario5Location1SeedRun = async (dbService: DBService): Promise<S
   });
 
   await eventBuilder(
-    1, { ...builderOptionsTemplate, spot: await mapSpotRepo.findByParams({ ...baseInfo, x: 4, y: 1 }) },
+    1, { ...builderOptionsTemplate, spot: await mapSpotRepo.findByParams({ ...baseInfo, x: 2, y: 3 }) },
   );
 
   return <const>{

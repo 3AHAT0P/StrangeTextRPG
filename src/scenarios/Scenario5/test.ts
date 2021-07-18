@@ -1,4 +1,3 @@
-import { AbstractActor, Skeleton } from '@actors';
 import { Rat } from '@actors/Rat';
 import { BattleModel, InteractionModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
@@ -12,7 +11,15 @@ import { Template } from '@utils/Template';
 import { AbstractScenario } from '../AbstractScenario';
 import { MerchantProduct, ScenarioContext } from './@types';
 import { buildScenarioEvent as buildScenarioEvent1 } from './events/1';
-import { merchantGoods } from './npcs/merchants';
+
+const merchantGoods = new Map<number, Set<MerchantProduct>>();
+merchantGoods.set(1, new Set([
+  {
+    internalName: 'healthPoitions',
+    displayName: 'Зелье лечения',
+    price: 10,
+  },
+]));
 
 const defaultGoods: Set<MerchantProduct> = new Set<MerchantProduct>();
 
@@ -20,8 +27,8 @@ const findActionByTextRaw = (
   actions: ActionModel[], value: string,
 ): ActionModel | null => actions.find(({ text }) => text.isEqualToRaw(value)) ?? null;
 
-export class ScenarioNo5 extends AbstractScenario {
-  protected _scenarioId: number = 5;
+export class ScenarioNoTest extends AbstractScenario {
+  protected _scenarioId: number = 10001;
 
   protected _context: ScenarioContext | null = null;
 
@@ -121,31 +128,8 @@ export class ScenarioNo5 extends AbstractScenario {
       if (difficult === 'VERY_HARD') return 25;
       return 0;
     };
-    const getEnemies = (difficult: BattleDifficulty): AbstractActor[] => {
-      if (difficult === 'VERY_EASY') return [new Rat()];
-      if (difficult === 'EASY') return [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' })];
-      if (difficult === 'MEDIUM') return [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' }), new Rat({ typePostfix: '№3' })];
-      if (difficult === 'HARD') {
-        return [
-          new Rat({ typePostfix: '№1' }),
-          new Rat({ typePostfix: '№2' }),
-          new Rat({ typePostfix: '№3' }),
-          new Skeleton({ typePostfix: '№1' }),
-          new Skeleton({ typePostfix: '№2' }),
-        ];
-      }
-      if (difficult === 'VERY_HARD') {
-        return [
-          new Skeleton({ typePostfix: '№1' }),
-          new Skeleton({ typePostfix: '№2' }),
-          new Skeleton({ typePostfix: '№3' }),
-          new Skeleton({ typePostfix: '№4' }),
-          new Skeleton({ typePostfix: '№5' }),
-        ];
-      }
-      return [];
-    };
-    const enemies = getEnemies(node.difficult);
+    // const enemies = [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' })];
+    const enemies = [new Rat()];
     const battleInteraction = new BattleInteraction({ ui: this._state.ui, player: this._state.player, enemies });
 
     const winInteraction = new Interaction({

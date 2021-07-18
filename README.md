@@ -8,6 +8,11 @@
 
 Если тебе это интересно пиши мне в телеграм [@ikostyakov](https://t.me/ikostyakov) или на почту [i.a.kostyakov@gmail.com](mailto:i.a.kostyakov@gmail.com)
 
+
+![Strange Text RPG Discord](https://discordapp.com/api/guilds/846656069177573408/widget.png?style=banner4)
+
+[Strange Text RPG Discord Invite Link](https://discord.gg/NXWxjtyT8n)
+
 ---------
 
 ## Prod
@@ -28,3 +33,14 @@ You can use `npm run area:map:preview [path/to/map/file.ts]` (for example `npm r
 ### Helpful links
 [Name (actors, armor, etc.) generators](https://www.fantasynamegenerators.com/)
 [Bestiary](https://dungeon.su/bestiary/)
+
+----------
+
+### Support
+Игра бесплатна.
+Проект развивается на энтузиазме создателей.
+Если тебе нравится, что мы делаем, ты можешь поддержать проект.
+
+[Задонатить разово](https://www.tinkoff.ru/sl/5ZlcyYuMcv5)
+
+[Become a Patron!](https://www.patreon.com/StrangeTextRPG)

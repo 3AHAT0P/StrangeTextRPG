@@ -17,7 +17,6 @@ export class Template {
 
   private _build(): string {
     if (this._ctx == null) throw new Error('Context is null');
-    // console.log(this._raw, this._ctx);
     this._result = this._compiled(this._ctx);
 
     return this._result;

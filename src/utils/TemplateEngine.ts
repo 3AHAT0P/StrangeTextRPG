@@ -2,20 +2,12 @@ import Handlebars from 'handlebars';
 
 export type TemplateDelegate<TContext> = Handlebars.TemplateDelegate<TContext>;
 
-const logWrapper = (cb: any) => (
-  (...args: any[]) => {
-    console.log([...args], args[args.length - 1].data.root);
-    const res = cb(...args);
-    console.log([...args], res);
-    return res;
-  });
-
 // Define helpers
 Handlebars.registerHelper('actorType', (actor, options) => actor.getType(options.hash));
 
 Handlebars.registerHelper(
   'get',
-  logWrapper(<TKey extends string | number>(target: Record<TKey, any>, key: TKey) => Reflect.get(target, key)),
+  <TKey extends string | number>(target: Record<TKey, any>, key: TKey) => Reflect.get(target, key),
 );
 
 Handlebars.registerHelper(
@@ -25,21 +17,60 @@ Handlebars.registerHelper(
 
 Handlebars.registerHelper('trueIndex', (index: number) => (index + 1).toString());
 
-Handlebars.registerHelper('isLTE', logWrapper((leftOperand: any, rightOperand: any) => leftOperand <= rightOperand));
-Handlebars.registerHelper('isGTE', logWrapper((leftOperand: any, rightOperand: any) => leftOperand >= rightOperand));
-Handlebars.registerHelper('isEQ', logWrapper((leftOperand: any, rightOperand: any) => leftOperand === rightOperand));
+Handlebars.registerHelper('isLTE', (leftOperand: any, rightOperand: any) => leftOperand <= rightOperand);
+Handlebars.registerHelper('isGTE', (leftOperand: any, rightOperand: any) => leftOperand >= rightOperand);
+Handlebars.registerHelper('isEQ', (leftOperand: any, rightOperand: any) => leftOperand === rightOperand);
 
 Handlebars.registerHelper(
   'updateEventState',
-  logWrapper((eventId: number, value: number, ctx: any) => {
-    Reflect.get(ctx.data.root.events, eventId).state = value;
+  (eventId: number, value: number, ctx: any) => {
+    Reflect.get(ctx.data.root.events, eventId).updateState(value);
     return true;
-  }),
+  },
 );
 
 Handlebars.registerHelper(
   'eventStateIsEQ',
-  logWrapper((eventId: number, value: number, ctx: any) => Reflect.get(ctx.data.root.events, eventId).state === value),
+  (eventId: number, value: number, ctx: any) => Reflect.get(ctx.data.root.events, eventId).state === value,
+);
+
+Handlebars.registerHelper(
+  'updateBattleImmune',
+  (battleId: number, value: number, ctx: any) => {
+    const oldValue = Number(Reflect.get(ctx.data.root.battles, battleId));
+    const newValue = Number.isNaN(oldValue) ? value : oldValue + value;
+    Reflect.set(
+      ctx.data.root.battles,
+      battleId,
+      newValue > 0 ? newValue : 0,
+    );
+    return true;
+  },
+);
+
+Handlebars.registerHelper(
+  'canBattleTrigger',
+  (battleId: number, chance: number, ctx: any) => {
+    const rawValue = Number(Reflect.get(ctx.data.root.battles, battleId));
+    const value = Number.isNaN(rawValue) ? 0 : rawValue;
+    if (value !== 0) {
+      Reflect.set(
+        ctx.data.root.battles,
+        battleId,
+        value - 1,
+      );
+      return false;
+    }
+    return chance > Math.random();
+  },
+);
+
+Handlebars.registerHelper(
+  'loadMerchantInfo',
+  (merchantId: number, ctx: any) => {
+    ctx.data.root.loadMerchantGoods(merchantId);
+    return true;
+  },
 );
 
 // Define Handlebars config

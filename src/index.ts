@@ -19,6 +19,7 @@ import { DemoBattleScenario } from '@scenarios/DemoBattleScenario';
 import { AbstractScenario } from '@scenarios/AbstractScenario';
 import { DemoMerchantScenario } from '@scenarios/DemoMerchantScenario';
 import { ScenarioNo5 } from '@scenarios/Scenario5/index';
+import { ScenarioNoTest } from '@scenarios/Scenario5/test';
 
 import { SessionState } from './SessionState';
 
@@ -133,6 +134,13 @@ class App {
           newScenario.run();
         } else if (scenarioId === 902) {
           const newScenario = new DemoMerchantScenario(
+            cursor, state, { onChangeScenario, onExit: state.finishSession },
+          );
+          scenarioMap.set(newScenario.scenarioId, newScenario);
+          await newScenario.init();
+          newScenario.run();
+        } else if (scenarioId === 10001) {
+          const newScenario = new ScenarioNoTest(
             cursor, state, { onChangeScenario, onExit: state.finishSession },
           );
           scenarioMap.set(newScenario.scenarioId, newScenario);
