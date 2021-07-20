@@ -25,6 +25,8 @@ export class NPCNeo4jRepository extends AbstractNeo4jRepository<
 
   protected findRelatedActionsQuery: string = 'MATCH (a:NPC)-[r:Action]->(b) WHERE id(a) = $id RETURN r';
 
+  public readonly type: string = 'NPC';
+
   protected buildFindByPropsQuery(params: Partial<NPCProperties>): string {
     const keys = Object.keys(params);
     let query = 'MATCH (a:NPC';

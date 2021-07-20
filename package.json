@@ -1,6 +1,6 @@
 {
   "name": "strange-text-rpg",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "main": "index.js",
   "scripts": {
     "start": "nodemon",
@@ -12,13 +12,40 @@
     "db:setup": "sudo mkdir -p /var/lib/neo4j/data && docker pull neo4j",
     "db:setup-ee": "sudo mkdir -p /var/lib/neo4j-ee/data && docker pull neo4j:4.2.7-enterprise",
     "db:start": "docker run --publish=7474:7474 --publish=7687:7687 --volume=/var/lib/neo4j/data:/data neo4j",
-    "db:start-ee": "docker run --publish=7474:7474 --publish=7687:7687 --volume=/var/lib/neo4j-ee/data:/data neo4j:4.2.7-enterprise",
+    "db:start-ee": "docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes --publish=7474:7474 --publish=7687:7687 --volume=/var/lib/neo4j-ee/data:/data neo4j:4.2.7-enterprise",
+    "db:seed:up": "ts-node -r tsconfig-paths/register  ./src/db/seeds/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint -c ./.eslintrc.js ./src"
   },
   "author": "Igor Kostyakov <i.a.kostyakov@gmail.com>",
+  "maintainers": [
+    {
+      "name": "Igor Kostyakov",
+      "email": "i.a.kostyakov@gmail.com",
+      "url": "https://github.com/3AHAT0P"
+    },
+    {
+      "name": "Erik Sulimenko",
+      "url": "https://github.com/e-sulimenko"
+    },
+    {
+      "name": "Alexander Egorov",
+      "url": "https://github.com/alakril"
+    }
+  ],
   "license": "ISC",
+  "funding": [
+    {
+      "type": "patreon",
+      "url": "https://www.patreon.com/StrangeTextRPG"
+    },
+    {
+      "type": "individual",
+      "url": "https://www.tinkoff.ru/sl/5ZlcyYuMcv5"
+    }
+  ],
   "devDependencies": {
+    "@types/handlebars": "^4.1.0",
     "@types/node": "^14.14.37",
     "@typescript-eslint/eslint-plugin": "^4.22.0",
     "@typescript-eslint/parser": "^4.22.0",
@@ -31,10 +58,11 @@
     "typescript": "^4.2.4"
   },
   "dependencies": {
+    "handlebars": "^4.7.7",
     "neo4j-driver": "^4.3.0",
     "neo4j-driver-core": "^4.3.0",
     "node-canvas": "^2.7.0",
-    "pm2": "^4.5.6",
+    "pm2": "^5.1.0",
     "telegraf": "^4.3.0",
     "ts-node": "^9.1.1"
   },

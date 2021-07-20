@@ -8,6 +8,9 @@ import { AbstractProperties, AbstractNeo4jRepository, DBConnectionOptions } from
 export interface ActionProperties extends AbstractProperties {
   text: string;
   type: 'SYSTEM' | 'AUTO' | 'CUSTOM';
+  condition?: string;
+  operation?: string;
+  isPrintable?: boolean;
 }
 
 export const isActionRelationship = <T extends Integer>(
@@ -29,6 +32,8 @@ export class ActionNeo4jRepository extends AbstractNeo4jRepository<typeof Action
 
   protected findByIdQuery: string = 'MATCH ()-[r:Action]->() WHERE id(r) = $id RETURN r';
 
+  public readonly type: string = 'Action';
+
   protected extractFromNode(node: Relationship): ActionEntity {
     if (!isRelationship(node)) throw new Error('Record isn\'t Relationship');
     if (!isActionRelationship(node)) throw new Error('Record isn\'t ActionRelationship');
@@ -41,6 +46,9 @@ export class ActionNeo4jRepository extends AbstractNeo4jRepository<typeof Action
       toInteractionId: node.end.toNumber(),
       text: node.properties.text,
       type: node.properties.type,
+      condition: node.properties.condition,
+      operation: node.properties.operation,
+      isPrintable: node.properties.isPrintable ?? false,
     };
   }
 
@@ -52,6 +60,7 @@ export class ActionNeo4jRepository extends AbstractNeo4jRepository<typeof Action
     params: ActionProperties & { from: number, to: number }, options?: DBConnectionOptions,
   ): Promise<ActionModel> {
     const { from, to, ...otherParams } = params;
+    otherParams.isPrintable = otherParams.isPrintable ?? false;
     const result = await this.runQuery(this.createQuery, { from, to, params: otherParams }, true, options);
 
     return this.fromRecord(result.records[0].get(0));

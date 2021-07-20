@@ -1,21 +1,26 @@
 /* eslint-disable no-await-in-loop */
 import { createCanvas, loadImage, ImageData } from 'node-canvas';
 
+import { DBService } from '@db/DBService';
 import { InteractionModel } from '@db/entities/Interaction';
 import { isThroughable, MapSpotModel, MapSpotSubtype } from '@db/entities/MapSpot';
 import { NPCModel, NPCSubtype } from '@db/entities/NPC';
-import { BattleModel, BattleDifficulty, parseBattleSubtype, isBattleSubtype } from '@db/entities/Battle';
+import { BattleModel, parseBattleSubtype, isBattleSubtype } from '@db/entities/Battle';
 import { MOVE_ACTIONS } from '@locations/AreaMap';
 import { Matcher } from '@utils/Matcher';
 
 import { Palette } from './Palette';
-import { DBService } from './DBService';
 
 export type MatcherContext = { currentSpot: MapSpotModel, subtype: MapSpotSubtype };
 
 export interface MapInfo {
   scenarioId: number,
   locationId: number,
+}
+
+export interface CustomInteractions {
+  exit?: InteractionModel;
+  onPlayerDied?: InteractionModel;
 }
 
 export class MapParser {
@@ -25,6 +30,8 @@ export class MapParser {
 
   private _mapInfo: MapInfo;
 
+  private _customInteractions: CustomInteractions;
+
   private _mapSpotMap = new Map<string, MapSpotModel>();
 
   private _dbService: DBService = new DBService();
@@ -33,6 +40,7 @@ export class MapParser {
 
   private _sequences = {
     npcId: 1,
+    interactionId: 1,
   };
 
   private async loadImageData() {
@@ -73,16 +81,29 @@ export class MapParser {
       from: currentSpot.id,
       to: npc.id,
       text: `💬 Поговорить с торговцем (#${this._sequences.npcId})`,
+      operation: `{{loadMerchantInfo ${this._sequences.npcId}}}`,
       type: 'CUSTOM',
     });
+    this._sequences.npcId += 1;
+  }
+
+  private async _createLocationExit({ currentSpot }: MatcherContext) {
+    let { exit } = this._customInteractions;
+
+    if (exit == null) {
+      exit = await this._dbService.repositories.interactionRepo.create({
+        ...this._mapInfo,
+        interactionId: 9000,
+        text: 'Ты вырался из этого лабиринта живым. Хе, могло быть и хуже.',
+      });
+    }
     await this._dbService.repositories.actionRepo.create({
       ...this._mapInfo,
-      from: npc.id,
-      to: currentSpot.id,
-      text: 'OnDialogEnd',
-      type: 'SYSTEM',
+      from: currentSpot.id,
+      to: exit.id,
+      text: '',
+      type: 'AUTO',
     });
-    this._sequences.npcId += 1;
   }
 
   private async _createBattle({ currentSpot, subtype }: MatcherContext) {
@@ -99,13 +120,35 @@ export class MapParser {
       from: currentSpot.id,
       to: battle.id,
       text: '',
+      condition: `{{canBattleTrigger ${battle.id} ${chanceOfTriggering}}}`,
+      type: 'AUTO',
+    });
+    const onWinInteraction = await this._dbService.repositories.interactionRepo.create({
+      ...this._mapInfo,
+      interactionId: this._sequences.interactionId,
+      text: 'Больше тут ничего и никого нет.',
+    });
+    this._sequences.interactionId += 1;
+    await this._dbService.repositories.actionRepo.create({
+      ...this._mapInfo,
+      from: battle.id,
+      to: onWinInteraction.id,
+      text: 'OnWin',
+      type: 'SYSTEM',
+    });
+    await this._dbService.repositories.actionRepo.create({
+      ...this._mapInfo,
+      from: onWinInteraction.id,
+      to: currentSpot.id,
+      text: '',
+      operation: `{{updateBattleImmune ${battle.id} 10}}`,
       type: 'AUTO',
     });
     await this._dbService.repositories.actionRepo.create({
       ...this._mapInfo,
       from: battle.id,
-      to: currentSpot.id,
-      text: 'OnBattleEnd',
+      to: this._customInteractions.onPlayerDied == null ? currentSpot.id : this._customInteractions.onPlayerDied.id,
+      text: 'OnLose',
       type: 'SYSTEM',
     });
   }
@@ -150,19 +193,21 @@ export class MapParser {
     }
   }
 
-  constructor(mapImagePath: string, mapInfo: MapInfo) {
+  constructor(mapImagePath: string, mapInfo: MapInfo, customInteractions: CustomInteractions = {}) {
     this._mapImagePath = mapImagePath;
     this._mapInfo = mapInfo;
+    this._customInteractions = customInteractions;
   }
 
   public async init(): Promise<void> {
     await this.loadImageData();
 
     this._mapSpotSubtypeMatcher
-      .addMatcher((event) => (event.startsWith('BATTLE_') ? 'BATTLE' : null));
+      .addMatcher((event) => (event.startsWith('BATTLE#') ? 'BATTLE' : null));
 
     this._mapSpotSubtypeMatcher
       .on('BATTLE', this._createBattle.bind(this))
+      .on('LOCATION_EXIT', this._createLocationExit.bind(this))
       .on('MERCHANT', this._createMerchant.bind(this));
   }
 

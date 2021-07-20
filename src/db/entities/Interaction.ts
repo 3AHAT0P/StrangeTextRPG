@@ -1,3 +1,4 @@
+import { Template } from '@utils/Template';
 import { AbstractEntity, AbstractModel } from './Abstract';
 
 export interface InteractionEntity extends AbstractEntity {
@@ -5,14 +6,14 @@ export interface InteractionEntity extends AbstractEntity {
   text: string;
 }
 
-export class InteractionModel extends AbstractModel implements InteractionEntity {
+export class InteractionModel extends AbstractModel {
   public readonly interactionId: number;
 
-  public readonly text: string;
+  public readonly text: Template;
 
   constructor(data: InteractionEntity) {
     super(data);
     this.interactionId = data.interactionId;
-    this.text = data.text;
+    this.text = new Template(data.text);
   }
 }

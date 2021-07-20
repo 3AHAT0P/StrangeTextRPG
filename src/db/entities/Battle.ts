@@ -27,7 +27,7 @@ export const parseBattleSubtype = (subtype: BattleSpotSubtype): [difficult: Batt
   return [difficult as BattleDifficulty, chanceOfTriggeringToNumber[chance as BattleChance]];
 };
 
-export class BattleModel extends AbstractModel implements BattleEntity {
+export class BattleModel extends AbstractModel {
   public readonly difficult: BattleDifficulty;
 
   public readonly chanceOfTriggering: number;

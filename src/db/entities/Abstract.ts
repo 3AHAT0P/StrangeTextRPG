@@ -4,7 +4,7 @@ export interface AbstractEntity {
   locationId: number;
 }
 
-export abstract class AbstractModel implements AbstractEntity {
+export abstract class AbstractModel {
   protected _id: number;
 
   public get id(): number { return this._id; }

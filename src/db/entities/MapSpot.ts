@@ -1,4 +1,3 @@
-/* eslint-disable no-multi-spaces */
 import { AbstractEntity, AbstractModel } from './Abstract';
 import type { BattleSpotSubtype } from './Battle';
 
@@ -18,7 +17,7 @@ export const isThroughable = (subtype: MapSpotSubtype): boolean => (
   !['UNREACHABLE', 'BREAK', 'WALL', 'HOUSE'].includes(subtype)
 );
 
-export class MapSpotModel extends AbstractModel implements MapSpotEntity {
+export class MapSpotModel extends AbstractModel {
   public readonly x: number;
 
   public readonly y: number;

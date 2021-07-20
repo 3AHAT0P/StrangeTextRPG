@@ -25,6 +25,8 @@ export class InteractionNeo4jRepository extends AbstractNeo4jRepository<
 
   protected findRelatedActionsQuery: string = 'MATCH (a:Interaction)-[r:Action]->(b) WHERE id(a) = $id RETURN r';
 
+  public readonly type: string = 'Interaction';
+
   protected buildFindByPropsQuery(params: Partial<InteractionProperties>): string {
     const keys = Object.keys(params);
     let query = 'MATCH (a:Interaction';

@@ -25,6 +25,8 @@ export class BattleNeo4jRepository extends AbstractNeo4jRepository<
 
   protected findRelatedActionsQuery: string = 'MATCH (a:Battle)-[r:Action]->(b) WHERE id(a) = $id RETURN r';
 
+  public readonly type: string = 'Battle';
+
   protected buildFindByPropsQuery(params: Partial<BattleProperties>): string {
     const keys = Object.keys(params);
     let query = 'MATCH (a:Battle';
