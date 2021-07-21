@@ -1,8 +1,10 @@
 import { Player } from '@actors';
+import { AbstractItem } from '@actors/AbstractItem';
+import { HealthPotion } from '@actors/potions';
 import { InteractionModel, NPCModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
 import { ActionsLayout } from '@ui';
-import { filterBy, findBy } from '@utils/ArrayUtils';
+import { filterBy } from '@utils/ArrayUtils';
 import { Template } from '@utils/Template';
 import { AbstractScenario } from './AbstractScenario';
 
@@ -10,6 +12,7 @@ interface MerchantProduct {
   internalName: string;
   displayName: string;
   price: number;
+  item: AbstractItem;
 }
 
 const merchantGoods = new Map<number, Set<MerchantProduct>>();
@@ -18,6 +21,7 @@ merchantGoods.set(1, new Set([
     internalName: 'healthPoitions',
     displayName: 'Зелье лечения',
     price: 10,
+    item: new HealthPotion(),
   },
 ]));
 
@@ -80,7 +84,7 @@ export class DemoMerchantScenario extends AbstractScenario {
         return;
       }
 
-      const exchangeResult = this._player.exchangeGoldToItem(choosedGood.price, { [choosedGood.internalName]: 1 });
+      const exchangeResult = this._player.exchangeGoldToItem(choosedGood.price, [choosedGood.item]);
       if (exchangeResult) {
         await this._sendTemplateToUser(
           new Template(`⚙️ {{actorType player declension="nominative" capitalised=true}} купил ${choosedGood.displayName.toLowerCase()}`),
@@ -99,6 +103,6 @@ export class DemoMerchantScenario extends AbstractScenario {
   public async init() {
     await super.init();
 
-    this._player.collectReward({ gold: 23 });
+    this._player.inventory.collectGold(23);
   }
 }

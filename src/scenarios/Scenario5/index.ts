@@ -25,7 +25,7 @@ export class ScenarioNo5 extends AbstractScenario {
 
   protected _context: ScenarioContext | null = null;
 
-  protected async _runner() {
+  protected async _runner(): Promise<void> {
     if (this._context === null) throw new Error('Context is null');
 
     try {
@@ -100,7 +100,7 @@ export class ScenarioNo5 extends AbstractScenario {
     }
 
     const exchangeResult = this._state
-      .player.exchangeGoldToItem(choosedGood.price, { [choosedGood.internalName]: 1 });
+      .player.exchangeGoldToItem(choosedGood.price, [choosedGood.item]);
     if (exchangeResult) {
       await this._sendTemplateToUser(
         new Template(`⚙️ {{actorType player declension="nominative" capitalised=true}} купил ${choosedGood.displayName.toLowerCase()}`),
@@ -113,14 +113,14 @@ export class ScenarioNo5 extends AbstractScenario {
   }
 
   private async _interactWithBattle(node: BattleModel): Promise<boolean> {
-    const getGoldCount = (difficult: BattleDifficulty): number => {
-      if (difficult === 'VERY_EASY') return 3;
-      if (difficult === 'EASY') return 8;
-      if (difficult === 'MEDIUM') return 13;
-      if (difficult === 'HARD') return 18;
-      if (difficult === 'VERY_HARD') return 25;
-      return 0;
-    };
+    // const getGoldCount = (difficult: BattleDifficulty): number => {
+    //   if (difficult === 'VERY_EASY') return 3;
+    //   if (difficult === 'EASY') return 8;
+    //   if (difficult === 'MEDIUM') return 13;
+    //   if (difficult === 'HARD') return 18;
+    //   if (difficult === 'VERY_HARD') return 25;
+    //   return 0;
+    // };
     const getEnemies = (difficult: BattleDifficulty): AbstractActor[] => {
       if (difficult === 'VERY_EASY') return [new Rat()];
       if (difficult === 'EASY') return [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' })];
@@ -167,9 +167,6 @@ export class ScenarioNo5 extends AbstractScenario {
     const actions = await this._cursor.getActions();
 
     if (nextInteraction === winInteraction) {
-      this._state.player.collectReward({
-        gold: getGoldCount(node.difficult),
-      });
       await this._state.ui.sendToUser('Ты победил, молодец!');
 
       const winAction = actions.find((action) => action.text.isEqualToRaw('OnWin'));
@@ -183,7 +180,7 @@ export class ScenarioNo5 extends AbstractScenario {
     return true;
   }
 
-  public async init() {
+  public async init(): Promise<void> {
     await super.init();
 
     this._context = {

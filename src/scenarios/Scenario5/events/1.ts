@@ -22,7 +22,6 @@ export const buildScenarioEvent = (ctx: ScenarioContext): ScenarioEvent<EventSta
     },
     stateDidUpdated(state: EventState): void {
       if (state === eventStates.FINISHED) {
-        // @TODO: update after merge inventory changes
         ctx.player.equipWeapon(new KnifeWeapon());
       }
     },

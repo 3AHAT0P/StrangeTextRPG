@@ -1,3 +1,4 @@
+import { HealthPotion } from '@actors/potions';
 import { Rat } from '@actors/Rat';
 import { BattleModel, InteractionModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
@@ -18,6 +19,7 @@ merchantGoods.set(1, new Set([
     internalName: 'healthPoitions',
     displayName: 'Зелье лечения',
     price: 10,
+    item: new HealthPotion(),
   },
 ]));
 
@@ -107,7 +109,7 @@ export class ScenarioNoTest extends AbstractScenario {
     }
 
     const exchangeResult = this._state
-      .player.exchangeGoldToItem(choosedGood.price, { [choosedGood.internalName]: 1 });
+      .player.exchangeGoldToItem(choosedGood.price, [choosedGood.item]);
     if (exchangeResult) {
       await this._sendTemplateToUser(
         new Template(`⚙️ {{actorType player declension="nominative" capitalised=true}} купил ${choosedGood.displayName.toLowerCase()}`),
@@ -151,9 +153,7 @@ export class ScenarioNoTest extends AbstractScenario {
     const actions = await this._cursor.getActions();
 
     if (nextInteraction === winInteraction) {
-      this._state.player.collectReward({
-        gold: getGoldCount(node.difficult),
-      });
+      this._state.player.inventory.collectGold(getGoldCount(node.difficult));
       await this._state.ui.sendToUser('Ты победил, молодец!');
 
       const winAction = actions.find((action) => action.text.isEqualToRaw('OnWin'));
