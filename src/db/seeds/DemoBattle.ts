@@ -40,6 +40,12 @@ export const demoBattleSeedRun = async (dbService: DBService): Promise<DemoBattl
     text: 'Что дальше?',
   });
 
+  const i4 = await interactionRepo.create({
+    ...baseInfo,
+    interactionId: 4,
+    text: 'Тебе удалось сбежать из боя.',
+  });
+
   await actionRepo.create({
     ...baseInfo,
     from: b1.id,
@@ -53,6 +59,22 @@ export const demoBattleSeedRun = async (dbService: DBService): Promise<DemoBattl
     from: b1.id,
     to: i2.id,
     text: 'OnLose',
+    type: 'AUTO',
+  });
+
+  await actionRepo.create({
+    ...baseInfo,
+    from: b1.id,
+    to: i4.id,
+    text: 'OnLeave',
+    type: 'AUTO',
+  });
+
+  await actionRepo.create({
+    ...baseInfo,
+    from: i4.id,
+    to: i3.id,
+    text: '',
     type: 'AUTO',
   });
 

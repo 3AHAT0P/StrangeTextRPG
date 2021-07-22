@@ -28,9 +28,16 @@ export class DemoBattleScenario extends AbstractScenario {
           return null;
         },
       });
+      const leaveInteraction = new Interaction({
+        ui: this._state.ui,
+        async activate() {
+          return null;
+        },
+      });
 
       battleInteraction.addSystemAction(BATTLE_FINAL_ACTIONS.PLAYER_WIN, winInteraction);
       battleInteraction.addSystemAction(BATTLE_FINAL_ACTIONS.PLAYER_DIED, loseInteraction);
+      battleInteraction.addSystemAction(BATTLE_FINAL_ACTIONS.PLAYER_LEFT, leaveInteraction);
       const nextInteraction = await battleInteraction.interact();
       const actions = await this._cursor.getActions();
 
@@ -42,6 +49,10 @@ export class DemoBattleScenario extends AbstractScenario {
         const loseAction = actions.find((action) => action.text.isEqualToRaw('OnLose'));
         if (loseAction == null) throw new Error('loseAction is null');
         this.currentNode = await this._cursor.getNextNode(loseAction);
+      } else if (nextInteraction === leaveInteraction) {
+        const leaveAction = actions.find((action) => action.text.isEqualToRaw('OnLeave'));
+        if (leaveAction == null) throw new Error('leaveAction is null');
+        this.currentNode = await this._cursor.getNextNode(leaveAction);
       } else throw new Error('Something went wrong!');
       return;
     }

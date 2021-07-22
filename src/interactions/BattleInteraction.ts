@@ -13,6 +13,7 @@ const ACTIONS = {
   attack: 'Атаковать 🗡',
   examine: 'Осмотреть 👀',
   back: 'Назад',
+  tryToLeave: 'Попытаться cбежать 🏃',
 } as const;
 
 type ACTION_VALUES = typeof ACTIONS[keyof typeof ACTIONS];
@@ -20,6 +21,7 @@ type ACTION_VALUES = typeof ACTIONS[keyof typeof ACTIONS];
 export const BATTLE_FINAL_ACTIONS = {
   PLAYER_DIED: 'onDied',
   PLAYER_WIN: 'onWin',
+  PLAYER_LEFT: 'onLeave',
 } as const;
 
 export class BattleInteraction extends AbstractInteraction {
@@ -65,7 +67,11 @@ export class BattleInteraction extends AbstractInteraction {
     let choosedAction: ACTION_VALUES | null = null;
 
     while (!this.battleFinished()) {
-      const actions: Set<ACTION_VALUES> = new Set([ACTIONS.attack, ACTIONS.examine]);
+      const actions: Set<ACTION_VALUES> = new Set([
+        ACTIONS.attack,
+        ACTIONS.examine,
+        ACTIONS.tryToLeave,
+      ]);
 
       if (choosedAction === null) {
         choosedAction = await this.ui.interactWithUser(new ActionsLayout<ACTION_VALUES>().addRow(...actions));
@@ -118,6 +124,8 @@ export class BattleInteraction extends AbstractInteraction {
             await this.ui.sendToUser(rewardMessage);
           }
         }
+      } else if (choosedAction === ACTIONS.tryToLeave) {
+        return BATTLE_FINAL_ACTIONS.PLAYER_LEFT;
       }
 
       const enemiesAttack = this._aliveEnemies.map(
