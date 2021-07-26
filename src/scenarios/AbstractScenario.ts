@@ -5,7 +5,7 @@ import { ActionsLayout } from '@ui';
 import { Template } from '@utils/Template';
 import { SessionState } from 'SessionState';
 
-interface ScenarioCallbacks {
+export interface ScenarioCallbacks {
   onChangeScenario: (scenarioId: number) => void;
   onExit: () => void;
 }
