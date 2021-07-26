@@ -1,3 +1,4 @@
+import { AbstractActor, AttackResult } from '@actors/AbstractActor';
 import Handlebars from 'handlebars';
 
 export type TemplateDelegate<TContext> = Handlebars.TemplateDelegate<TContext>;
@@ -71,6 +72,21 @@ Handlebars.registerHelper(
     ctx.data.root.loadMerchantGoods(merchantId);
     return true;
   },
+);
+
+Handlebars.registerHelper(
+  'showDamage',
+  (attackResult: AttackResult) => {
+    let result = String(attackResult.damage);
+    if (attackResult.isCritical) result += ' ‼️КРИТ';
+    if (attackResult.isMiss) result += ' ⚠️Промах';
+    return result;
+  },
+);
+
+Handlebars.registerHelper(
+  'showActorHealthPoints',
+  (actor: AbstractActor) => actor.stats.healthPoints,
 );
 
 // Define Handlebars config

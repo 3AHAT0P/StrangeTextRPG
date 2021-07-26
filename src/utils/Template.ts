@@ -1,11 +1,11 @@
 import { compile, TemplateDelegate } from './TemplateEngine';
 
-export class Template {
+export class Template<TContext = any> {
   private _raw: string;
 
-  private _ctx: any | null = null;
+  private _ctx: TContext | null = null;
 
-  private _compiled: TemplateDelegate<any>;
+  private _compiled: TemplateDelegate<TContext>;
 
   private _result: string | null = null;
 
@@ -27,7 +27,7 @@ export class Template {
     this._compiled = compile(this._raw);
   }
 
-  public useContext(ctx: any): this {
+  public useContext(ctx: TContext): this {
     if (this._ctx === ctx) return this;
     this._ctx = ctx;
     this._result = null;
@@ -45,5 +45,21 @@ export class Template {
 
   public forceBuild(): void {
     this._build();
+  }
+
+  public clone(ctx: TContext): Template {
+    return new Template(this._raw).useContext(ctx);
+  }
+
+  public toString(): string {
+    return this.value;
+  }
+
+  public valueOf(): string {
+    return this.value;
+  }
+
+  public [Symbol.toPrimitive](): string {
+    return this.value;
   }
 }
