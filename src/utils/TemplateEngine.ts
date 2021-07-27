@@ -4,7 +4,7 @@ import Handlebars from 'handlebars';
 export type TemplateDelegate<TContext> = Handlebars.TemplateDelegate<TContext>;
 
 // Define helpers
-Handlebars.registerHelper('actorType', (actor, options) => actor.getType(options.hash));
+Handlebars.registerHelper('actorType', (actor, ctx: any) => actor.getType(ctx.hash));
 
 Handlebars.registerHelper(
   'get',

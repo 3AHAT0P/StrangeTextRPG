@@ -4,7 +4,7 @@ import { AbstractUI } from '@ui';
 import { ActionsLayout } from '@ui/ActionsLayout';
 import { Template } from '@utils/Template';
 
-export interface BattleInteractionOptions {
+export interface BattleOptions {
   ui: AbstractUI;
   player: AbstractActor;
   enemies: AbstractActor[];
@@ -28,8 +28,8 @@ export type BATTLE_FINAL_ACTIONS_VALUES = typeof BATTLE_FINAL_ACTIONS[keyof type
 const TEMPLATES = <const>{
   firstMessage: new Template<{ attacker: AbstractActor; attacked: AbstractActor[] }>(
     '{{actorType attacker declension="nominative" capitalised=true}} встретил'
-    + '{{#each attacked as | enemy |}}'
-    + ' {{actorType enemy declension="accusative" withPostfix=true}} {{#unless @last}} и {{/unless}}\n'
+    + '{{#each attacked}}'
+    + ' {{actorType this declension="accusative" withPostfix=true}} {{#unless @last}} и {{/unless}}\n'
     + '{{/each}}'
     + 'Они все хотят кушать, а ты выглядишь очень аппетитно.\n',
   ),
@@ -42,12 +42,12 @@ const TEMPLATES = <const>{
   ),
   examineEnemyCharacteristicsMessage: new Template<{ stats: AbstractActor['stats'] }>(
     'Xарактеристики:\n'
-    + '  Очки здоровья(❤️) - {{get enemyStats "healthPoints"}} / {{get enemyStats "maxHealthPoints"}}\n'
-    + '  Защита(🛡) - {{get enemyStats "armor"}}\n'
-    + '  Сила удара(🗡) - {{get enemyStats "attackDamage"}}\n'
-    + '  Шанс попасть ударом(🎯) - {{get enemyStats "accuracy"}}\n'
-    + '  Шанс попасть в уязвимое место(‼️) - {{get enemyStats "criticalChance"}}\n'
-    + '  Модификатор критического урона(✖️) - {{get enemyStats "criticalDamageModifier"}}\n',
+    + '  Очки здоровья(❤️) - {{get stats "healthPoints"}} / {{get stats "maxHealthPoints"}}\n'
+    + '  Защита(🛡) - {{get stats "armor"}}\n'
+    + '  Сила удара(🗡) - {{get stats "attackDamage"}}\n'
+    + '  Шанс попасть ударом(🎯) - {{get stats "accuracy"}}\n'
+    + '  Шанс попасть в уязвимое место(‼️) - {{get stats "criticalChance"}}\n'
+    + '  Модификатор критического урона(✖️) - {{get stats "criticalDamageModifier"}}\n',
   ),
 
   attackEnemyAction: new Template<{ enemy: AbstractActor }>(
@@ -62,8 +62,8 @@ const TEMPLATES = <const>{
   roundResultMessage: new Template<{ player: AbstractActor; aliveEnemies: AbstractActor[] }>(
     '⚔️Результаты раунда:\n'
     + ' - У {{actorType player declension="genitive"}} осталось {{showActorHealthPoints player}} ОЗ;\n'
-    + '{{#each aliveEnemies as | enemy |}}'
-    + ' - У {{actorType enemy declension="genitive" withPostfix=true}} осталось {{showActorHealthPoints enemy}} ОЗ;\n'
+    + '{{#each aliveEnemies}}'
+    + ' - У {{actorType this declension="genitive" withPostfix=true}} осталось {{showActorHealthPoints this}} ОЗ;\n'
     + '{{/each}}',
   ),
 };
@@ -114,15 +114,8 @@ const ACTION_HANDLERS = <const>{
 
     await ui.sendToUser(TEMPLATES.attackMessage.clone({ attacker: player, attacked: enemy, attackResult }).value);
 
-    for (const aliveEnemy of aliveEnemies.slice()) {
-      if (!aliveEnemy.isAlive) {
-        const index = aliveEnemies.indexOf(aliveEnemy);
-        if (index < 0) continue;
-        aliveEnemies.splice(index, 1);
-        const rewardMessage = aliveEnemy.getReward(player);
-        await ui.sendToUser(`${aliveEnemy.getDeathMessage()}.`);
-        await ui.sendToUser(rewardMessage);
-      }
+    for (const aliveEnemy of aliveEnemies) {
+      if (!aliveEnemy.isAlive) await ui.sendToUser(`${aliveEnemy.getDeathMessage()}.`);
     }
 
     return ACTIONS.attack;
@@ -130,7 +123,29 @@ const ACTION_HANDLERS = <const>{
   [ACTIONS.back]: () => Promise.resolve(null),
 };
 
-export class BattleInteraction {
+const enemiesAttack = async (ui: AbstractUI, player: AbstractActor, aliveEnemies: AbstractActor[]): Promise<void> => {
+  const attackResultMessage = aliveEnemies.map(
+    (actor: AbstractActor) => (
+      TEMPLATES.attackMessage.clone({
+        attacker: actor,
+        attacked: player,
+        attackResult: actor.doAttack(player),
+      }).value
+    ),
+  ).join('\n');
+  if (attackResultMessage.trim() !== '') await ui.sendToUser(attackResultMessage);
+};
+
+const lootRewards = async (ui: AbstractUI, player: AbstractActor, enemies: AbstractActor[]): Promise<void> => {
+  for (const enemy of enemies) {
+    if (!enemy.isAlive) {
+      const rewardMessage = enemy.getReward(player);
+      await ui.sendToUser(rewardMessage);
+    }
+  }
+};
+
+export class Battle {
   private _ui: AbstractUI;
 
   private _player: AbstractActor;
@@ -143,7 +158,7 @@ export class BattleInteraction {
     return this._aliveEnemies.length === 0 || !this._player.isAlive;
   }
 
-  constructor(options: BattleInteractionOptions) {
+  constructor(options: BattleOptions) {
     this._ui = options.ui;
     this._player = options.player;
     this._enemies = options.enemies;
@@ -170,16 +185,9 @@ export class BattleInteraction {
 
       choosedAction = await handler(this._ui, this._player, this._aliveEnemies);
 
-      const enemiesAttack = this._aliveEnemies.map(
-        (actor: AbstractActor) => (
-          TEMPLATES.attackMessage.clone({
-            attacker: actor,
-            attacked: this._player,
-            attackResult: actor.doAttack(this._player),
-          }).value
-        ),
-      ).join('\n');
-      if (enemiesAttack !== '') await this._ui.sendToUser(enemiesAttack);
+      this._aliveEnemies = this._enemies.filter((enemy) => enemy.isAlive);
+
+      await enemiesAttack(this._ui, this._player, this._enemies);
 
       await this._ui.sendToUser(
         TEMPLATES.roundResultMessage.clone({ player: this._player, aliveEnemies: this._aliveEnemies }).value,
@@ -187,6 +195,8 @@ export class BattleInteraction {
 
       if (!this._player.isAlive) return BATTLE_FINAL_ACTIONS.PLAYER_DIED;
     }
+
+    await lootRewards(this._ui, this._player, this._enemies);
 
     return BATTLE_FINAL_ACTIONS.PLAYER_WIN;
   }
