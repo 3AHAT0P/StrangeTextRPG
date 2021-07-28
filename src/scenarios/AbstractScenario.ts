@@ -1,14 +1,72 @@
 import { Cursor } from '@db/Cursor';
-import { OneOFNodeModel, InteractionModel } from '@db/entities';
+import { OneOFNodeModel, InteractionModel, BattleModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
-import { ActionsLayout } from '@ui';
+import { AbstractActor } from '@actors';
+import { Battle, BATTLE_FINAL_ACTIONS } from '@interactions/Battle';
+import { AbstractUI, ActionsLayout } from '@ui';
 import { Template } from '@utils/Template';
 import { SessionState } from 'SessionState';
 
-interface ScenarioCallbacks {
+export interface ScenarioCallbacks {
   onChangeScenario: (scenarioId: number) => void;
   onExit: () => void;
 }
+
+export const interactWithBattle = async (
+  ui: AbstractUI, cursor: Cursor, player: AbstractActor, enemies: AbstractActor[],
+): Promise<OneOFNodeModel> => {
+  const battleInteraction = new Battle({ ui, player, enemies });
+
+  const battleResult = await battleInteraction.activate();
+  const actions = await cursor.getActions();
+
+  if (battleResult === BATTLE_FINAL_ACTIONS.PLAYER_WIN) {
+    const winAction = actions.find((action) => action.text.isEqualToRaw('OnWin'));
+    if (winAction == null) throw new Error('winAction is null');
+    return await cursor.getNextNode(winAction);
+  }
+
+  if (battleResult === BATTLE_FINAL_ACTIONS.PLAYER_DIED) {
+    const loseAction = actions.find((action) => action.text.isEqualToRaw('OnLose'));
+    if (loseAction == null) throw new Error('loseAction is null');
+    return await cursor.getNextNode(loseAction);
+  }
+
+  throw new Error('Incorrect battle result');
+};
+
+export interface ProcessedActions {
+  auto: ActionModel | null;
+  system: ActionModel[];
+  custom: ActionModel[];
+}
+
+export const processActions = (actions: ActionModel[], context: any): ProcessedActions => {
+  const result: ProcessedActions = {
+    auto: null,
+    system: [],
+    custom: [],
+  };
+  for (const action of actions) {
+    if (action.condition !== null) {
+      action.condition.useContext(context);
+      if (!action.condition.isEqualTo('true')) continue;
+    }
+
+    if (action.type === 'AUTO') {
+      result.auto = action;
+      return result;
+    }
+
+    if (action.type === 'SYSTEM') {
+      result.system.push(action);
+    } else {
+      result.custom.push(action);
+    }
+  }
+
+  return result;
+};
 
 export abstract class AbstractScenario {
   protected _cursor: Cursor;
@@ -39,6 +97,16 @@ export abstract class AbstractScenario {
 
   protected async _runner(): Promise<void> {
     if (this.currentNode instanceof InteractionModel) await this._sendTemplateToUser(this.currentNode.text);
+
+    if (this.currentNode instanceof BattleModel) {
+      this.currentNode = await interactWithBattle(
+        this._state.ui,
+        this._cursor,
+        this._state.player,
+        [],
+      );
+      return;
+    }
 
     const actions = await this._cursor.getActions();
     if (actions.length === 1 && actions[0].type === 'AUTO') {
