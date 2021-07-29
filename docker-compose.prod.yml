@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  main:
+    container_name: strpg-main-prod
+    image: strpg-main-prod:latest
+    working_dir: /usr/src/app/dist
+    volumes:
+      - node_modules:/usr/src/app/node_modules
+    command: npm run prod:start
+    restart: on-failure
+    environment:
+      NODE_ENV: production
+    secrets:
+      - source: main_secret
+        target: /usr/src/app/dist/.env.json
+    networks:
+      - webnet
+    dns:
+      - 8.8.8.8
+    depends_on:
+      - graphDB
+  graphDB:
+    container_name: strpg-graphDB-prod
+    image: neo4j:4.2.7-enterprise
+    networks:
+      - webnet
+    environment:
+      NEO4J_ACCEPT_LICENSE_AGREEMENT: 'yes'
+      NEO4J_AUTH: 'neo4j/maestro-nectar-film-cycle-castle-8780'
+    volumes:
+      - graphDBData:/data
+networks:
+  webnet:
+volumes:
+  graphDBData:
+  node_modules:
+secrets:
+  main_secret:
+    file: .env.json

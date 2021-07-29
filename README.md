@@ -21,12 +21,45 @@ Telegram Bot [@StrangeTextRPGBot](https://t.me/StrangeTextRPGBot)
 ---------
 
 ## Development
-For start fill .env and use `npm start`;
+For start
+
+1) copy .env.template.json to .env.json
+
+1) fill up .env.json
+
+1) run `docker-compose up`
+
+2) run in other terminal  `docker exec -i strpg-main npm run db:seed:up`
+
+3) ...
+
+4) profit
 
 ---------
 
-### Tools
-You can use `npm run area:map:preview [path/to/map/file.ts]` (for example `npm run area:map:preview src/locations/ruin/map.ts`) for previewing map in the clean mode;
+## Production
+
+For deploy on prod we need:
+### On Local Machine
+
+```bash
+VERSION_TAG=3.0.0
+docker build -t strpg-main-prod -f Dockerfile.prod .
+docker image tag strpg-main-prod:latest ik0s/strange-text-rpg:$VERSION_TAG
+docker login
+docker push ik0s/strange-text-rpg:$VERSION_TAG
+docker logout
+```
+
+### On Production VPS
+
+```bash
+docker login
+docker pull ik0s/strange-text-rpg:latest
+docker logout
+docker-compose -f docker-compose.prod.yml down
+docker-compose -f docker-compose.prod.yml up -d
+```
 
 ---------
 
