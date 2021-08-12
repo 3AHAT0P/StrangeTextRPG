@@ -6,14 +6,14 @@
     "start": "nodemon",
     "dev:inspect": "nodemon --config ./nodemon.inspect.json",
     "area:map:preview": "nodemon --config ./nodemon.area-map-preview.json",
-    "prod:start": "pm2 start src/index.ts --node-args='-r tsconfig-paths/register'",
-    "prod:stop": "pm2 stop src/index.ts",
-    "prod:reload": "pm2 restart src/index.ts --node-args='-r tsconfig-paths/register'",
+    "prod:build": "./build.sh",
+    "prod:start": "node -r tsconfig-paths/register ./src/index.js",
+    "prod:wait": "sleep 50000",
     "db:setup": "sudo mkdir -p /var/lib/neo4j/data && docker pull neo4j",
     "db:setup-ee": "sudo mkdir -p /var/lib/neo4j-ee/data && docker pull neo4j:4.2.7-enterprise",
     "db:start": "docker run --publish=7474:7474 --publish=7687:7687 --volume=/var/lib/neo4j/data:/data neo4j",
     "db:start-ee": "docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes --publish=7474:7474 --publish=7687:7687 --volume=/var/lib/neo4j-ee/data:/data neo4j:4.2.7-enterprise",
-    "db:seed:up": "ts-node -r tsconfig-paths/register  ./src/db/seeds/index.ts",
+    "db:seed:up": "ts-node -r tsconfig-paths/register ./src/db/seeds/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint -c ./.eslintrc.js ./src"
   },
@@ -54,7 +54,7 @@
     "eslint-import-resolver-typescript": "^2.4.0",
     "eslint-plugin-import": "^2.23.2",
     "nodemon": "^2.0.7",
-    "tsconfig-paths": "^3.9.0",
+    "ts-node": "^9.1.1",
     "typescript": "^4.2.4"
   },
   "dependencies": {
@@ -64,7 +64,7 @@
     "node-canvas": "^2.7.0",
     "pm2": "^5.1.0",
     "telegraf": "^4.3.0",
-    "ts-node": "^9.1.1"
+    "tsconfig-paths": "^3.9.0"
   },
   "repository": {
     "type": "git",
