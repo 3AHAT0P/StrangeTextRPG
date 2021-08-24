@@ -1,4 +1,5 @@
 import { capitalise } from '@utils/capitalise';
+import logger from '@utils/Logger';
 import {
   HeadArmor,
   NeckArmor,
@@ -116,7 +117,7 @@ export class Player extends AbstractActor {
     if (itemType === 'armor') {
       const fromInventory = this.inventory.armors.find((item: Armor) => item.name === fullName);
       if (fromInventory == null) {
-        console.log('Player::compareWithEquipped', 'fromInventory is null');
+        logger.info('Player::compareWithEquipped', 'fromInventory is null');
         return 'Упс...что-то сломалось';
       }
       let fromEquipment;
@@ -135,7 +136,7 @@ export class Player extends AbstractActor {
       const fromInventory = this.inventory.weapons.find((item: Weapon) => item.name === fullName);
       const fromEquipment = this.wearingEquipment.rightHand;
       if (fromInventory == null) {
-        console.log('Player::compareWithEquipped', 'fromInventory is null');
+        logger.info('Player::compareWithEquipped', 'fromInventory is null');
         return 'Упс...что-то сломалось';
       }
       const equippedStats = fromEquipment == null ? 'На вас ничего не надето.' : `Надето\n${this.inventory.getStats(fromEquipment)}`;
@@ -155,7 +156,7 @@ export class Player extends AbstractActor {
     else if (armor instanceof FeetArmor) slot = 'feet';
     else if (armor instanceof InHandArmor) slot = 'leftHand';
     else {
-      console.log('Player::equipArmor', 'Slot is null');
+      logger.info('Player::equipArmor', 'Slot is null');
       return;
     }
     this.inventory.dropItem(armor);

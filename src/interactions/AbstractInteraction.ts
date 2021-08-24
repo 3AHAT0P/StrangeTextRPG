@@ -1,5 +1,6 @@
 import { AbstractUI } from '@ui/AbstractUI';
 import { ActionsLayout } from '@ui/ActionsLayout';
+import logger from '@utils/Logger';
 // eslint-disable-next-line import/no-cycle
 import { ActionMap } from './ActionMap';
 
@@ -79,7 +80,7 @@ export abstract class AbstractInteraction implements Interactable {
   protected async afterActivate(action: string): Promise<AbstractInteraction | null> {
     const [, , , showableText, nextInteraction] = this.actions.getRecordByAction(action) ?? [];
     if (nextInteraction == null) {
-      console.log(new Error(`Selected action is null: ${action}`));
+      logger.error('AbstractInteraction::afterActivate', new Error(`Selected action is null: ${action}`));
       // throw new Error('Selected action is incorrect');
       return null;
     }

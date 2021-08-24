@@ -1,4 +1,4 @@
-import { catchAndLogError } from '@utils/catchAndLogError';
+import logger from '@utils/Logger';
 
 // eslint-disable-next-line import/no-cycle
 import {
@@ -19,7 +19,7 @@ export abstract class AbstractUI {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public init(runOnStart: StartTheGameCallback, runOnFinish: FinishTheGameCallback): this {
-    catchAndLogError('AbstractUI::init', runOnStart('1', this, getDefaultAdditionalSessionInfo()));
+    logger.catchAndLogError('AbstractUI::init', runOnStart('1', this, getDefaultAdditionalSessionInfo()));
     return this;
   }
 

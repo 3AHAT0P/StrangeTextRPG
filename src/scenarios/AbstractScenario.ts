@@ -5,6 +5,7 @@ import { AbstractActor } from '@actors';
 import { Battle, BATTLE_FINAL_ACTIONS } from '@interactions/Battle';
 import { AbstractUI, ActionsLayout } from '@ui';
 import { Template } from '@utils/Template';
+import logger from '@utils/Logger';
 import { SessionState } from 'SessionState';
 
 export interface ScenarioCallbacks {
@@ -89,7 +90,7 @@ export abstract class AbstractScenario {
 
   protected async _beforeRun(): Promise<boolean> {
     if (this.currentNode == null) {
-      console.log('AbstractScenario::_beforeRun', 'currentNode is null');
+      logger.info('AbstractScenario::_beforeRun', 'currentNode is null');
       return false;
     }
     return true;
@@ -119,7 +120,7 @@ export abstract class AbstractScenario {
 
   protected async _afterRun(): Promise<void> {
     if (this.currentNode == null) {
-      console.log('AbstractScenario::_afterRun', 'currentNode is null');
+      logger.info('AbstractScenario::_afterRun', 'currentNode is null');
       return;
     }
     if (this.currentNode.scenarioId !== this._scenarioId) {

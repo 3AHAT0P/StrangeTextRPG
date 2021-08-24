@@ -8,6 +8,7 @@ import { NPCModel, NPCSubtype } from '@db/entities/NPC';
 import { BattleModel, parseBattleSubtype, isBattleSubtype } from '@db/entities/Battle';
 import { MOVE_ACTIONS } from '@locations/AreaMap';
 import { Matcher } from '@utils/Matcher';
+import logger from '@utils/Logger';
 
 import { Palette } from './Palette';
 
@@ -107,7 +108,7 @@ export class MapParser {
   }
 
   private async _createBattle({ currentSpot, subtype }: MatcherContext) {
-    if (!isBattleSubtype(subtype)) return console.error('Subtype mismatch');
+    if (!isBattleSubtype(subtype)) return logger.error('MapParser::_createBattle', 'Subtype mismatch');
 
     const [difficult, chanceOfTriggering] = parseBattleSubtype(subtype);
     const battle = await this._dbService.repositories.battleRepo.create({
@@ -230,7 +231,7 @@ export class MapParser {
         await this._createAboveSpot({ currentSpot, subtype });
         await this._createLeftSpot({ currentSpot, subtype });
       } catch (e) {
-        console.error('MapParser::parse', e);
+        logger.error('MapParser::parse', e);
       }
     }
   }

@@ -12,6 +12,7 @@ import {
 } from '@interactions';
 import { ActionsLayout } from '@ui/ActionsLayout';
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
+import logger from '@utils/Logger';
 import { capitalise } from '@utils/capitalise';
 import { Miscellaneous } from '@actors/miscellaneous';
 import { HealthPotion } from '@actors/potions';
@@ -174,7 +175,7 @@ export class RuinLocation extends AbstractLocation {
           const inventoryItem = player.inventory.getArmorByName(itemName);
           if (inventoryItem == null) {
             await this.ui.sendToUser('Снова это чувство, как когда забыл зачем пришел...');
-            console.log('RuinLocation::showInventory', 'inventoryItem is null');
+            logger.info('RuinLocation::showInventory', 'inventoryItem is null');
             continue;
           }
           player.equipArmor(inventoryItem);
@@ -212,7 +213,7 @@ export class RuinLocation extends AbstractLocation {
           const inventoryItem = player.inventory.getWeaponByName(itemName);
           if (inventoryItem == null) {
             await this.ui.sendToUser('Снова это чувство, как когда забыл зачем пришел...');
-            console.log('RuinLocation::showInventory', 'inventoryItem is null');
+            logger.info('RuinLocation::showInventory', 'inventoryItem is null');
             continue;
           }
           player.equipWeapon(inventoryItem);
@@ -235,7 +236,7 @@ export class RuinLocation extends AbstractLocation {
         const item = player.inventory.getPotionByName(itemName);
         if (item == null) {
           await this.ui.sendToUser('Снова это чувство, как когда забыл зачем пришел...');
-          console.log('RuinLocation::showInventory', 'inventoryItem is null');
+          logger.info('RuinLocation::showInventory', 'inventoryItem is null');
           continue;
         }
         await this.ui.sendToUser(`${itemName}\n${item.description}`);
@@ -382,7 +383,7 @@ export class RuinLocation extends AbstractLocation {
         const { currentSpot } = ruinAreaMap;
 
         if (currentSpot == null) {
-          console.error('Oops, something went wrong!');
+          logger.error('RuinLocation::activate', 'Oops, something went wrong!');
         } else if (currentSpot.type === 'EVENT') {
           // const info = ruinAreaMap.currentSpot?.additionalInfo;
           if (currentSpot.icon === 'E1') {

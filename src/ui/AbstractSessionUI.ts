@@ -1,4 +1,5 @@
-import { catchAndLogError } from '@utils/catchAndLogError';
+import logger from '@utils/Logger';
+
 import { ActionsLayout } from './ActionsLayout';
 // eslint-disable-next-line import/no-cycle
 import { SessionUIProxy } from './SessionUIProxy';
@@ -24,7 +25,7 @@ export abstract class AbstractSessionUI {
   public init(runOnStart: StartTheGameCallback, runOnFinish: FinishTheGameCallback): this {
     const sessionId = Math.random().toString();
     const sessionUI = new SessionUIProxy(this, sessionId);
-    catchAndLogError('AbstractSessionUI::init', runOnStart(sessionId, sessionUI, getDefaultAdditionalSessionInfo()));
+    logger.catchAndLogError('AbstractSessionUI::init', runOnStart(sessionId, sessionUI, getDefaultAdditionalSessionInfo()));
     return this;
   }
 
