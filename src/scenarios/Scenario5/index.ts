@@ -5,6 +5,7 @@ import { BattleDifficulty } from '@db/entities/Battle';
 import { MOVE_ACTIONS } from '@locations/AreaMap';
 import { ActionsLayout } from '@ui';
 import { Template } from '@utils/Template';
+import logger from '@utils/Logger';
 
 import { AbstractScenario, interactWithBattle, processActions } from '../AbstractScenario';
 
@@ -92,7 +93,7 @@ export class ScenarioNo5 extends AbstractScenario {
       await this._sendTransitionMessage(choosedAction);
       this.currentNode = await this._cursor.getNextNode(choosedAction);
     } catch (error) {
-      console.error('ScenarioNo5::_runner', error);
+      logger.error('ScenarioNo5::_runner', error);
     }
   }
 

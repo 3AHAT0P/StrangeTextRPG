@@ -2,6 +2,7 @@ import { AbstractInventory } from '@actors/AbstractInventory';
 import { Weapon } from '@weapon';
 import { Armor } from '@armor';
 import { AbstractItem } from '@actors/AbstractItem';
+import logger from '@utils/Logger';
 
 const armorSubtypes = <const>{
   LIGHT: 'Легкая',
@@ -74,7 +75,7 @@ export class Inventory<T> extends AbstractInventory {
         + `  Шанс попасть в уязвимое место: ${item.criticalChance}\n`
         + `  Модификатор критического урона: ${item.criticalDamageModifier}\n`;
     }
-    console.log('Inventory::getStats', 'item is not one of the types: Armor, Weapon');
+    logger.info('Inventory::getStats', 'item is not one of the types: Armor, Weapon');
     return '';
   }
 }

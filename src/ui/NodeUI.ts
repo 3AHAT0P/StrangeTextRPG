@@ -1,5 +1,6 @@
-import { catchAndLogError } from '@utils/catchAndLogError';
 import readline from 'readline';
+import logger from '@utils/Logger';
+
 import { MESSAGES } from '../translations/ru';
 
 import { AbstractUI } from './AbstractUI';
@@ -59,7 +60,7 @@ export class NodeUI extends AbstractUI {
   });
 
   public init(runOnStart: StartTheGameCallback): this {
-    catchAndLogError('', runOnStart('1', this, { playerName: 'unknown', playerId: '1' }));
+    logger.catchAndLogError('NodeUI::init', runOnStart('1', this, { playerName: 'unknown', playerId: '1' }));
     return this;
   }
 

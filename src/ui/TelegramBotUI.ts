@@ -6,7 +6,7 @@ import {
 
 import { getConfig } from 'ConfigProvider';
 import { DropSessionError } from '@utils/Error/DropSessionError';
-import { catchAndLogError } from '@utils/catchAndLogError';
+import logger from '@utils/Logger';
 
 import { AbstractSessionUI } from './AbstractSessionUI';
 import { ActionsLayout } from './ActionsLayout';
@@ -93,7 +93,7 @@ export class TelegramBotUi extends AbstractSessionUI {
       const sessionId = ctx.message.chat.id.toString();
 
       setTimeout(runOnFinish, 16, sessionId, this);
-      catchAndLogError('TelegramBotUI::OnQuitCommand', ctx.leaveChat());
+      logger.catchAndLogError('TelegramBotUI::OnQuitCommand', ctx.leaveChat());
     });
 
     this.bot.start(async (ctx) => {
@@ -142,8 +142,8 @@ export class TelegramBotUi extends AbstractSessionUI {
     });
 
     this.bot.launch()
-      .then((res) => console.log('Bot is ready!', res))
-      .catch((error) => console.error(error));
+      .then((res) => logger.info('TelegramBotInlineUi::init:launch', 'Bot is ready!', res))
+      .catch((error) => logger.error('TelegramBotInlineUi::init:launch', error));
 
     return this;
   }
@@ -169,7 +169,7 @@ export class TelegramBotUi extends AbstractSessionUI {
         if (actions.flatList.includes(action) && validate(action)) {
           eventEmitter.off(sessionId, listener);
           // eslint-disable-next-line @typescript-eslint/no-use-before-define
-          catchAndLogError('TelegramBotUI::interactWithUser', this.deleteOrClearMessage(sendedMessage));
+          logger.catchAndLogError('TelegramBotUI::interactWithUser', this.deleteOrClearMessage(sendedMessage));
           return resolve(action);
         }
       };
@@ -195,7 +195,7 @@ export class TelegramBotUi extends AbstractSessionUI {
       const action = actions.groupedByRows[Number(rowIndex)][Number(columnIndex)]; // @TODO: Here may be error.
 
       if (action == null) {
-        console.log('TelegramBotInlineUI::showPersistentActions', 'Action is null', actionQuery, actions);
+        logger.info('TelegramBotInlineUI::showPersistentActions', 'Action is null', actionQuery, actions);
         return;
       }
 
@@ -223,7 +223,7 @@ export class TelegramBotUi extends AbstractSessionUI {
           const action = newActions.groupedByRows[Number(rowIndex)][Number(columnIndex)]; // @TODO: Here may be error.
 
           if (action == null) {
-            console.log('TelegramBotInlineUI::showPersistentActions', 'Action is null', actionQuery, actions);
+            logger.info('TelegramBotInlineUI::showPersistentActions', 'Action is null', actionQuery, actions);
             return;
           }
 

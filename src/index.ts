@@ -10,6 +10,7 @@ import {
 } from '@ui';
 import { TelegramBotInlineUi } from '@ui/TelegramBotInlineUI';
 import { DropSessionError } from '@utils/Error/DropSessionError';
+import logger from '@utils/Logger';
 import { getConfig } from 'ConfigProvider';
 import { scenarioManager } from '@scenarios';
 import { ScenarioFactoryOptions } from '@scenarios/ScenarioManager';
@@ -33,7 +34,7 @@ class App {
       setTimeout(this.treeTraversal, 16, state);
     } catch (error) {
       if (error instanceof DropSessionError) return;
-      console.log(error);
+      logger.error('App::treeTraversal', error);
       await state.ui.sendToUser('Извините, что-то поломалось.\nЕсли вы не входите в команду разработки, напишите пожалуйста автору.\nСпасибо за понимание ;-)\n');
     }
   }
@@ -92,7 +93,7 @@ class App {
 
       await onChangeScenario(0);
     } catch (error) {
-      console.error(error);
+      logger.error('App::runSession', error);
     }
   }
 

@@ -1,7 +1,8 @@
 import { Armor } from '@armor';
 import { Weapon } from '@weapon';
+import logger from '@utils/Logger';
 import { Miscellaneous } from '@actors/miscellaneous';
-import {HealthPotion, Potion} from '@actors/potions';
+import { HealthPotion, Potion } from '@actors/potions';
 import type { AbstractActor } from '@actors/AbstractActor';
 import type { AbstractItem } from '@actors/AbstractItem';
 
@@ -25,7 +26,7 @@ export abstract class AbstractInventory {
     if (item instanceof Miscellaneous) searchSection = this._miscellaneous;
     if (item instanceof Potion) searchSection = this._potions;
     if (searchSection == null) {
-      console.log('AbstractInventory::checkExists', 'Unknown item type');
+      logger.info('AbstractInventory::checkExists', 'Unknown item type');
       return false;
     }
     // TODO change to check id when items will have an id
@@ -62,7 +63,7 @@ export abstract class AbstractInventory {
     if (item instanceof Potion) inventorySection = this._potions;
     if (item instanceof Miscellaneous) inventorySection = this._miscellaneous;
     if (inventorySection == null) {
-      console.log('AbstractInventory::dropItem', 'unknown instance of item');
+      logger.info('AbstractInventory::dropItem', 'unknown instance of item');
       return 'Вы никак не можете найти нужный карман';
     }
     const index = inventorySection.findIndex((inventoryItem: AbstractItem) => inventoryItem.name === item.name);
@@ -70,7 +71,7 @@ export abstract class AbstractInventory {
       inventorySection.splice(index, 1);
       return `Вы выкинули ${item.name}. Идти становится легче`;
     }
-    console.log('AbstractInventory::dropItem', 'Item not found');
+    logger.info('AbstractInventory::dropItem', 'Item not found');
     return 'Странно, но вы не можете снова найти этот предмет...Возможно, его и не было?';
   }
 
@@ -93,7 +94,7 @@ export abstract class AbstractInventory {
   public useItem(item: AbstractItem, target: AbstractActor): string {
     const isExist = this.checkExists(item);
     if (!isExist) {
-      console.log('AbstractInventory::useItem', 'No item to be used');
+      logger.info('AbstractInventory::useItem', 'No item to be used');
       return 'Кажется, вы забыли, как это использовать';
     }
     const message = item.use(target);
