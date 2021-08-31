@@ -38,6 +38,62 @@ const getGoldCount = (difficult: BattleDifficulty): number => {
   return 0;
 };
 
+const buildActionsBlock = (actions: ActionModel[], context: ScenarioContext): ActionsLayout<string> => {
+  const groupedActions: {
+    moveToNorth: string;
+    moveToWest: string;
+    moveToEast: string;
+    moveToSouth: string;
+    other: string[];
+  } = {
+    moveToNorth: MOVE_ACTIONS.NO_WAY,
+    moveToWest: MOVE_ACTIONS.NO_WAY,
+    moveToEast: MOVE_ACTIONS.NO_WAY,
+    moveToSouth: MOVE_ACTIONS.NO_WAY,
+    other: [],
+  };
+
+  for (const action of actions) {
+    if (action.text.isEqualToRaw(MOVE_ACTIONS.TO_NORTH)) groupedActions.moveToNorth = MOVE_ACTIONS.TO_NORTH;
+    else if (action.text.isEqualToRaw(MOVE_ACTIONS.TO_WEST)) groupedActions.moveToWest = MOVE_ACTIONS.TO_WEST;
+    else if (action.text.isEqualToRaw(MOVE_ACTIONS.TO_EAST)) groupedActions.moveToEast = MOVE_ACTIONS.TO_EAST;
+    else if (action.text.isEqualToRaw(MOVE_ACTIONS.TO_SOUTH)) groupedActions.moveToSouth = MOVE_ACTIONS.TO_SOUTH;
+    else {
+      groupedActions.other.push(action.text.useContext(context).value);
+    }
+  }
+
+  const layout = new ActionsLayout();
+  layout.addRow(
+    '❓ Справка',
+    `${groupedActions.moveToNorth} На Север`,
+    '🗺 Карта',
+  );
+  layout.addRow(
+    `${groupedActions.moveToWest} На Запад`,
+    '🎒 Инвентарь',
+    `${groupedActions.moveToEast} На Восток`,
+  );
+  layout.addRow(
+    '🛏 Отдохнуть',
+    `${groupedActions.moveToSouth} На Юг`,
+    '⚙️ Меню',
+  );
+
+  let prevActionText: string | null = null;
+  for (const actionText of groupedActions.other) {
+    if (prevActionText === null) prevActionText = actionText;
+    else {
+      layout.addRow(prevActionText, actionText);
+      prevActionText = null;
+    }
+  }
+
+  if (prevActionText !== null) layout.addRow(prevActionText);
+
+  return layout;
+};
+
 export class ScenarioNo5Test extends AbstractScenario {
   protected _scenarioId: number = 10001;
 

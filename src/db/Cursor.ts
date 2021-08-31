@@ -1,4 +1,6 @@
-import type { DBService } from './DBService';
+import { DIConsumer } from '@utils/DI';
+
+import { DBService } from './DBService';
 import { OneOFNodeModel } from './entities';
 import { ActionModel } from './entities/Action';
 
@@ -8,6 +10,7 @@ export interface CursorOptions {
   interactionId?: number;
 }
 
+@DIConsumer
 export class Cursor {
   protected currentNode: OneOFNodeModel | null = null;
 

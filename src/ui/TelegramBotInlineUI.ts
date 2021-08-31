@@ -100,6 +100,25 @@ export class TelegramBotInlineUi extends AbstractSessionUI {
         'Привет!\nЯ бот-рассказчик одной маленькой текстовой РПГ.\nЧто тебе интересно?',
         { disable_notification: true, ...listOfCommands },
       );
+
+      // ----------------]
+      const t1 = Markup.inlineKeyboard([
+        Markup.button.callback('❓ Справка', 'showHelp'),
+        Markup.button.callback('⬆️ На север', 'toNorth'),
+        Markup.button.callback('🗺 Карта', 'openMap'),
+
+        Markup.button.callback('⬅️ На запад', 'toWest'),
+        Markup.button.callback('🎒 Инвентарь', 'openInventory'),
+        Markup.button.callback('➡️ На восток', 'toEast'),
+
+        Markup.button.callback('🛏 Отдохнуть', 'sleep'),
+        Markup.button.callback('⬇️ На юг', 'toSouth'),
+        Markup.button.callback('⚙️ Меню', 'openMenu'),
+      ], { columns: 3 });
+      const t2 = await ctx.reply(
+        'TEST',
+        { disable_notification: true, ...t1 },
+      );
       await ctx.pinChatMessage(message.message_id, { disable_notification: true });
     });
 

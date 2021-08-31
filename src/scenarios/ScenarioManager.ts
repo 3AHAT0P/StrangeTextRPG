@@ -1,4 +1,5 @@
 import { Cursor } from '@db/Cursor';
+import { DIProducer } from '@utils/DI';
 import { SessionState } from 'SessionState';
 import { AbstractScenario, ScenarioCallbacks } from './AbstractScenario';
 
@@ -12,6 +13,7 @@ interface ScenarioFactory {
   new(cursor: Cursor, state: SessionState, callbacks: ScenarioCallbacks): AbstractScenario;
 }
 
+@DIProducer()
 export class ScenarioManager {
   private readonly _scenarioFactoriesMap: Map<number, ScenarioFactory> = new Map();
 
@@ -49,7 +51,7 @@ export class ScenarioManager {
     const scenario = new ScenarioFactory(cursor, state, callbacks);
     this._scenarioMap.set(id, scenario);
     await scenario.init();
-    // scenario.run();
+
     return scenario;
   }
 }

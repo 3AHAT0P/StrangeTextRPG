@@ -1,7 +1,7 @@
 import neo4j from 'neo4j-driver';
 
 import { getConfig } from 'ConfigProvider';
-// import { getConfig } from '../ConfigProvider'; // @TODO: Debug only
+import { DIProducer } from '@utils/DI';
 
 import {
   Driver, Session,
@@ -34,6 +34,7 @@ export interface RepositoriesHash {
 
 export type OneOfConcreteRepository = RepositoriesHash[keyof RepositoriesHash];
 
+@DIProducer()
 export class DBService {
   private _driver: Driver;
 
