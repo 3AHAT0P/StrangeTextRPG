@@ -1,13 +1,17 @@
-import { ActionModel, ActionEntity } from '@db/entities/Action';
+import {
+  ActionModel, ActionEntity, ActionType, ActionSubtype,
+} from '@db/entities/Action';
 
 import {
-  isRelationship, Relationship, Integer, getIntValue, EspeciallyRelationship, Session,
+  isRelationship, Relationship, Integer, EspeciallyRelationship, Session,
 } from './common';
 import { AbstractProperties, AbstractNeo4jRepository, DBConnectionOptions } from './AbstractNeo4jRepository';
 
 export interface ActionProperties extends AbstractProperties {
+  toInteractionId: string;
   text: string;
-  type: 'SYSTEM' | 'AUTO' | 'CUSTOM';
+  type: ActionType;
+  subtype: ActionSubtype;
   condition?: string;
   operation?: string;
   isPrintable?: boolean;
@@ -18,19 +22,25 @@ export const isActionRelationship = <T extends Integer>(
 ): value is EspeciallyRelationship<ActionProperties, T> => value.type.toLowerCase() === 'action';
 
 export class ActionNeo4jRepository extends AbstractNeo4jRepository<typeof ActionModel, ActionModel, ActionProperties> {
-  protected createQuery: string = `
-    MATCH (a)
-    WHERE id(a) = $from
+  protected label: string = ':Action';
 
-    MATCH (b)
-    WHERE id(b) = $to
+  protected get createQuery(): string {
+    return `
+      MATCH (a)
+      WHERE id(a) = $from
 
-    CREATE (a)-[r:Action $params]->(b)
+      MATCH (b)
+      WHERE id(b) = $to
 
-    RETURN r
-  `;
+      CREATE (a)-[r:Action $params]->(b)
 
-  protected findByIdQuery: string = 'MATCH ()-[r:Action]->() WHERE id(r) = $id RETURN r';
+      RETURN r
+    `;
+  }
+
+  protected get findByInternalIdQuery(): string { return 'MATCH ()-[r:Action]->() WHERE id(r) = $id RETURN r'; }
+
+  protected get findByIdQuery(): string { return 'MATCH ()-[r:Action]->() WHERE r.interactionId = $id RETURN r'; }
 
   public readonly type: string = 'Action';
 
@@ -40,12 +50,13 @@ export class ActionNeo4jRepository extends AbstractNeo4jRepository<typeof Action
 
     return {
       id: node.identity.toNumber(),
-      scenarioId: getIntValue(node.properties.scenarioId),
-      locationId: getIntValue(node.properties.locationId),
-      fromInteractionId: node.start.toNumber(),
-      toInteractionId: node.end.toNumber(),
+      scenarioId: node.properties.scenarioId,
+      locationId: node.properties.locationId,
+      interactionId: node.properties.interactionId,
+      toInteractionId: node.properties.toInteractionId,
       text: node.properties.text,
       type: node.properties.type,
+      subtype: node.properties.subtype,
       condition: node.properties.condition,
       operation: node.properties.operation,
       isPrintable: node.properties.isPrintable ?? false,

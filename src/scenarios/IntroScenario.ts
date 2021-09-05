@@ -1,5 +1,4 @@
 import { InteractionModel } from '@db/entities';
-import { ActionsLayout } from '@ui';
 import { AbstractScenario } from './AbstractScenario';
 
 export class IntroScenario extends AbstractScenario {
@@ -7,7 +6,7 @@ export class IntroScenario extends AbstractScenario {
 
   protected async _runner() {
     if (this.currentNode instanceof InteractionModel) {
-      if (this.currentNode.interactionId === 3) {
+      if (this.currentNode.interactionId === '3') {
         this._callbacks.onExit();
         return;
       }

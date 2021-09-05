@@ -5,7 +5,7 @@ import { ActionModel } from './entities/Action';
 export interface CursorOptions {
   scenarioId: number;
   locationId?: number;
-  interactionId?: number;
+  interactionId?: string;
 }
 
 export class Cursor {
@@ -21,7 +21,7 @@ export class Cursor {
     const { scenarioId } = options;
 
     const locationId = options.locationId ?? 0;
-    const interactionId = options.interactionId ?? 1;
+    const interactionId = options.interactionId ?? '1';
 
     this.currentNode = await this._dbService.repositories.interactionRepo.findByParams({
       scenarioId,
@@ -39,8 +39,8 @@ export class Cursor {
   }
 
   getActions(): Promise<ActionModel[]> {
-    const { id } = this.getNode();
-    return this._dbService.getRelatedActions(id);
+    const { interactionId } = this.getNode();
+    return this._dbService.getRelatedActions(interactionId);
   }
 
   async getNextNode(action: ActionModel): Promise<OneOFNodeModel> {

@@ -1,5 +1,6 @@
-import { DBService } from '@db/DBService';
-import { AbstractModel } from '@db/entities/Abstract';
+import {
+  DataContainer, InteractionEntity, AbstractEntity, createDataCollection,
+} from '@db/entities';
 
 import { ConnectorFrom, ConnectorTo } from './Connector';
 
@@ -8,7 +9,8 @@ export const baseInfo = <const>{
   locationId: 1,
 };
 
-interface IntroConnectors {
+interface SeedResult {
+  data: Record<string, DataContainer<AbstractEntity>>,
   inboundOnReload: ConnectorFrom;
   inboundOnReturn: ConnectorFrom;
   inboundOnExit: ConnectorFrom;
@@ -16,78 +18,69 @@ interface IntroConnectors {
   outboundToScenario: ConnectorTo;
 }
 
-export const introSeedRun = async (dbService: DBService): Promise<IntroConnectors> => {
-  const { interactionRepo, actionRepo } = dbService.repositories;
-
-  const i1 = await interactionRepo.create({
+export const introSeedRun = (): SeedResult => {
+  const dataCollection = createDataCollection();
+  const i1 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 1,
+    interactionId: '1',
     text: 'Добро пожаловать в эту странную текстовую РПГ (Демо версия).\n'
       + 'Что бы ты хотел попробовать?',
   });
 
-  const i2 = await interactionRepo.create({
+  const i2 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 2,
     text: 'Это режим в котором можно попробовать те или иные механики игры.\n'
       + 'Выбери что тебе интересно.',
   });
 
-  const i3 = await interactionRepo.create({
+  const i3 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 3,
     text: 'Удачи!',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i1, {
     ...baseInfo,
-    from: i1.id,
-    to: i2.id,
+    to: i2.entity.interactionId,
     text: 'Перейти к списку механик',
     type: 'CUSTOM',
+    subtype: 'OTHER',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i2, {
     ...baseInfo,
-    from: i2.id,
-    to: i1.id,
+    to: i1.entity.interactionId,
     text: 'Назад',
     type: 'CUSTOM',
+    subtype: 'BACK',
   });
 
   return <const>{
-    async inboundOnReload(connect: ConnectorTo) {
-      await connect(i1, 'Reloading...');
-      // await actionRepo.create({
-      //   ...baseInfo,
-      //   from: from.id,
-      //   to: i1.id,
-      //   text: 'Reloading...',
-      //   type: 'SYSTEM',
-      // });
+    data: dataCollection.data,
+    inboundOnReload(connect: ConnectorTo) {
+      connect(i1, 'Reloading...');
     },
-    async inboundOnReturn(connect: ConnectorTo) {
-      await connect(i1, 'OnReturn');
+    inboundOnReturn(connect: ConnectorTo) {
+      connect(i1, 'OnReturn');
     },
-    async inboundOnExit(connect: ConnectorTo) {
-      await connect(i3, 'OnExit');
+    inboundOnExit(connect: ConnectorTo) {
+      connect(i3, 'OnExit');
     },
-    async outboundToDemoScenario(demo: AbstractModel, text: string) {
-      await actionRepo.create({
+    outboundToDemoScenario(demo: DataContainer<AbstractEntity>, text: string) {
+      dataCollection.addLink(i2, {
         ...baseInfo,
-        from: i2.id,
-        to: demo.id,
+        to: demo.entity.interactionId,
         text,
         type: 'CUSTOM',
+        subtype: 'OTHER',
       });
     },
-    async outboundToScenario(scenario: AbstractModel, text: string) {
-      await actionRepo.create({
+    outboundToScenario(scenario: DataContainer<AbstractEntity>, text: string) {
+      dataCollection.addLink(i1, {
         ...baseInfo,
-        from: i1.id,
-        to: scenario.id,
+        to: scenario.entity.interactionId,
         text,
         type: 'CUSTOM',
+        subtype: 'OTHER',
       });
     },
   };

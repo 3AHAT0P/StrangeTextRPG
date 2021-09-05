@@ -19,27 +19,9 @@ export const isNPCNode = <T extends Integer>(
 export class NPCNeo4jRepository extends AbstractNeo4jRepository<
   typeof NPCModel, NPCModel, NPCProperties
 > {
-  protected createQuery: string = 'CREATE (a:NPC $params) RETURN a';
-
-  protected findByIdQuery: string = 'MATCH (a:NPC) WHERE id(a) = $id RETURN a';
-
-  protected findRelatedActionsQuery: string = 'MATCH (a:NPC)-[r:Action]->(b) WHERE id(a) = $id RETURN r';
+  protected label: string = ':NPC';
 
   public readonly type: string = 'NPC';
-
-  protected buildFindByPropsQuery(params: Partial<NPCProperties>): string {
-    const keys = Object.keys(params);
-    let query = 'MATCH (a:NPC';
-    if (keys.length > 0) {
-      query += ' { ';
-      query += Object.keys(params)
-        .map((key) => `${key}: $${key}`)
-        .join(', ');
-      query += ' }';
-    }
-    query += ') RETURN a';
-    return query;
-  }
 
   protected extractFromNode(node: Node): NPCEntity {
     const entity = super.extractFromNode(node);

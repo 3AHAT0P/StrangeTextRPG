@@ -2,7 +2,7 @@ import { Transaction, Session, QueryResult } from 'neo4j-driver-core';
 import { AbstractModel, AbstractEntity } from '@db/entities/Abstract';
 
 import {
-  isNode, Node, Relationship, Integer, getIntValue,
+  isNode, Node, Relationship,
 } from './common';
 
 export interface DBConnectionOptions {
@@ -10,8 +10,9 @@ export interface DBConnectionOptions {
 }
 
 export interface AbstractProperties {
-  scenarioId: Integer | number;
-  locationId: Integer | number;
+  scenarioId: number;
+  locationId: number;
+  interactionId: string;
 }
 
 export abstract class AbstractNeo4jRepository<
@@ -23,9 +24,31 @@ export abstract class AbstractNeo4jRepository<
 
   protected modelClass: TModelClass;
 
-  protected createQuery: string = 'CREATE (a $params) RETURN a';
+  protected abstract label: string;
 
-  protected findByIdQuery: string = 'MATCH (a) WHERE id(a) = $id RETURN a';
+  protected get createQuery(): string { return `CREATE (a${this.label} $params) RETURN a`; }
+
+  protected get findByInternalIdQuery(): string { return `MATCH (a${this.label}) WHERE id(a) = $id RETURN a`; }
+
+  protected get findByIdQuery(): string { return `MATCH (a${this.label} { interactionId: $id }) RETURN a`; }
+
+  protected get findRelatedActionsQuery(): string {
+    return `MATCH (a${this.label} { interactionId: $id })-[r:Action]->(b) RETURN r`;
+  }
+
+  protected buildFindByPropsQuery(params: Partial<TProperties>): string {
+    const keys = Object.keys(params);
+    let query = `MATCH (a:${this.label}`;
+    if (keys.length > 0) {
+      query += ' { ';
+      query += Object.keys(params)
+        .map((key) => `${key}: $${key}`)
+        .join(', ');
+      query += ' }';
+    }
+    query += ') RETURN a';
+    return query;
+  }
 
   public abstract readonly type: string;
 
@@ -34,8 +57,9 @@ export abstract class AbstractNeo4jRepository<
 
     return {
       id: node.identity.toNumber(),
-      scenarioId: getIntValue(node.properties.scenarioId),
-      locationId: getIntValue(node.properties.locationId),
+      scenarioId: node.properties.scenarioId,
+      locationId: node.properties.locationId,
+      interactionId: node.properties.interactionId,
     };
   }
 

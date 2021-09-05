@@ -1,18 +1,23 @@
 /* eslint-disable no-await-in-loop */
 import { createCanvas, loadImage, ImageData } from 'node-canvas';
 
-import { DBService } from '@db/DBService';
-import { InteractionModel } from '@db/entities/Interaction';
-import { isThroughable, MapSpotModel, MapSpotSubtype } from '@db/entities/MapSpot';
-import { NPCModel, NPCSubtype } from '@db/entities/NPC';
-import { BattleModel, parseBattleSubtype, isBattleSubtype } from '@db/entities/Battle';
+import {
+  InteractionEntity,
+  BattleEntity,
+  NPCEntity,
+  MapSpotEntity,
+  DataContainer,
+  DataCollection,
+} from '@db/entities';
+import { isThroughable, MapSpotSubtype } from '@db/entities/MapSpot';
+import { parseBattleSubtype, isBattleSubtype } from '@db/entities/Battle';
 import { MOVE_ACTIONS } from '@locations/AreaMap';
 import { Matcher } from '@utils/Matcher';
 import logger from '@utils/Logger';
 
 import { Palette } from './Palette';
 
-export type MatcherContext = { currentSpot: MapSpotModel, subtype: MapSpotSubtype };
+export type MatcherContext = { currentSpot: DataContainer<MapSpotEntity>, subtype: MapSpotSubtype };
 
 export interface MapInfo {
   scenarioId: number,
@@ -20,8 +25,8 @@ export interface MapInfo {
 }
 
 export interface CustomInteractions {
-  exit?: InteractionModel;
-  onPlayerDied?: InteractionModel;
+  exitId: string;
+  onPlayerDiedId: string;
 }
 
 export class MapParser {
@@ -33,9 +38,9 @@ export class MapParser {
 
   private _customInteractions: CustomInteractions;
 
-  private _mapSpotMap = new Map<string, MapSpotModel>();
+  private _nodeCollection: DataCollection;
 
-  private _dbService: DBService = new DBService();
+  private _mapSpotMap = new Map<string, DataContainer<MapSpotEntity>>();
 
   private _mapSpotSubtypeMatcher = new Matcher<MapSpotSubtype, 'BATTLE', MatcherContext>();
 
@@ -43,6 +48,8 @@ export class MapParser {
     npcId: 1,
     interactionId: 1,
   };
+
+  public get spotMap(): Map<string, DataContainer<MapSpotEntity>> { return this._mapSpotMap; }
 
   private async loadImageData() {
     const image = await loadImage(this._mapImagePath);
@@ -54,150 +61,169 @@ export class MapParser {
     this._imageData = ctx.getImageData(0, 0, image.width, image.height);
   }
 
-  private async _createSpot(x: number, y: number, subtype: MapSpotSubtype) {
-    const currentSpot = await this._dbService.repositories.mapSpotRepo.create({
-      ...this._mapInfo,
-      x,
-      y,
-      subtype,
-      isThroughable: isThroughable(subtype),
-    });
+  private _createSpot(x: number, y: number, subtype: MapSpotSubtype): DataContainer<MapSpotEntity> {
+    const currentSpot = this._nodeCollection.addContainer<MapSpotEntity>(
+      'MapSpot',
+      {
+        ...this._mapInfo,
+        x,
+        y,
+        subtype,
+        isThroughable: isThroughable(subtype),
+      },
+    );
     this._mapSpotMap.set(`${x}:${y}`, currentSpot);
 
     return currentSpot;
   }
 
-  private async _createRelatedNodes({ currentSpot, subtype }: MatcherContext) {
+  private async _createRelatedNodes({ currentSpot, subtype }: MatcherContext): Promise<void> {
     await this._mapSpotSubtypeMatcher.run(subtype, { currentSpot, subtype });
   }
 
-  private async _createMerchant({ currentSpot }: MatcherContext) {
-    const npc = await this._dbService.repositories.npcRepo.create({
+  private _createMerchant({ currentSpot }: MatcherContext): void {
+    const npc = this._nodeCollection.addContainer<NPCEntity>(
+      'NPC',
+      {
+        ...this._mapInfo,
+        NPCId: this._sequences.npcId,
+        subtype: 'MERCHANT',
+      },
+    );
+    this._nodeCollection.addLink(currentSpot, {
       ...this._mapInfo,
-      NPCId: this._sequences.npcId,
-      subtype: 'MERCHANT',
-    });
-    await this._dbService.repositories.actionRepo.create({
-      ...this._mapInfo,
-      from: currentSpot.id,
-      to: npc.id,
+      to: npc.entity.interactionId,
       text: `💬 Поговорить с торговцем (#${this._sequences.npcId})`,
       operation: `{{loadMerchantInfo ${this._sequences.npcId}}}`,
       type: 'CUSTOM',
+      subtype: 'TALK_TO_NPC',
     });
     this._sequences.npcId += 1;
   }
 
-  private async _createLocationExit({ currentSpot }: MatcherContext) {
-    let { exit } = this._customInteractions;
+  private _createLocationExit({ currentSpot }: MatcherContext): void {
+    const { exitId } = this._customInteractions;
 
-    if (exit == null) {
-      exit = await this._dbService.repositories.interactionRepo.create({
-        ...this._mapInfo,
-        interactionId: 9000,
-        text: 'Ты вырался из этого лабиринта живым. Хе, могло быть и хуже.',
-      });
-    }
-    await this._dbService.repositories.actionRepo.create({
+    this._nodeCollection.addLink(currentSpot, {
       ...this._mapInfo,
-      from: currentSpot.id,
-      to: exit.id,
+      to: exitId,
       text: '',
       type: 'AUTO',
+      subtype: 'EXIT_LOCATION',
     });
   }
 
-  private async _createBattle({ currentSpot, subtype }: MatcherContext) {
+  private _createBattle({ currentSpot, subtype }: MatcherContext): void {
     if (!isBattleSubtype(subtype)) return logger.error('MapParser::_createBattle', 'Subtype mismatch');
 
     const [difficult, chanceOfTriggering] = parseBattleSubtype(subtype);
-    const battle = await this._dbService.repositories.battleRepo.create({
+
+    const battle = this._nodeCollection.addContainer<BattleEntity>(
+      'Battle',
+      {
+        ...this._mapInfo,
+        difficult,
+        chanceOfTriggering,
+      },
+    );
+
+    this._nodeCollection.addLink(currentSpot, {
       ...this._mapInfo,
-      difficult,
-      chanceOfTriggering,
-    });
-    await this._dbService.repositories.actionRepo.create({
-      ...this._mapInfo,
-      from: currentSpot.id,
-      to: battle.id,
+      to: battle.entity.interactionId,
       text: '',
-      condition: `{{canBattleTrigger ${battle.id} ${chanceOfTriggering}}}`,
+      condition: `{{canBattleTrigger ${battle.entity.interactionId} ${chanceOfTriggering}}}`,
       type: 'AUTO',
+      subtype: 'BATTLE_START',
     });
-    const onWinInteraction = await this._dbService.repositories.interactionRepo.create({
+
+    const onWinInteraction = this._nodeCollection.addContainer<InteractionEntity>(
+      'Battle',
+      {
+        ...this._mapInfo,
+        text: 'Больше тут ничего и никого нет.',
+      },
+    );
+
+    this._nodeCollection.addLink(battle, {
       ...this._mapInfo,
-      interactionId: this._sequences.interactionId,
-      text: 'Больше тут ничего и никого нет.',
-    });
-    this._sequences.interactionId += 1;
-    await this._dbService.repositories.actionRepo.create({
-      ...this._mapInfo,
-      from: battle.id,
-      to: onWinInteraction.id,
-      text: 'OnWin',
-      type: 'SYSTEM',
-    });
-    await this._dbService.repositories.actionRepo.create({
-      ...this._mapInfo,
-      from: onWinInteraction.id,
-      to: currentSpot.id,
+      to: onWinInteraction.entity.interactionId,
       text: '',
-      operation: `{{updateBattleImmune ${battle.id} 10}}`,
-      type: 'AUTO',
-    });
-    await this._dbService.repositories.actionRepo.create({
-      ...this._mapInfo,
-      from: battle.id,
-      to: this._customInteractions.onPlayerDied == null ? currentSpot.id : this._customInteractions.onPlayerDied.id,
-      text: 'OnLose',
       type: 'SYSTEM',
+      subtype: 'BATTLE_WIN',
+    });
+
+    this._nodeCollection.addLink(battle, {
+      ...this._mapInfo,
+      to: this._customInteractions.onPlayerDiedId ?? currentSpot.entity.interactionId,
+      text: '',
+      type: 'SYSTEM',
+      subtype: 'BATTLE_LOSE',
+    });
+
+    this._nodeCollection.addLink(onWinInteraction, {
+      ...this._mapInfo,
+      to: currentSpot.entity.interactionId,
+      text: '',
+      operation: `{{updateBattleImmune ${battle.entity.interactionId} 10}}`,
+      type: 'AUTO',
+      subtype: 'OTHER',
     });
   }
 
-  private async _createAboveSpot({ currentSpot }: MatcherContext) {
-    const above = this._mapSpotMap.get(`${currentSpot.x}:${currentSpot.y - 1}`);
+  private _createAboveSpot({ currentSpot }: MatcherContext): void {
+    const above = this._mapSpotMap.get(`${currentSpot.entity.x}:${currentSpot.entity.y - 1}`);
+
     if (above != null) {
-      await this._dbService.repositories.actionRepo.create({
+      const isThroughableSpot = currentSpot.entity.isThroughable && above.entity.isThroughable;
+      this._nodeCollection.addLink(currentSpot, {
         ...this._mapInfo,
-        from: currentSpot.id,
-        to: above.id,
-        text: currentSpot.isThroughable && above.isThroughable ? MOVE_ACTIONS.TO_NORTH : MOVE_ACTIONS.NO_WAY,
+        to: above.entity.interactionId,
+        text: isThroughableSpot ? MOVE_ACTIONS.TO_NORTH : MOVE_ACTIONS.NO_WAY,
         type: 'CUSTOM',
+        subtype: isThroughableSpot ? 'MOVE_TO_NORTH' : 'MOVE_FORBIDDEN',
       });
-      await this._dbService.repositories.actionRepo.create({
+      this._nodeCollection.addLink(above, {
         ...this._mapInfo,
-        from: above.id,
-        to: currentSpot.id,
-        text: currentSpot.isThroughable && above.isThroughable ? MOVE_ACTIONS.TO_SOUTH : MOVE_ACTIONS.NO_WAY,
+        to: currentSpot.entity.interactionId,
+        text: isThroughableSpot ? MOVE_ACTIONS.TO_SOUTH : MOVE_ACTIONS.NO_WAY,
         type: 'CUSTOM',
+        subtype: isThroughableSpot ? 'MOVE_TO_SOUTH' : 'MOVE_FORBIDDEN',
       });
     }
   }
 
-  private async _createLeftSpot({ currentSpot }: MatcherContext) {
-    const left = this._mapSpotMap.get(`${currentSpot.x - 1}:${currentSpot.y}`);
+  private _createLeftSpot({ currentSpot }: MatcherContext): void {
+    const left = this._mapSpotMap.get(`${currentSpot.entity.x - 1}:${currentSpot.entity.y}`);
+
     if (left != null) {
-      await this._dbService.repositories.actionRepo.create({
+      const isThroughableSpot = currentSpot.entity.isThroughable && left.entity.isThroughable;
+      this._nodeCollection.addLink(currentSpot, {
         ...this._mapInfo,
-        from: currentSpot.id,
-        to: left.id,
-        text: currentSpot.isThroughable && left.isThroughable ? MOVE_ACTIONS.TO_WEST : MOVE_ACTIONS.NO_WAY,
+        to: left.entity.interactionId,
+        text: isThroughableSpot ? MOVE_ACTIONS.TO_WEST : MOVE_ACTIONS.NO_WAY,
         type: 'CUSTOM',
+        subtype: isThroughableSpot ? 'MOVE_TO_WEST' : 'MOVE_FORBIDDEN',
       });
-      await this._dbService.repositories.actionRepo.create({
+      this._nodeCollection.addLink(left, {
         ...this._mapInfo,
-        from: left.id,
-        to: currentSpot.id,
-        text: currentSpot.isThroughable && left.isThroughable ? MOVE_ACTIONS.TO_EAST : MOVE_ACTIONS.NO_WAY,
+        to: currentSpot.entity.interactionId,
+        text: isThroughableSpot ? MOVE_ACTIONS.TO_EAST : MOVE_ACTIONS.NO_WAY,
         type: 'CUSTOM',
+        subtype: isThroughableSpot ? 'MOVE_TO_EAST' : 'MOVE_FORBIDDEN',
       });
     }
   }
 
-  constructor(mapImagePath: string, mapInfo: MapInfo, customInteractions: CustomInteractions = {}) {
+  constructor(
+    mapImagePath: string,
+    mapInfo: MapInfo,
+    customInteractions: CustomInteractions,
+    nodeCollection: DataCollection,
+  ) {
     this._mapImagePath = mapImagePath;
     this._mapInfo = mapInfo;
     this._customInteractions = customInteractions;
+    this._nodeCollection = nodeCollection;
   }
 
   public async init(): Promise<void> {
@@ -226,10 +252,10 @@ export class MapParser {
       if (subtype === null) throw new Error('Spot subtype is incorrect.');
 
       try {
-        const currentSpot = await this._createSpot(x, y, subtype);
+        const currentSpot = this._createSpot(x, y, subtype);
         await this._createRelatedNodes({ currentSpot, subtype });
-        await this._createAboveSpot({ currentSpot, subtype });
-        await this._createLeftSpot({ currentSpot, subtype });
+        this._createAboveSpot({ currentSpot, subtype });
+        this._createLeftSpot({ currentSpot, subtype });
       } catch (e) {
         logger.error('MapParser::parse', e);
       }
@@ -237,6 +263,6 @@ export class MapParser {
   }
 
   public async destructor(): Promise<void> {
-    await this._dbService.destructor();
+    // await this._dbService.destructor();
   }
 }

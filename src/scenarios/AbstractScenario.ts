@@ -163,7 +163,7 @@ export abstract class AbstractScenario {
       }
     }
 
-    await this._cursor.init({ scenarioId: this._scenarioId, locationId: 1 });
+    await this._cursor.init({ scenarioId: this._scenarioId, locationId: 1, interactionId: '1' });
     this.currentNode = this._cursor.getNode();
   }
 

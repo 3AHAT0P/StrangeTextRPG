@@ -8,7 +8,6 @@ import { AbstractProperties, AbstractNeo4jRepository, DBConnectionOptions } from
 import { ActionNeo4jRepository } from './ActionNeo4jRepository';
 
 export interface InteractionProperties extends AbstractProperties {
-  interactionId: Integer | number;
   text: string;
 }
 
@@ -19,27 +18,9 @@ export const isInteractionNode = <T extends Integer>(
 export class InteractionNeo4jRepository extends AbstractNeo4jRepository<
   typeof InteractionModel, InteractionModel, InteractionProperties
 > {
-  protected createQuery: string = 'CREATE (a:Interaction $params) RETURN a';
-
-  protected findByIdQuery: string = 'MATCH (a:Interaction) WHERE id(a) = $id RETURN a';
-
-  protected findRelatedActionsQuery: string = 'MATCH (a:Interaction)-[r:Action]->(b) WHERE id(a) = $id RETURN r';
+  protected label: string = ':Interaction';
 
   public readonly type: string = 'Interaction';
-
-  protected buildFindByPropsQuery(params: Partial<InteractionProperties>): string {
-    const keys = Object.keys(params);
-    let query = 'MATCH (a:Interaction';
-    if (keys.length > 0) {
-      query += ' { ';
-      query += Object.keys(params)
-        .map((key) => `${key}: $${key}`)
-        .join(', ');
-      query += ' }';
-    }
-    query += ') RETURN a';
-    return query;
-  }
 
   protected extractFromNode(node: Node): InteractionEntity {
     const entity = super.extractFromNode(node);
@@ -47,7 +28,6 @@ export class InteractionNeo4jRepository extends AbstractNeo4jRepository<
 
     return {
       ...entity,
-      interactionId: getIntValue(node.properties.interactionId),
       text: node.properties.text,
     };
   }

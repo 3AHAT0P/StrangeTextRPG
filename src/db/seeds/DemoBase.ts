@@ -1,5 +1,9 @@
-import { DBService } from '@db/DBService';
-import { AbstractModel } from '@db/entities/Abstract';
+import {
+  AbstractEntity,
+  InteractionEntity,
+  DataContainer,
+  createDataCollection,
+} from '@db/entities';
 
 import { ConnectorTo, ConnectorFrom } from './Connector';
 
@@ -9,136 +13,133 @@ export const baseInfo = <const>{
 };
 
 interface DemoBaseConnectors {
+  data: Record<string, DataContainer<AbstractEntity>>,
   inboundOnStart: ConnectorFrom;
   outboundToExit: ConnectorTo;
   outboundToReturn: ConnectorTo;
 }
 
-export const demoBaseSeedRun = async (dbService: DBService): Promise<DemoBaseConnectors> => {
-  const { interactionRepo, actionRepo } = dbService.repositories;
+export const demoBaseSeedRun = (): DemoBaseConnectors => {
+  const dataCollection = createDataCollection();
 
-  const i1 = await interactionRepo.create({
+  const i1 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 1,
+    interactionId: '1',
     text: 'БЕРИ МЕЧ И РУБИ!',
   });
 
-  const i2 = await interactionRepo.create({
+  const i2 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 2,
     text: 'Ладонь сжимает рукоять меча - шершавую и тёплую.',
   });
 
-  const i3 = await interactionRepo.create({
+  const i3 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 3,
     text: 'Воздух свистит, рассекаемый сталью, и расплывчатый силуэт перед тобой делает сальто назад.',
   });
 
-  const i4 = await interactionRepo.create({
+  const i4 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 4,
     text: 'Серый песок, фиолетовое небо, и расплывчатый клинок, торчащий из твоей грудины.\n'
       + 'Времени не было уже секунду назад; сейчас последние секунды с кровью утекают в песок.\n'
       + 'Вы проиграли',
   });
 
-  const i5 = await interactionRepo.create({
+  const i5 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 5,
     text: 'Продолжение следует...',
   });
 
-  const i6 = await interactionRepo.create({
+  const i6 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 6,
     text: 'Ну и что дальше?',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i1, {
     ...baseInfo,
-    from: i1.id,
-    to: i2.id,
+    to: i2.entity.interactionId,
     text: 'ВЗЯТЬ МЕЧ',
     type: 'CUSTOM',
+    subtype: 'OTHER',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i2, {
     ...baseInfo,
-    from: i2.id,
-    to: i3.id,
+    to: i3.entity.interactionId,
     text: 'РУБИТЬ',
     type: 'CUSTOM',
+    subtype: 'OTHER',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i1, {
     ...baseInfo,
-    from: i1.id,
-    to: i4.id,
+    to: i4.entity.interactionId,
     text: 'ПОПЫТАТЬСЯ ОСМОТРЕТЬСЯ',
     type: 'CUSTOM',
+    subtype: 'OTHER',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i2, {
     ...baseInfo,
-    from: i2.id,
-    to: i4.id,
+    to: i4.entity.interactionId,
     text: 'ПОПЫТАТЬСЯ ОСМОТРЕТЬСЯ',
     type: 'CUSTOM',
+    subtype: 'OTHER',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i3, {
     ...baseInfo,
-    from: i3.id,
-    to: i5.id,
+    to: i5.entity.interactionId,
     text: 'Дальше?',
     type: 'CUSTOM',
+    subtype: 'OTHER',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i5, {
     ...baseInfo,
-    from: i5.id,
-    to: i6.id,
+    to: i6.entity.interactionId,
     text: '',
     type: 'AUTO',
+    subtype: 'OTHER',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i4, {
     ...baseInfo,
-    from: i4.id,
-    to: i6.id,
+    to: i6.entity.interactionId,
     text: '',
     type: 'AUTO',
+    subtype: 'OTHER',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i6, {
     ...baseInfo,
-    from: i6.id,
-    to: i1.id,
+    to: i1.entity.interactionId,
     text: 'Перезагрузить локацию',
     type: 'CUSTOM',
+    subtype: 'RELOAD',
   });
 
   return <const>{
-    async inboundOnStart(connect: ConnectorTo) {
-      await connect(i1, 'Попробовать демо сюжет');
+    data: dataCollection.data,
+    inboundOnStart(connect: ConnectorTo) {
+      connect(i1, 'Попробовать демо сюжет');
     },
-    async outboundToExit(exitInteraction: AbstractModel) {
-      await actionRepo.create({
+    outboundToExit(exitInteraction: DataContainer<AbstractEntity>) {
+      dataCollection.addLink(i6, {
         ...baseInfo,
-        from: i6.id,
-        to: exitInteraction.id,
+        to: exitInteraction.entity.interactionId,
         text: 'ВСЕ! ХВАТИТ С МЕНЯ!',
         type: 'CUSTOM',
+        subtype: 'OTHER',
       });
     },
-    async outboundToReturn(returnInteraction: AbstractModel) {
-      await actionRepo.create({
+    outboundToReturn(returnInteraction: DataContainer<AbstractEntity>) {
+      dataCollection.addLink(i6, {
         ...baseInfo,
-        from: i6.id,
-        to: returnInteraction.id,
+        to: returnInteraction.entity.interactionId,
         text: 'Вернутся к выбору локаций',
         type: 'CUSTOM',
+        subtype: 'OTHER',
       });
     },
   };

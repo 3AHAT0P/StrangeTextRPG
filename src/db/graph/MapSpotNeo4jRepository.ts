@@ -21,27 +21,9 @@ export const isMapSpotNode = <T extends Integer>(
 export class MapSpotNeo4jRepository extends AbstractNeo4jRepository<
   typeof MapSpotModel, MapSpotModel, MapSpotProperties
 > {
-  protected createQuery: string = 'CREATE (a:MapSpot $params) RETURN a';
-
-  protected findByIdQuery: string = 'MATCH (a:MapSpot) WHERE id(a) = $id RETURN a';
-
-  protected findRelatedActionsQuery: string = 'MATCH (a:MapSpot)-[r:Action]->(b) WHERE id(a) = $id RETURN r';
+  protected label: string = ':MapSpot';
 
   public readonly type: string = 'MapSpot';
-
-  protected buildFindByPropsQuery(params: Partial<MapSpotProperties>): string {
-    const keys = Object.keys(params);
-    let query = 'MATCH (a:MapSpot';
-    if (keys.length > 0) {
-      query += ' { ';
-      query += Object.keys(params)
-        .map((key) => `${key}: $${key}`)
-        .join(', ');
-      query += ' }';
-    }
-    query += ') RETURN a';
-    return query;
-  }
 
   protected extractFromNode(node: Node): MapSpotEntity {
     const entity = super.extractFromNode(node);

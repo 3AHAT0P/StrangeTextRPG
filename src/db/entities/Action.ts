@@ -1,24 +1,30 @@
 import { Template } from '@utils/Template';
 import { AbstractEntity, AbstractModel } from './Abstract';
 
+export type ActionType = 'SYSTEM' | 'AUTO' | 'CUSTOM';
+export type ActionSubtype = 'TALK_TO_NPC' | 'START_QUEST' | 'DEAL_SUCCESS' | 'DEAL_FAILURE'
+| 'MOVE_TO_WEST' | 'MOVE_TO_EAST' | 'MOVE_TO_NORTH' | 'MOVE_TO_SOUTH' | 'MOVE_FORBIDDEN'
+| 'EXIT_LOCATION' | 'OTHER' | 'BACK' | 'RELOAD'
+| 'BATTLE_START' | 'BATTLE_WIN' | 'BATTLE_LOSE';
+
 export interface ActionEntity extends AbstractEntity {
-  fromInteractionId: number;
-  toInteractionId: number;
+  toInteractionId: string;
   text: string;
-  type: 'SYSTEM' | 'AUTO' | 'CUSTOM';
+  type: ActionType;
+  subtype: ActionSubtype;
   condition?: string;
   operation?: string;
   isPrintable?: boolean;
 }
 
 export class ActionModel extends AbstractModel {
-  public readonly fromInteractionId: number;
-
-  public readonly toInteractionId: number;
+  public readonly toInteractionId: string;
 
   public readonly text: Template;
 
-  public readonly type: 'SYSTEM' | 'AUTO' | 'CUSTOM';
+  public readonly type: ActionType;
+
+  public readonly subtype: ActionSubtype;
 
   public readonly condition: Template | null;
 
@@ -28,10 +34,10 @@ export class ActionModel extends AbstractModel {
 
   constructor(data: ActionEntity) {
     super(data);
-    this.fromInteractionId = data.fromInteractionId;
     this.toInteractionId = data.toInteractionId;
     this.text = new Template(data.text);
     this.type = data.type;
+    this.subtype = data.subtype;
     this.condition = data.condition == null ? null : new Template(data.condition);
     this.operation = data.operation == null ? null : new Template(data.operation);
     this.isPrintable = data.isPrintable ?? false;
