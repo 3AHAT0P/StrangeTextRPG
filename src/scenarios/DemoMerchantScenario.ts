@@ -2,11 +2,10 @@ import { Player } from '@actors';
 import { AbstractItem } from '@actors/AbstractItem';
 import { HealthPotion } from '@actors/potions';
 import { InteractionModel, NPCModel } from '@db/entities';
-import { ActionModel } from '@db/entities/Action';
 import { ActionsLayout } from '@ui';
 import { filterBy } from '@utils/ArrayUtils';
 import { Template } from '@utils/Template';
-import { AbstractScenario } from './AbstractScenario';
+import { AbstractScenario, findActionBySubtype } from './AbstractScenario';
 
 interface MerchantProduct {
   internalName: string;
@@ -24,10 +23,6 @@ merchantGoods.set(1, new Set([
     item: new HealthPotion(),
   },
 ]));
-
-const findActionByTextRaw = (
-  actions: ActionModel[], value: string,
-): ActionModel | null => actions.find(({ text }) => text.isEqualToRaw(value)) ?? null;
 
 export class DemoMerchantScenario extends AbstractScenario {
   protected _scenarioId: number = 902;
@@ -58,8 +53,8 @@ export class DemoMerchantScenario extends AbstractScenario {
       return;
     }
 
-    const onDealSuccessAction = findActionByTextRaw(actions, 'OnDealSuccess');
-    const onDealFailureAction = findActionByTextRaw(actions, 'OnDealFailure');
+    const onDealSuccessAction = findActionBySubtype(actions, 'DEAL_SUCCESS');
+    const onDealFailureAction = findActionBySubtype(actions, 'DEAL_FAILURE');
 
     if (onDealSuccessAction !== null && onDealFailureAction !== null) {
       // buy

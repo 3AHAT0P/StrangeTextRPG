@@ -1,11 +1,13 @@
 import type { DBService } from './DBService';
 import { OneOFNodeModel } from './entities';
 import { ActionModel } from './entities/Action';
+import { InteractionProperties } from './graph/InteractionNeo4jRepository';
 
 export interface CursorOptions {
   scenarioId: number;
   locationId?: number;
   interactionId?: string;
+  isStart?: boolean;
 }
 
 export class Cursor {
@@ -20,14 +22,13 @@ export class Cursor {
   public async init(options: CursorOptions): Promise<void> {
     const { scenarioId } = options;
 
-    const locationId = options.locationId ?? 0;
-    const interactionId = options.interactionId ?? '1';
+    const params: Partial<InteractionProperties> = { scenarioId };
 
-    this.currentNode = await this._dbService.repositories.interactionRepo.findByParams({
-      scenarioId,
-      locationId,
-      interactionId,
-    });
+    if (options.locationId != null) params.locationId = options.locationId;
+    if (options.interactionId != null) params.interactionId = options.interactionId;
+    params.isStart = options.isStart ?? true;
+
+    this.currentNode = await this._dbService.repositories.interactionRepo.findByParams(params);
 
     this._isInitiated = true;
   }

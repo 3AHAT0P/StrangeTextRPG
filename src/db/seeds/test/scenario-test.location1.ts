@@ -75,7 +75,7 @@ export const scenarioTestLocation1SeedRun = async (): Promise<SeedResult> => {
 
   const intro = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: '1',
+    isStart: true,
     text: 'Привет {{get additionalInfo "playerName"}}.\n'
       + '{{actorType player declension="nominative" capitalised=true}} очнулся посреди руин.\n'
       + '{{actorType player declension="nominative" capitalised=true}} не знаешь кто ты, где ты, зачем ты и что вообще произошло.\n',

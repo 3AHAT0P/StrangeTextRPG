@@ -15,6 +15,8 @@
     "db:start-ee": "docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes --publish=7474:7474 --publish=7687:7687 --volume=/var/lib/neo4j-ee/data:/data neo4j:4.2.7-enterprise",
     "db:seed:generate": "ts-node -r tsconfig-paths/register ./src/db/seeds/generate.ts",
     "db:seed:up": "ts-node -r tsconfig-paths/register ./src/db/seeds/applySeedsToDB.ts",
+    "db:seed:reset": "ts-node -r tsconfig-paths/register ./src/db/seeds/resetDB.ts",
+    "db:seed:reset-and-up": "npm run db:seed:reset && npm run db:seed:up",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint -c ./.eslintrc.js ./src"
   },

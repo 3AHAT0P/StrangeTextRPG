@@ -24,7 +24,7 @@ export const demoBaseSeedRun = (): DemoBaseConnectors => {
 
   const i1 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: '1',
+    isStart: true,
     text: 'БЕРИ МЕЧ И РУБИ!',
   });
 

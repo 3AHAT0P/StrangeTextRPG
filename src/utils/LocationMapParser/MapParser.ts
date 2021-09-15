@@ -137,7 +137,7 @@ export class MapParser {
     });
 
     const onWinInteraction = this._nodeCollection.addContainer<InteractionEntity>(
-      'Battle',
+      'Interaction',
       {
         ...this._mapInfo,
         text: 'Больше тут ничего и никого нет.',

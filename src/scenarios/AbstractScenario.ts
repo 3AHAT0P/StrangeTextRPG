@@ -1,6 +1,6 @@
 import { Cursor } from '@db/Cursor';
 import { OneOFNodeModel, InteractionModel, BattleModel } from '@db/entities';
-import { ActionModel } from '@db/entities/Action';
+import { ActionModel, ActionSubtype } from '@db/entities/Action';
 import { AbstractActor } from '@actors';
 import { Battle, BATTLE_FINAL_ACTIONS } from '@interactions/Battle';
 import { AbstractUI, ActionsLayout } from '@ui';
@@ -13,6 +13,10 @@ export interface ScenarioCallbacks {
   onExit: () => void;
 }
 
+export const findActionBySubtype = (
+  actions: ActionModel[], value: ActionSubtype,
+): ActionModel | null => actions.find(({ subtype }) => subtype === value) ?? null;
+
 export const interactWithBattle = async (
   ui: AbstractUI, cursor: Cursor, player: AbstractActor, enemies: AbstractActor[],
 ): Promise<OneOFNodeModel> => {
@@ -22,15 +26,15 @@ export const interactWithBattle = async (
   const actions = await cursor.getActions();
 
   if (battleResult === BATTLE_FINAL_ACTIONS.PLAYER_WIN) {
-    const winAction = actions.find((action) => action.text.isEqualToRaw('OnWin'));
+    const winAction = findActionBySubtype(actions, 'BATTLE_WIN');
     if (winAction == null) throw new Error('winAction is null');
-    return await cursor.getNextNode(winAction);
+    return cursor.getNextNode(winAction);
   }
 
   if (battleResult === BATTLE_FINAL_ACTIONS.PLAYER_DIED) {
-    const loseAction = actions.find((action) => action.text.isEqualToRaw('OnLose'));
+    const loseAction = findActionBySubtype(actions, 'BATTLE_LOSE');
     if (loseAction == null) throw new Error('loseAction is null');
-    return await cursor.getNextNode(loseAction);
+    return cursor.getNextNode(loseAction);
   }
 
   throw new Error('Incorrect battle result');
@@ -157,13 +161,13 @@ export abstract class AbstractScenario {
   public async init(): Promise<void> {
     if (this._cursor.isInitiated) {
       const node = this._cursor.getNode();
-      if (node.scenarioId === this._scenarioId && node.locationId === 1) {
+      if (node.scenarioId === this._scenarioId) {
         this.currentNode = node;
         return;
       }
     }
 
-    await this._cursor.init({ scenarioId: this._scenarioId, locationId: 1, interactionId: '1' });
+    await this._cursor.init({ scenarioId: this._scenarioId, locationId: 1, isStart: true });
     this.currentNode = this._cursor.getNode();
   }
 

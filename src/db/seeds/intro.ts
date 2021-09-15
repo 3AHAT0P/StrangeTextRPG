@@ -22,7 +22,7 @@ export const introSeedRun = (): SeedResult => {
   const dataCollection = createDataCollection();
   const i1 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: '1',
+    isStart: true,
     text: 'Добро пожаловать в эту странную текстовую РПГ (Демо версия).\n'
       + 'Что бы ты хотел попробовать?',
   });

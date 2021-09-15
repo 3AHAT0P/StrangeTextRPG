@@ -1,3 +1,4 @@
+import { ResultSummary } from 'neo4j-driver-core';
 import {
   ActionModel, ActionEntity, ActionType, ActionSubtype,
 } from '@db/entities/Action';
@@ -27,10 +28,10 @@ export class ActionNeo4jRepository extends AbstractNeo4jRepository<typeof Action
   protected get createQuery(): string {
     return `
       MATCH (a)
-      WHERE id(a) = $from
+      WHERE a.interactionId = $from
 
       MATCH (b)
-      WHERE id(b) = $to
+      WHERE b.interactionId = $to
 
       CREATE (a)-[r:Action $params]->(b)
 
@@ -68,12 +69,22 @@ export class ActionNeo4jRepository extends AbstractNeo4jRepository<typeof Action
   }
 
   public async create(
-    params: ActionProperties & { from: number, to: number }, options?: DBConnectionOptions,
+    params: ActionProperties & { from: string, to: string }, options?: DBConnectionOptions,
   ): Promise<ActionModel> {
     const { from, to, ...otherParams } = params;
     otherParams.isPrintable = otherParams.isPrintable ?? false;
     const result = await this.runQuery(this.createQuery, { from, to, params: otherParams }, true, options);
 
     return this.fromRecord(result.records[0].get(0));
+  }
+
+  public async cleanCreate(
+    params: ActionProperties & { from: string, to: string }, options?: DBConnectionOptions,
+  ): Promise<ResultSummary<Integer>> {
+    const { from, to, ...otherParams } = params;
+    otherParams.isPrintable = otherParams.isPrintable ?? false;
+    const result = await this.runQuery(this.createQuery, { from, to, params: otherParams }, true, options);
+
+    return result.summary;
   }
 }

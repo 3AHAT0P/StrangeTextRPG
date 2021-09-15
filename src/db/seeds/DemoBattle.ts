@@ -22,6 +22,12 @@ interface DemoBattleConnectors {
 export const demoBattleSeedRun = (): DemoBattleConnectors => {
   const dataCollection = createDataCollection();
 
+  const i0 = dataCollection.addContainer<InteractionEntity>('Interaction', {
+    ...baseInfo,
+    isStart: true,
+    text: 'На тебя напали.',
+  });
+
   const b1 = dataCollection.addContainer<BattleEntity>('Battle', {
     ...baseInfo,
     difficult: 'EASY',
@@ -30,7 +36,6 @@ export const demoBattleSeedRun = (): DemoBattleConnectors => {
 
   const i1 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: '1',
     text: 'Ты победил, молодец!',
   });
 
@@ -44,20 +49,28 @@ export const demoBattleSeedRun = (): DemoBattleConnectors => {
     text: 'Что дальше?',
   });
 
+  dataCollection.addLink(i0, {
+    ...baseInfo,
+    to: b1.entity.interactionId,
+    text: '',
+    type: 'AUTO',
+    subtype: 'BATTLE_START',
+  });
+
   dataCollection.addLink(b1, {
     ...baseInfo,
     to: i1.entity.interactionId,
-    text: 'OnWin',
+    text: '',
     type: 'AUTO',
-    subtype: 'OTHER',
+    subtype: 'BATTLE_WIN',
   });
 
   dataCollection.addLink(b1, {
     ...baseInfo,
     to: i2.entity.interactionId,
-    text: 'OnLose',
+    text: '',
     type: 'AUTO',
-    subtype: 'OTHER',
+    subtype: 'BATTLE_LOSE',
   });
 
   dataCollection.addLink(i1, {
@@ -78,7 +91,7 @@ export const demoBattleSeedRun = (): DemoBattleConnectors => {
 
   dataCollection.addLink(i3, {
     ...baseInfo,
-    to: b1.entity.interactionId,
+    to: i0.entity.interactionId,
     text: 'Перезагрузить локацию',
     type: 'CUSTOM',
     subtype: 'RELOAD',
@@ -87,7 +100,7 @@ export const demoBattleSeedRun = (): DemoBattleConnectors => {
   return <const>{
     data: dataCollection.data,
     inboundOnStart(connect: ConnectorTo) {
-      connect(b1, 'Попробовать демо бой');
+      connect(i0, 'Попробовать демо бой');
     },
     outboundToReturn(returnInteraction: DataContainer<AbstractEntity>) {
       dataCollection.addLink(i3, {

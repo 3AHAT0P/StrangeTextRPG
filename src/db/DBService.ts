@@ -94,8 +94,8 @@ export class DBService {
     return result.records.map((item) => this.repositories.actionRepo.fromRecord(item.get(0)));
   }
 
-  public async runRawQuery(query: string, params: any) {
-    const result = await this._session.readTransaction(
+  public async runRawQuery(query: string, params?: any) {
+    const result = await this._session.writeTransaction(
       (transaction) => transaction.run(query, params),
     );
 

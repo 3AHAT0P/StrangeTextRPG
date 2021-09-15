@@ -2,13 +2,14 @@ import { InteractionModel, InteractionEntity } from '@db/entities/Interaction';
 import { ActionModel } from '@db/entities/Action';
 
 import {
-  Node, Integer, getIntValue, EspeciallyNode, Session,
+  Node, Integer, EspeciallyNode, Session,
 } from './common';
 import { AbstractProperties, AbstractNeo4jRepository, DBConnectionOptions } from './AbstractNeo4jRepository';
 import { ActionNeo4jRepository } from './ActionNeo4jRepository';
 
 export interface InteractionProperties extends AbstractProperties {
   text: string;
+  isStart?: boolean;
 }
 
 export const isInteractionNode = <T extends Integer>(
@@ -29,6 +30,7 @@ export class InteractionNeo4jRepository extends AbstractNeo4jRepository<
     return {
       ...entity,
       text: node.properties.text,
+      isStart: node.properties.isStart,
     };
   }
 
