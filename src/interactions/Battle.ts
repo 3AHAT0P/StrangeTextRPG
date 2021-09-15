@@ -185,6 +185,8 @@ export class Battle {
 
       choosedAction = await handler(this._ui, this._player, this._aliveEnemies);
 
+      if (choosedAction === null) continue; // null returned only when <back> pressed
+
       this._aliveEnemies = this._enemies.filter((enemy) => enemy.isAlive);
 
       await enemiesAttack(this._ui, this._player, this._enemies);
