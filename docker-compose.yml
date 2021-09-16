@@ -2,6 +2,7 @@ version: '3'
 
 services:
   main:
+    stdin_open: true
     container_name: strpg-main
     build:
       context: .
