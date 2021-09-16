@@ -27,13 +27,15 @@ For start
 
 1) fill up .env.json
 
-1) run `docker-compose up`
+1) run `docker-compose up -d` to start containers in detach mode
 
-2) run in other terminal  `docker exec -i strpg-main npm run db:seed:up`
+2) run `docker exec -i strpg-main npm run db:seed:up` to fill database by seed
 
-3) ...
+3) run `docker attach strpg-main` to attach current terminal to node container
 
-4) profit
+4) ...
+
+5) profit
 
 ---------
 
