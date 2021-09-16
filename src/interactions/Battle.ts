@@ -184,6 +184,7 @@ export class Battle {
       const handler: ActionHandler = ACTION_HANDLERS[choosedAction];
 
       choosedAction = await handler(this._ui, this._player, this._aliveEnemies);
+      if (choosedAction === null) continue;
 
       this._aliveEnemies = this._enemies.filter((enemy) => enemy.isAlive);
 

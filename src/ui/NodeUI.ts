@@ -73,7 +73,7 @@ export class NodeUI extends AbstractUI {
     // this.internalInterface.write(outputMessage);
     this.output.cork();
     // this.output.write(MessageTypes[type].join(''));
-    this.output.write(message);
+    this.output.write(`${message}\n`);
     this.output.write(TextModifiers.Reset);
     process.nextTick(() => this.output.uncork());
   }
@@ -91,7 +91,7 @@ export class NodeUI extends AbstractUI {
     return new Promise((resolve, reject) => {
       this.internalInterface.prompt();
       this.internalInterface.once('line', (answer: string) => {
-        const optionId = Number(answer);
+        const optionId = Number(answer) - 1;
         if (answer === '' || Number.isNaN(optionId) || optionId < 0 || optionId > actions.flatList.length) {
           reject(new Error('Answer is incorrect'));
         }

@@ -1,4 +1,4 @@
-export const MESSAGES = {
+export const MESSAGES = <const>{
   prompt: 'Твои действия> ',
   title: 'БЕРИ МЕЧ И РУБИ!\n',
   actions: {
