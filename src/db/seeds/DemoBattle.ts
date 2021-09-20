@@ -1,5 +1,10 @@
-import { DBService } from '@db/DBService';
-import { AbstractModel } from '@db/entities/Abstract';
+import {
+  AbstractEntity,
+  InteractionEntity,
+  DataContainer,
+  createDataCollection,
+  BattleEntity,
+} from '@db/entities';
 
 import { ConnectorTo, ConnectorFrom } from './Connector';
 
@@ -9,88 +14,101 @@ export const baseInfo = <const>{
 };
 
 interface DemoBattleConnectors {
+  data: Record<string, DataContainer<AbstractEntity>>,
   inboundOnStart: ConnectorFrom;
   outboundToReturn: ConnectorTo;
 }
 
-export const demoBattleSeedRun = async (dbService: DBService): Promise<DemoBattleConnectors> => {
-  const { battleRepo, interactionRepo, actionRepo } = dbService.repositories;
+export const demoBattleSeedRun = (): DemoBattleConnectors => {
+  const dataCollection = createDataCollection();
 
-  const b1 = await battleRepo.create({
+  const i0 = dataCollection.addContainer<InteractionEntity>('Interaction', {
+    ...baseInfo,
+    isStart: true,
+    text: 'На тебя напали.',
+  });
+
+  const b1 = dataCollection.addContainer<BattleEntity>('Battle', {
     ...baseInfo,
     difficult: 'EASY',
     chanceOfTriggering: 1,
   });
 
-  const i1 = await interactionRepo.create({
+  const i1 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 1,
     text: 'Ты победил, молодец!',
   });
 
-  const i2 = await interactionRepo.create({
+  const i2 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 2,
     text: 'К сожалению, ты умер.',
   });
 
-  const i3 = await interactionRepo.create({
+  const i3 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 3,
     text: 'Что дальше?',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i0, {
     ...baseInfo,
-    from: b1.id,
-    to: i1.id,
-    text: 'OnWin',
-    type: 'AUTO',
-  });
-
-  await actionRepo.create({
-    ...baseInfo,
-    from: b1.id,
-    to: i2.id,
-    text: 'OnLose',
-    type: 'AUTO',
-  });
-
-  await actionRepo.create({
-    ...baseInfo,
-    from: i1.id,
-    to: i3.id,
+    to: b1.entity.interactionId,
     text: '',
     type: 'AUTO',
+    subtype: 'BATTLE_START',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(b1, {
     ...baseInfo,
-    from: i2.id,
-    to: i3.id,
+    to: i1.entity.interactionId,
     text: '',
     type: 'AUTO',
+    subtype: 'BATTLE_WIN',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(b1, {
     ...baseInfo,
-    from: i3.id,
-    to: b1.id,
+    to: i2.entity.interactionId,
+    text: '',
+    type: 'AUTO',
+    subtype: 'BATTLE_LOSE',
+  });
+
+  dataCollection.addLink(i1, {
+    ...baseInfo,
+    to: i3.entity.interactionId,
+    text: '',
+    type: 'AUTO',
+    subtype: 'OTHER',
+  });
+
+  dataCollection.addLink(i2, {
+    ...baseInfo,
+    to: i3.entity.interactionId,
+    text: '',
+    type: 'AUTO',
+    subtype: 'OTHER',
+  });
+
+  dataCollection.addLink(i3, {
+    ...baseInfo,
+    to: i0.entity.interactionId,
     text: 'Перезагрузить локацию',
     type: 'CUSTOM',
+    subtype: 'RELOAD',
   });
 
   return <const>{
-    async inboundOnStart(connect: ConnectorTo) {
-      await connect(b1, 'Попробовать демо бой');
+    data: dataCollection.data,
+    inboundOnStart(connect: ConnectorTo) {
+      connect(i0, 'Попробовать демо бой');
     },
-    async outboundToReturn(returnInteraction: AbstractModel) {
-      await actionRepo.create({
+    outboundToReturn(returnInteraction: DataContainer<AbstractEntity>) {
+      dataCollection.addLink(i3, {
         ...baseInfo,
-        from: i3.id,
-        to: returnInteraction.id,
+        to: returnInteraction.entity.interactionId,
         text: 'Вернутся к выбору локаций',
         type: 'CUSTOM',
+        subtype: 'OTHER',
       });
     },
   };

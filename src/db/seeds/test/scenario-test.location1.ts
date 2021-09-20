@@ -1,17 +1,26 @@
 import path from 'path';
 
-import { DBService, RepositoriesHash } from '@db/DBService';
-import { AbstractModel } from '@db/entities/Abstract';
 import { MapParser } from '@utils/LocationMapParser/MapParser';
-import { InteractionModel, MapSpotModel, NPCModel } from '@db/entities';
-import { ActionModel } from '@db/entities/Action';
+import {
+  AbstractEntity,
+  InteractionEntity,
+  NPCEntity,
+  MapSpotEntity,
+  DataContainer,
+  createDataCollection,
+  DataCollection,
+} from '@db/entities';
 
 import { ConnectorTo, ConnectorFrom } from '../Connector';
 
 import { eventBuilder } from './events';
 import { npcInteractionBuilder } from './npcs';
 
-const parseMap = async (exitInteraction: InteractionModel, onDied: InteractionModel) => {
+const parseMap = async (
+  dataCollection: DataCollection,
+  exitInteractionId: string,
+  onDiedId: string,
+): Promise<Map<string, DataContainer<MapSpotEntity>>> => {
   const mapPath = path.resolve(__dirname, '..', '..', '..', '..', 'assets', 'test.location.png');
   const mapParser = new MapParser(
     mapPath,
@@ -20,9 +29,10 @@ const parseMap = async (exitInteraction: InteractionModel, onDied: InteractionMo
       locationId: 1,
     },
     {
-      exit: exitInteraction,
-      onPlayerDied: onDied,
+      exitId: exitInteractionId,
+      onPlayerDiedId: onDiedId,
     },
+    dataCollection,
   );
 
   await mapParser.init();
@@ -30,6 +40,8 @@ const parseMap = async (exitInteraction: InteractionModel, onDied: InteractionMo
   await mapParser.parse();
 
   await mapParser.destructor();
+
+  return mapParser.spotMap;
 };
 
 export const baseInfo = <const>{
@@ -37,115 +49,112 @@ export const baseInfo = <const>{
   locationId: 1,
 };
 
-export interface Scenario5Location1Connectors {
+export type SeedResult = Readonly<{
+  data: Record<string, DataContainer<AbstractEntity>>,
   inboundOnStart: ConnectorFrom;
   outboundToReturn: ConnectorTo;
-}
+}>;
 
-const getMerchantOnTheSpotQuery = 'MATCH (a: MapSpot)-[r: Action]->(b: NPC) WHERE a.x = $x AND a.y = $y RETURN a, b';
+const getSpotAndRelatedMerchant = (
+  [data, spots]: [DataCollection['data'], Map<string, DataContainer<MapSpotEntity>>], x: number, y: number,
+): { spot: DataContainer<MapSpotEntity>, npc: DataContainer<NPCEntity> } => {
+  const spot = spots.get(`${x}:${y}`);
+  const npcLink = spot?.links.find((link) => link.subtype === 'TALK_TO_NPC');
+  const npc = data[npcLink?.to ?? ''] as DataContainer<NPCEntity>;
 
-const getSpotAndRelatedMerchant = async (
-  dbService: DBService, x: number, y: number,
-): Promise<{ spot: MapSpotModel, npc: NPCModel }> => {
-  const records = await dbService.runRawQuery(getMerchantOnTheSpotQuery, { x, y });
-  const spotData = records[0].get(0);
-  const merchantData = records[0].get(1);
+  if (spot == null || npc == null) throw new Error('Invalid position');
 
-  const mapSpot = dbService.repositories.mapSpotRepo.fromRecord(spotData);
-  const merchant = dbService.repositories.npcRepo.fromRecord(merchantData);
-
-  return { spot: mapSpot, npc: merchant };
+  return {
+    spot,
+    npc,
+  };
 };
 
-const getActionsToSpot = async (
-  dbService: DBService, x: number, y: number,
-): Promise<ActionModel[]> => {
-  const records = await dbService.runRawQuery('MATCH (a)-[r: Action]->(b: MapSpot) WHERE b.x = $x AND b.y = $y RETURN r', { x, y });
-  return records.map((item) => dbService.repositories.actionRepo.fromRecord(item.get(0)));
-};
+export const scenarioTestLocation1SeedRun = async (): Promise<SeedResult> => {
+  const dataCollection = createDataCollection();
 
-export const scenarioTestLocation1SeedRun = async (dbService: DBService): Promise<Scenario5Location1Connectors> => {
-  const {
-    battleRepo, interactionRepo, npcRepo, mapSpotRepo, actionRepo,
-  } = dbService.repositories;
-
-  const intro = await interactionRepo.create({
+  const intro = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 1,
+    isStart: true,
     text: 'Привет {{get additionalInfo "playerName"}}.\n'
       + '{{actorType player declension="nominative" capitalised=true}} очнулся посреди руин.\n'
       + '{{actorType player declension="nominative" capitalised=true}} не знаешь кто ты, где ты, зачем ты и что вообще произошло.\n',
   });
 
-  const onDied = await interactionRepo.create({
+  const onDied = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 9001,
     text: 'К сожалению, ты умер.',
   });
 
-  const exitInteraction = await interactionRepo.create({
+  const exitInteraction = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 9000,
     text: 'Ты вырался из этого лабиринта живым. Хе, могло быть и хуже.',
   });
 
-  const standUp = await interactionRepo.create({
+  const standUp = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 2,
     text: '{{actorType player declension="nominative" capitalised=true}} аккуратно встаешь опираясь на стену. Все тело болит и сопротивляется.',
   });
 
-  await parseMap(exitInteraction, onDied);
-
-  const startSpot = await mapSpotRepo.findByParams({ ...baseInfo, x: 3, y: 3 });
-
-  const builderOptionsTemplate = <const>{
-    repositories: dbService.repositories,
-    baseInfo,
-  };
-
-  await npcInteractionBuilder(
-    'default', { ...builderOptionsTemplate, ...await getSpotAndRelatedMerchant(dbService, 1, 3) },
+  const spots = await parseMap(
+    dataCollection,
+    exitInteraction.entity.interactionId,
+    onDied.entity.interactionId,
   );
 
-  await actionRepo.create({
+  const startSpot = spots.get('3:3');
+
+  if (startSpot == null) throw new Error('Invalid position');
+
+  npcInteractionBuilder(
+    'default', {
+      baseInfo,
+      dataCollection,
+      ...getSpotAndRelatedMerchant([dataCollection.data, spots], 1, 3),
+    },
+  );
+
+  dataCollection.addLink(intro, {
     ...baseInfo,
-    from: intro.id,
-    to: standUp.id,
+    to: standUp.entity.interactionId,
     text: 'Встать',
     type: 'CUSTOM',
+    subtype: 'OTHER',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(standUp, {
     ...baseInfo,
-    from: standUp.id,
-    to: startSpot.id,
+    to: startSpot.entity.interactionId,
     text: '',
     type: 'AUTO',
+    subtype: 'OTHER',
   });
 
-  await eventBuilder(
-    1, { ...builderOptionsTemplate, spot: await mapSpotRepo.findByParams({ ...baseInfo, x: 2, y: 3 }) },
-  );
+  const eventSpot = spots.get('2:3');
+
+  if (eventSpot == null) throw new Error('Invalid position');
+
+  eventBuilder(1, { baseInfo, spot: eventSpot, dataCollection });
 
   return <const>{
-    async inboundOnStart(connect: ConnectorTo) {
-      await connect(intro, 'Начать сценарий!');
+    data: dataCollection.data,
+    inboundOnStart(connect: ConnectorTo) {
+      connect(intro, 'Начать сценарий!');
     },
-    async outboundToReturn(returnInteraction: AbstractModel) {
-      await actionRepo.create({
+    outboundToReturn(returnInteraction: DataContainer<AbstractEntity>) {
+      dataCollection.addLink(exitInteraction, {
         ...baseInfo,
-        from: exitInteraction.id,
-        to: returnInteraction.id,
+        to: returnInteraction.entity.interactionId,
         text: 'Вернутся к выбору локаций',
         type: 'CUSTOM',
+        subtype: 'OTHER',
       });
-      await actionRepo.create({
+      dataCollection.addLink(onDied, {
         ...baseInfo,
-        from: onDied.id,
-        to: returnInteraction.id,
+        to: returnInteraction.entity.interactionId,
         text: 'Вернутся к выбору локаций',
         type: 'CUSTOM',
+        subtype: 'OTHER',
       });
     },
   };

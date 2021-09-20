@@ -3,12 +3,11 @@ import { Rat } from '@actors/Rat';
 import { BattleModel, InteractionModel, OneOFNodeModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
 import { BattleDifficulty } from '@db/entities/Battle';
-import { MOVE_ACTIONS } from '@locations/AreaMap';
 import { ActionsLayout } from '@ui';
 import { Template } from '@utils/Template';
 import logger from '@utils/Logger';
 
-import { AbstractScenario, interactWithBattle, processActions } from '../AbstractScenario';
+import { AbstractScenario, findActionBySubtype, interactWithBattle, processActions } from '../AbstractScenario';
 
 import { MerchantProduct, ScenarioContext } from './@types';
 import { buildScenarioEvent as buildScenarioEvent1 } from './events/1';
@@ -24,10 +23,6 @@ merchantGoods.set(1, new Set([
 ]));
 
 const defaultGoods: Set<MerchantProduct> = new Set<MerchantProduct>();
-
-const findActionByTextRaw = (
-  actions: ActionModel[], value: string,
-): ActionModel | null => actions.find(({ text }) => text.isEqualToRaw(value)) ?? null;
 
 const getGoldCount = (difficult: BattleDifficulty): number => {
   if (difficult === 'VERY_EASY') return 8;
@@ -72,8 +67,8 @@ export class ScenarioNo5Test extends AbstractScenario {
       }
 
       if (processedActions.system.length > 0) {
-        const onDealSuccessAction = findActionByTextRaw(processedActions.system, 'OnDealSuccess');
-        const onDealFailureAction = findActionByTextRaw(processedActions.system, 'OnDealFailure');
+        const onDealSuccessAction = findActionBySubtype(processedActions.system, 'DEAL_SUCCESS');
+        const onDealFailureAction = findActionBySubtype(processedActions.system, 'DEAL_FAILURE');
         if (onDealSuccessAction !== null && onDealFailureAction !== null) {
           this.currentNode = await this._buyOrLeaveInteract(
             onDealSuccessAction, onDealFailureAction, processedActions.custom,
@@ -84,7 +79,7 @@ export class ScenarioNo5Test extends AbstractScenario {
       }
 
       const choosedAction = await this._interactWithUser(processedActions.custom, this._context);
-      if (choosedAction.text.isEqualToRaw(MOVE_ACTIONS.NO_WAY)) return;
+      if (choosedAction.subtype === 'MOVE_FORBIDDEN') return;
 
       await this._sendTransitionMessage(choosedAction);
       this.currentNode = await this._cursor.getNextNode(choosedAction);
@@ -131,10 +126,10 @@ export class ScenarioNo5Test extends AbstractScenario {
   }
 
   private async _sendTransitionMessage(action: ActionModel): Promise<void> {
-    if (action.text.isEqualToRaw(MOVE_ACTIONS.TO_NORTH)) await this._state.ui.sendToUser('Ты идешь на север');
-    if (action.text.isEqualToRaw(MOVE_ACTIONS.TO_SOUTH)) await this._state.ui.sendToUser('Ты идешь на юг');
-    if (action.text.isEqualToRaw(MOVE_ACTIONS.TO_WEST)) await this._state.ui.sendToUser('Ты идешь на запад');
-    if (action.text.isEqualToRaw(MOVE_ACTIONS.TO_EAST)) await this._state.ui.sendToUser('Ты идешь на восток');
+    if (action.subtype === 'MOVE_TO_NORTH') await this._state.ui.sendToUser('Ты идешь на север');
+    if (action.subtype === 'MOVE_TO_SOUTH') await this._state.ui.sendToUser('Ты идешь на юг');
+    if (action.subtype === 'MOVE_TO_WEST') await this._state.ui.sendToUser('Ты идешь на запад');
+    if (action.subtype === 'MOVE_TO_EAST') await this._state.ui.sendToUser('Ты идешь на восток');
   }
 
   public async init() {

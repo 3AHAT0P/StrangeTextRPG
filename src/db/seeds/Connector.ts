@@ -1,4 +1,4 @@
-import type { AbstractModel } from '@db/entities/Abstract';
+import { DataContainer, AbstractEntity } from '@db/entities';
 
-export type ConnectorTo = (to: AbstractModel, text: string) => Promise<void>;
-export type ConnectorFrom = (connect: ConnectorTo) => Promise<void>;
+export type ConnectorTo = (to: DataContainer<AbstractEntity>, text: string) => void;
+export type ConnectorFrom = (connect: ConnectorTo) => void;

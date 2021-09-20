@@ -1,5 +1,4 @@
 import { InteractionModel } from '@db/entities';
-import { ActionsLayout } from '@ui';
 import { AbstractScenario } from './AbstractScenario';
 
 export class DemoBaseScenario extends AbstractScenario {

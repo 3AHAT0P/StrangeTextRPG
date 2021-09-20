@@ -13,7 +13,10 @@
     "db:setup-ee": "sudo mkdir -p /var/lib/neo4j-ee/data && docker pull neo4j:4.2.7-enterprise",
     "db:start": "docker run --publish=7474:7474 --publish=7687:7687 --volume=/var/lib/neo4j/data:/data neo4j",
     "db:start-ee": "docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes --publish=7474:7474 --publish=7687:7687 --volume=/var/lib/neo4j-ee/data:/data neo4j:4.2.7-enterprise",
-    "db:seed:up": "ts-node -r tsconfig-paths/register ./src/db/seeds/index.ts",
+    "db:seed:generate": "ts-node -r tsconfig-paths/register ./src/db/seeds/generate.ts",
+    "db:seed:up": "ts-node -r tsconfig-paths/register ./src/db/seeds/applySeedsToDB.ts",
+    "db:seed:reset": "ts-node -r tsconfig-paths/register ./src/db/seeds/resetDB.ts",
+    "db:seed:reset-and-up": "npm run db:seed:reset && npm run db:seed:up",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint -c ./.eslintrc.js ./src"
   },
@@ -58,13 +61,16 @@
     "typescript": "^4.2.4"
   },
   "dependencies": {
+    "@types/uuid": "^8.3.1",
     "handlebars": "^4.7.7",
     "neo4j-driver": "^4.3.0",
     "neo4j-driver-core": "^4.3.0",
     "node-canvas": "^2.7.0",
     "pm2": "^5.1.0",
     "telegraf": "^4.3.0",
-    "tsconfig-paths": "^3.9.0"
+    "tsconfig-paths": "^3.9.0",
+    "uuid": "^8.3.2",
+    "uuidv4": "^6.2.12"
   },
   "repository": {
     "type": "git",

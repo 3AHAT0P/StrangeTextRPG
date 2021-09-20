@@ -1,153 +1,150 @@
-import { RepositoriesHash } from '@db/DBService';
-import { MapSpotModel, NPCModel } from '@db/entities';
+import {
+  InteractionEntity,
+  NPCEntity,
+  MapSpotEntity,
+  DataContainer,
+  DataCollection,
+} from '@db/entities';
 
 interface NPCInteractBuilderOptions {
-  spot: MapSpotModel;
-  repositories: RepositoriesHash;
-  npc: NPCModel;
+  dataCollection: DataCollection;
+  spot: DataContainer<MapSpotEntity>;
+  npc: DataContainer<NPCEntity>;
   baseInfo: {
     readonly scenarioId: number;
     readonly locationId: number;
   };
 }
 
-const NPCInteractions: Record<number | 'default', (options: NPCInteractBuilderOptions) => Promise<void>> = {
-  async default(options: NPCInteractBuilderOptions) {
+const NPCInteractions: Record<number | 'default', (options: NPCInteractBuilderOptions) => void> = {
+  default(options: NPCInteractBuilderOptions): void {
     const {
-      spot, repositories, npc: merchant, baseInfo,
+      spot, npc: merchant, baseInfo,
     } = options;
-    const { interactionRepo, actionRepo } = repositories;
 
-    // @TODO: Тут айдишниги полная фигня
-    const i0 = await interactionRepo.create({
+    const i0 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
-      interactionId: 8 * 1e7 + merchant.id * 1e3 + 0,
       text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Привет!',
     });
 
-    const i1 = await interactionRepo.create({
+    const i1 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
-      interactionId: 8 * 1e7 + merchant.id * 1e3 + 1,
       text: '💬 [Торговец]: Привет!',
     });
 
-    const i2 = await interactionRepo.create({
+    const i2 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
-      interactionId: 8 * 1e7 + merchant.id * 1e3 + 2,
       text: '💬 [Торговец]: Извини, за столь скудный выбор.\n'
         + '{{#each (get currentMerchant goods) as | good |}}'
         + '{{trueIndex @index}}: {{good.displayName}} = {{good.price}} золотых (📀)\n'
         + '{{/each}}',
     });
 
-    const i3 = await interactionRepo.create({
+    const i3 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
-      interactionId: 8 * 1e7 + merchant.id * 1e3 + 3,
       text: '💬 [Торговец]: Чего изволишь?',
     });
 
-    const i4 = await interactionRepo.create({
+    const i4 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
-      interactionId: 8 * 1e7 + merchant.id * 1e3 + 4,
       text: '💬 [Торговец]: К сожалению, у {{actorType player declension="genitive"}} не хватает золота.',
     });
 
-    const i5 = await interactionRepo.create({
+    const i5 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
-      interactionId: 8 * 1e7 + merchant.id * 1e3 + 5,
       text: '⚙️ У {{actorType player declension="genitive"}} осталось {{get player "gold"}} золота (📀)',
     });
 
-    const i6 = await interactionRepo.create({
+    const i6 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
-      interactionId: 8 * 1e7 + merchant.id * 1e3 + 6,
       text: '💬 [Торговец]: Приходи еще :)',
     });
 
-    await actionRepo.create({
+    options.dataCollection.addLink(merchant, {
       ...baseInfo,
-      from: merchant.id,
-      to: i0.id,
+      to: i0.entity.interactionId,
       text: '',
       type: 'AUTO',
+      subtype: 'OTHER',
     });
 
-    await actionRepo.create({
+    options.dataCollection.addLink(i0, {
       ...baseInfo,
-      from: i0.id,
-      to: i1.id,
+      to: i1.entity.interactionId,
       text: '',
       type: 'AUTO',
+      subtype: 'OTHER',
     });
 
-    await actionRepo.create({
+    options.dataCollection.addLink(i1, {
       ...baseInfo,
-      from: i1.id,
-      to: i2.id,
+      to: i2.entity.interactionId,
       text: '',
       type: 'AUTO',
+      subtype: 'OTHER',
     });
 
-    await actionRepo.create({
+    options.dataCollection.addLink(i2, {
       ...baseInfo,
-      from: i2.id,
-      to: i3.id,
+      to: i3.entity.interactionId,
       text: '',
       type: 'AUTO',
+      subtype: 'OTHER',
     });
 
-    await actionRepo.create({
+    options.dataCollection.addLink(i3, {
       ...baseInfo,
-      from: i3.id,
-      to: i4.id,
-      text: 'OnDealFailure',
+      to: i4.entity.interactionId,
+      text: '',
       type: 'SYSTEM',
+      subtype: 'DEAL_FAILURE',
     });
 
-    await actionRepo.create({
+    options.dataCollection.addLink(i3, {
       ...baseInfo,
-      from: i3.id,
-      to: i5.id,
-      text: 'OnDealSuccess',
+      to: i5.entity.interactionId,
+      text: '',
       type: 'SYSTEM',
+      subtype: 'DEAL_SUCCESS',
     });
 
-    await actionRepo.create({
+    options.dataCollection.addLink(i3, {
       ...baseInfo,
-      from: i3.id,
-      to: i6.id,
+      to: i6.entity.interactionId,
       text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Ничего, спасибо.',
       type: 'CUSTOM',
+      subtype: 'OTHER',
       isPrintable: true,
     });
 
-    await actionRepo.create({
+    options.dataCollection.addLink(i4, {
       ...baseInfo,
-      from: i4.id,
-      to: i3.id,
+      to: i3.entity.interactionId,
       text: '',
       type: 'AUTO',
+      subtype: 'OTHER',
     });
 
-    await actionRepo.create({
+    options.dataCollection.addLink(i5, {
       ...baseInfo,
-      from: i5.id,
-      to: i3.id,
+      to: i3.entity.interactionId,
       text: '',
       type: 'AUTO',
+      subtype: 'OTHER',
     });
 
-    await actionRepo.create({
+    options.dataCollection.addLink(i6, {
       ...baseInfo,
-      from: i6.id,
-      to: spot.id,
+      to: spot.entity.interactionId,
       text: '',
       type: 'AUTO',
+      subtype: 'OTHER',
     });
   },
 };
 
-export const npcInteractionBuilder = (id: number | 'default', options: NPCInteractBuilderOptions): Promise<void> => {
+export const npcInteractionBuilder = (id: number | 'default', options: NPCInteractBuilderOptions): void => {
   if (!(id in NPCInteractions)) throw new Error('EventId is incorrect!');
+
   return NPCInteractions[id](options);
 };

@@ -72,7 +72,7 @@ export class DBService {
     await this._driver.close();
   }
 
-  public async getNodeById(id: number): Promise<OneOFNodeModel> {
+  public async getNodeById(id: string): Promise<OneOFNodeModel> {
     const result = await this._session.readTransaction(
       (transaction) => transaction.run('MATCH (a) WHERE id(a) = $id RETURN a', { id }),
     );
@@ -86,7 +86,7 @@ export class DBService {
     return repo.fromRecord(record);
   }
 
-  public async getRelatedActions(id: number): Promise<ActionModel[]> {
+  public async getRelatedActions(id: string): Promise<ActionModel[]> {
     const result = await this._session.readTransaction(
       (transaction) => transaction.run('MATCH (a)-[r:Action]->(b) WHERE id(a) = $id RETURN r', { id }),
     );
@@ -94,8 +94,8 @@ export class DBService {
     return result.records.map((item) => this.repositories.actionRepo.fromRecord(item.get(0)));
   }
 
-  public async runRawQuery(query: string, params: any) {
-    const result = await this._session.readTransaction(
+  public async runRawQuery(query: string, params?: any) {
+    const result = await this._session.writeTransaction(
       (transaction) => transaction.run(query, params),
     );
 

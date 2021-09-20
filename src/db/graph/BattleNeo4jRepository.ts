@@ -19,27 +19,9 @@ export const isBattleNode = <T extends Integer>(
 export class BattleNeo4jRepository extends AbstractNeo4jRepository<
   typeof BattleModel, BattleModel, BattleProperties
 > {
-  protected createQuery: string = 'CREATE (a:Battle $params) RETURN a';
-
-  protected findByIdQuery: string = 'MATCH (a:Battle) WHERE id(a) = $id RETURN a';
-
-  protected findRelatedActionsQuery: string = 'MATCH (a:Battle)-[r:Action]->(b) WHERE id(a) = $id RETURN r';
+  protected label: string = ':Battle';
 
   public readonly type: string = 'Battle';
-
-  protected buildFindByPropsQuery(params: Partial<BattleProperties>): string {
-    const keys = Object.keys(params);
-    let query = 'MATCH (a:Battle';
-    if (keys.length > 0) {
-      query += ' { ';
-      query += Object.keys(params)
-        .map((key) => `${key}: $${key}`)
-        .join(', ');
-      query += ' }';
-    }
-    query += ') RETURN a';
-    return query;
-  }
 
   protected extractFromNode(node: Node): BattleEntity {
     const entity = super.extractFromNode(node);

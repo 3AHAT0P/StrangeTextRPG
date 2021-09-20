@@ -1,5 +1,10 @@
-import { DBService } from '@db/DBService';
-import { AbstractModel } from '@db/entities/Abstract';
+import {
+  AbstractEntity,
+  InteractionEntity,
+  DataContainer,
+  createDataCollection,
+  NPCEntity,
+} from '@db/entities';
 
 import { ConnectorTo, ConnectorFrom } from './Connector';
 
@@ -9,146 +14,142 @@ export const baseInfo = <const>{
 };
 
 interface DemoMerchantConnectors {
+  data: Record<string, DataContainer<AbstractEntity>>,
   inboundOnStart: ConnectorFrom;
   outboundToReturn: ConnectorTo;
 }
 
-export const demoMerchantSeedRun = async (dbService: DBService): Promise<DemoMerchantConnectors> => {
-  const { npcRepo, interactionRepo, actionRepo } = dbService.repositories;
+export const demoMerchantSeedRun = (): DemoMerchantConnectors => {
+  const dataCollection = createDataCollection();
 
-  const merchant1 = await npcRepo.create({
+  const i0 = dataCollection.addContainer<InteractionEntity>('Interaction', {
+    ...baseInfo,
+    isStart: true,
+    text: '⚙️ Завернув за угол, ты увидел человека за прилавком со всякими склянками.',
+  });
+
+  const merchant1 = dataCollection.addContainer<NPCEntity>('NPC', {
     ...baseInfo,
     NPCId: 1,
     subtype: 'MERCHANT',
   });
 
-  const i0 = await interactionRepo.create({
+  const i1 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 0,
-    text: '⚙️ Завернув за угол, ты увидел человека за прилавком со всякими склянками.',
-  });
-
-  const i1 = await interactionRepo.create({
-    ...baseInfo,
-    interactionId: 1,
     text: '💬 [Торговец]: Привет!',
   });
 
-  const i2 = await interactionRepo.create({
+  const i2 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 2,
     text: '💬 [Торговец]: Извини, за столь скудный выбор.\n{{#each goods}}{{trueIndex @index}}: {{this.displayName}} = {{this.price}} золотых (📀)\n{{/each}}',
   });
 
-  const i3 = await interactionRepo.create({
+  const i3 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 3,
     text: '💬 [Торговец]: Чего изволишь?',
   });
 
-  const i4 = await interactionRepo.create({
+  const i4 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 4,
     text: '💬 [Торговец]: К сожалению, у {{actorType player declension="genitive"}} не хватает золота.',
   });
 
-  const i5 = await interactionRepo.create({
+  const i5 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 5,
     text: '⚙️ У {{actorType player declension="genitive"}} осталось {{get player "gold"}} золота (📀)',
   });
 
-  const i6 = await interactionRepo.create({
+  const i6 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    interactionId: 6,
     text: '💬 [Торговец]: Приходи еще :)',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i0, {
     ...baseInfo,
-    from: merchant1.id,
-    to: i0.id,
-    text: 'Talk',
-    type: 'AUTO',
-  });
-
-  await actionRepo.create({
-    ...baseInfo,
-    from: i0.id,
-    to: i1.id,
+    to: merchant1.entity.interactionId,
     text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Привет!',
     type: 'CUSTOM',
+    subtype: 'OTHER',
     isPrintable: true,
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(merchant1, {
     ...baseInfo,
-    from: i1.id,
-    to: i2.id,
+    to: i1.entity.interactionId,
     text: '',
     type: 'AUTO',
+    subtype: 'OTHER',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i1, {
     ...baseInfo,
-    from: i2.id,
-    to: i3.id,
+    to: i2.entity.interactionId,
     text: '',
     type: 'AUTO',
+    subtype: 'OTHER',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i2, {
     ...baseInfo,
-    from: i3.id,
-    to: i4.id,
-    text: 'OnDealFailure',
+    to: i3.entity.interactionId,
+    text: '',
+    type: 'AUTO',
+    subtype: 'OTHER',
+  });
+
+  dataCollection.addLink(i3, {
+    ...baseInfo,
+    to: i4.entity.interactionId,
+    text: '',
     type: 'SYSTEM',
+    subtype: 'DEAL_FAILURE',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i3, {
     ...baseInfo,
-    from: i3.id,
-    to: i5.id,
-    text: 'OnDealSuccess',
+    to: i5.entity.interactionId,
+    text: '',
     type: 'SYSTEM',
+    subtype: 'DEAL_SUCCESS',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i3, {
     ...baseInfo,
-    from: i3.id,
-    to: i6.id,
+    to: i6.entity.interactionId,
     text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Ничего, спасибо.',
     type: 'CUSTOM',
+    subtype: 'OTHER',
     isPrintable: true,
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i4, {
     ...baseInfo,
-    from: i4.id,
-    to: i3.id,
+    to: i3.entity.interactionId,
     text: '',
     type: 'AUTO',
+    subtype: 'OTHER',
   });
 
-  await actionRepo.create({
+  dataCollection.addLink(i5, {
     ...baseInfo,
-    from: i5.id,
-    to: i3.id,
+    to: i3.entity.interactionId,
     text: '',
     type: 'AUTO',
+    subtype: 'OTHER',
   });
 
   return <const>{
-    async inboundOnStart(connect: ConnectorTo) {
-      await connect(merchant1, 'Попробовать демо торговца');
+    data: dataCollection.data,
+    inboundOnStart(connect: ConnectorTo) {
+      connect(i0, 'Попробовать демо торговца');
     },
-    async outboundToReturn(returnInteraction: AbstractModel) {
-      await actionRepo.create({
+    outboundToReturn(returnInteraction: DataContainer<AbstractEntity>) {
+      dataCollection.addLink(i6, {
         ...baseInfo,
-        from: i6.id,
-        to: returnInteraction.id,
+        to: returnInteraction.entity.interactionId,
         text: '',
         type: 'AUTO',
+        subtype: 'OTHER',
       });
     },
   };
