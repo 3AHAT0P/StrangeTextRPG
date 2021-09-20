@@ -40,11 +40,9 @@ export const interactWithBattle = async (
   }
 
   if (battleResult === BATTLE_FINAL_ACTIONS.LEAVE) {
-    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!spotOnLeave', spotOnLeave);
     if (spotOnLeave !== null) return spotOnLeave;
 
     const leaveAction = findActionBySubtype(actions, 'BATTLE_LEAVE');
-    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!leaveAction', leaveAction);
     if (leaveAction == null) throw new Error('leaveAction is null');
     return cursor.getNextNode(leaveAction);
   }
