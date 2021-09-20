@@ -38,7 +38,7 @@ export abstract class AbstractNeo4jRepository<
 
   protected buildFindByPropsQuery(params: Partial<TProperties>): string {
     const keys = Object.keys(params);
-    let query = `MATCH (a:${this.label}`;
+    let query = `MATCH (a${this.label}`;
     if (keys.length > 0) {
       query += ' { ';
       query += Object.keys(params)

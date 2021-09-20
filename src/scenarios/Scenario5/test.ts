@@ -1,6 +1,6 @@
 import { HealthPotion } from '@actors/potions';
 import { Rat } from '@actors/Rat';
-import { BattleModel, InteractionModel, OneOFNodeModel } from '@db/entities';
+import { BattleModel, InteractionModel, MapSpotModel, OneOFNodeModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
 import { BattleDifficulty } from '@db/entities/Battle';
 import { ActionsLayout } from '@ui';
@@ -38,6 +38,10 @@ export class ScenarioNo5Test extends AbstractScenario {
 
   protected _context: ScenarioContext | null = null;
 
+  protected currentSpot: MapSpotModel | null = null;
+
+  protected previousSpot: MapSpotModel | null = null;
+
   protected async _runner(): Promise<void> {
     if (this._context === null) throw new Error('Context is null');
 
@@ -53,6 +57,7 @@ export class ScenarioNo5Test extends AbstractScenario {
           this._cursor,
           this._state.player,
           [new Rat()],
+          this.previousSpot,
         );
         this._state.player.inventory.collectGold(goldReward);
         return;
@@ -79,10 +84,19 @@ export class ScenarioNo5Test extends AbstractScenario {
       }
 
       const choosedAction = await this._interactWithUser(processedActions.custom, this._context);
+
       if (choosedAction.subtype === 'MOVE_FORBIDDEN') return;
 
-      await this._sendTransitionMessage(choosedAction);
+      if (['MOVE_TO_WEST', 'MOVE_TO_EAST', 'MOVE_TO_NORTH', 'MOVE_TO_SOUTH'].includes(choosedAction.subtype)) {
+        await this._sendTransitionMessage(choosedAction);
+      }
+
       this.currentNode = await this._cursor.getNextNode(choosedAction);
+
+      if (this.currentNode instanceof MapSpotModel) {
+        this.previousSpot = this.currentSpot;
+        this.currentSpot = this.currentNode;
+      }
     } catch (error) {
       logger.error('ScenarioNo5Test::_runner', error);
     }

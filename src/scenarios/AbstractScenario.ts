@@ -18,7 +18,9 @@ export const findActionBySubtype = (
 ): ActionModel | null => actions.find(({ subtype }) => subtype === value) ?? null;
 
 export const interactWithBattle = async (
-  ui: AbstractUI, cursor: Cursor, player: AbstractActor, enemies: AbstractActor[],
+  ui: AbstractUI, cursor: Cursor,
+  player: AbstractActor, enemies: AbstractActor[],
+  spotOnLeave: OneOFNodeModel | null = null,
 ): Promise<OneOFNodeModel> => {
   const battleInteraction = new Battle({ ui, player, enemies });
 
@@ -35,6 +37,16 @@ export const interactWithBattle = async (
     const loseAction = findActionBySubtype(actions, 'BATTLE_LOSE');
     if (loseAction == null) throw new Error('loseAction is null');
     return cursor.getNextNode(loseAction);
+  }
+
+  if (battleResult === BATTLE_FINAL_ACTIONS.LEAVE) {
+    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!spotOnLeave', spotOnLeave);
+    if (spotOnLeave !== null) return spotOnLeave;
+
+    const leaveAction = findActionBySubtype(actions, 'BATTLE_LEAVE');
+    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!leaveAction', leaveAction);
+    if (leaveAction == null) throw new Error('leaveAction is null');
+    return cursor.getNextNode(leaveAction);
   }
 
   throw new Error('Incorrect battle result');
@@ -127,6 +139,11 @@ export abstract class AbstractScenario {
       logger.info('AbstractScenario::_afterRun', 'currentNode is null');
       return;
     }
+
+    if (!this._cursor.nodeIsEqual(this.currentNode)) {
+      this._cursor.jumpToNode(this.currentNode); // I don't know. It could be (hypotetical) kostyl'
+    }
+
     if (this.currentNode.scenarioId !== this._scenarioId) {
       this._callbacks.onChangeScenario(this.currentNode.scenarioId);
     } else setTimeout(this._run, 16);

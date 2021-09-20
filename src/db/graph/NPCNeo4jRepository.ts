@@ -46,7 +46,7 @@ export class NPCNeo4jRepository extends AbstractNeo4jRepository<
     return this.fromRecord(result.records[0].get(0));
   }
 
-  public async getRelatedActions(id: number, options?: DBConnectionOptions): Promise<ActionModel[]> {
+  public async getRelatedActions(id: string, options?: DBConnectionOptions): Promise<ActionModel[]> {
     const result = await this.runQuery(this.findRelatedActionsQuery, { id }, false, options);
     const actionNeo4jRepository = new ActionNeo4jRepository(this.session);
     return result.records.map((item) => actionNeo4jRepository.fromRecord(item.get(0)));

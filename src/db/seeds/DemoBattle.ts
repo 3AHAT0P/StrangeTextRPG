@@ -49,6 +49,11 @@ export const demoBattleSeedRun = (): DemoBattleConnectors => {
     text: 'Что дальше?',
   });
 
+  const i4 = dataCollection.addContainer<InteractionEntity>('Interaction', {
+    ...baseInfo,
+    text: 'Ты начинаешь пятиться, но спотыкаешься о камень. Падая, ты замечаешь как твои враги набросились на тебя. Страх и адская боль от того что тебя разрывают на части - это последнее, что ты успел ощутить...',
+  });
+
   dataCollection.addLink(i0, {
     ...baseInfo,
     to: b1.entity.interactionId,
@@ -73,6 +78,14 @@ export const demoBattleSeedRun = (): DemoBattleConnectors => {
     subtype: 'BATTLE_LOSE',
   });
 
+  dataCollection.addLink(b1, {
+    ...baseInfo,
+    to: i4.entity.interactionId,
+    text: '',
+    type: 'AUTO',
+    subtype: 'BATTLE_LEAVE',
+  });
+
   dataCollection.addLink(i1, {
     ...baseInfo,
     to: i3.entity.interactionId,
@@ -82,6 +95,14 @@ export const demoBattleSeedRun = (): DemoBattleConnectors => {
   });
 
   dataCollection.addLink(i2, {
+    ...baseInfo,
+    to: i3.entity.interactionId,
+    text: '',
+    type: 'AUTO',
+    subtype: 'OTHER',
+  });
+
+  dataCollection.addLink(i4, {
     ...baseInfo,
     to: i3.entity.interactionId,
     text: '',

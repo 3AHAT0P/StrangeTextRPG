@@ -74,7 +74,7 @@ export class DBService {
 
   public async getNodeById(id: string): Promise<OneOFNodeModel> {
     const result = await this._session.readTransaction(
-      (transaction) => transaction.run('MATCH (a) WHERE id(a) = $id RETURN a', { id }),
+      (transaction) => transaction.run('MATCH (a { interactionId: $id }) RETURN a', { id }),
     );
 
     const record = result.records[0].get(0);
@@ -88,7 +88,7 @@ export class DBService {
 
   public async getRelatedActions(id: string): Promise<ActionModel[]> {
     const result = await this._session.readTransaction(
-      (transaction) => transaction.run('MATCH (a)-[r:Action]->(b) WHERE id(a) = $id RETURN r', { id }),
+      (transaction) => transaction.run('MATCH (a { interactionId: $id })-[r:Action]->(b) RETURN r', { id }),
     );
 
     return result.records.map((item) => this.repositories.actionRepo.fromRecord(item.get(0)));
