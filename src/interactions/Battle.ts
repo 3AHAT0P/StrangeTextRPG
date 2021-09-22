@@ -14,6 +14,7 @@ const ACTIONS = {
   attack: 'Атаковать 🗡',
   examine: 'Осмотреть 👀',
   back: 'Назад',
+  leave: 'Убежать из боя',
 } as const;
 
 type ACTION_VALUES = typeof ACTIONS[keyof typeof ACTIONS];
@@ -21,6 +22,7 @@ type ACTION_VALUES = typeof ACTIONS[keyof typeof ACTIONS];
 export const BATTLE_FINAL_ACTIONS = {
   PLAYER_DIED: 'onDied',
   PLAYER_WIN: 'onWin',
+  LEAVE: 'onLeave',
 } as const;
 
 export type BATTLE_FINAL_ACTIONS_VALUES = typeof BATTLE_FINAL_ACTIONS[keyof typeof BATTLE_FINAL_ACTIONS];
@@ -175,16 +177,17 @@ export class Battle {
     let choosedAction: ACTION_VALUES | null = null;
 
     while (!this.battleFinished) {
-      const actions: Set<ACTION_VALUES> = new Set([ACTIONS.attack, ACTIONS.examine]);
+      const actions: Set<ACTION_VALUES> = new Set([ACTIONS.attack, ACTIONS.examine, ACTIONS.leave]);
 
       if (choosedAction === null) {
         choosedAction = await this._ui.interactWithUser(new ActionsLayout<ACTION_VALUES>().addRow(...actions));
       }
 
+      if (choosedAction === ACTIONS.leave) return BATTLE_FINAL_ACTIONS.LEAVE;
+
       const handler: ActionHandler = ACTION_HANDLERS[choosedAction];
 
       choosedAction = await handler(this._ui, this._player, this._aliveEnemies);
-      if (choosedAction === null) continue;
 
       if (choosedAction === null) continue; // null returned only when <back> pressed
 

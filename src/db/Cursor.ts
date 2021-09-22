@@ -33,18 +33,18 @@ export class Cursor {
     this._isInitiated = true;
   }
 
-  getNode(): OneOFNodeModel {
+  public getNode(): OneOFNodeModel {
     if (this.currentNode === null) throw new Error('Cursor is not initiated!');
 
     return this.currentNode;
   }
 
-  getActions(): Promise<ActionModel[]> {
+  public getActions(): Promise<ActionModel[]> {
     const { interactionId } = this.getNode();
     return this._dbService.getRelatedActions(interactionId);
   }
 
-  async getNextNode(action: ActionModel): Promise<OneOFNodeModel> {
+  public async getNextNode(action: ActionModel): Promise<OneOFNodeModel> {
     const node = await this._dbService.getNodeById(action.toInteractionId);
 
     if (node instanceof ActionModel) throw new Error('Node is instance of ActionModel');
@@ -52,5 +52,13 @@ export class Cursor {
     this.currentNode = node;
 
     return this.currentNode;
+  }
+
+  public nodeIsEqual(node: OneOFNodeModel): boolean {
+    return this.currentNode === node;
+  }
+
+  public jumpToNode(node: OneOFNodeModel): void {
+    this.currentNode = node;
   }
 }

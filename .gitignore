@@ -5,3 +5,4 @@ node_modules
 dist
 docker/prod/dist
 db
+!src/db
