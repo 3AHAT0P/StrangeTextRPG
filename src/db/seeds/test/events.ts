@@ -19,7 +19,6 @@ const events: Record<number, (options: EventBuilderOptions) => void> = {
   1({ spot, baseInfo, dataCollection }: EventBuilderOptions) {
     const event1Interaction = dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
-      interactionId: '9010',
       text: 'Внезапно, {{actorType player declension="nominative"}} спотыкаешься о труп крысы.',
     });
 
@@ -43,7 +42,6 @@ const events: Record<number, (options: EventBuilderOptions) => void> = {
 
     const event1LookupInteraction = dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
-      interactionId: '9011',
       text: 'Крыса, как крыса. Но в боку у нее торчит нож. О, теперь будет чем отбиваться от этих тварей!',
     });
 

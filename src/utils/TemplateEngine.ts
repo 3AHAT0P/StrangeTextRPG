@@ -37,7 +37,7 @@ Handlebars.registerHelper(
 
 Handlebars.registerHelper(
   'updateBattleImmune',
-  (battleId: number, value: number, ctx: any) => {
+  (battleId: string, value: number, ctx: any) => {
     const oldValue = Number(Reflect.get(ctx.data.root.battles, battleId));
     const newValue = Number.isNaN(oldValue) ? value : oldValue + value;
     Reflect.set(
@@ -51,7 +51,7 @@ Handlebars.registerHelper(
 
 Handlebars.registerHelper(
   'canBattleTrigger',
-  (battleId: number, chance: number, ctx: any) => {
+  (battleId: string, chance: number, ctx: any) => {
     const rawValue = Number(Reflect.get(ctx.data.root.battles, battleId));
     const value = Number.isNaN(rawValue) ? 0 : rawValue;
     if (value !== 0) {

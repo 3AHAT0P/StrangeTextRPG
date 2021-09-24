@@ -131,7 +131,7 @@ export class MapParser {
       ...this._mapInfo,
       to: battle.entity.interactionId,
       text: '',
-      condition: `{{canBattleTrigger ${battle.entity.interactionId} ${chanceOfTriggering}}}`,
+      condition: `{{canBattleTrigger "${battle.entity.interactionId}" ${chanceOfTriggering}}}`,
       type: 'AUTO',
       subtype: 'BATTLE_START',
     });
@@ -164,7 +164,7 @@ export class MapParser {
       ...this._mapInfo,
       to: currentSpot.entity.interactionId,
       text: '',
-      operation: `{{updateBattleImmune ${battle.entity.interactionId} 10}}`,
+      operation: `{{updateBattleImmune "${battle.entity.interactionId}" 10}}`,
       type: 'AUTO',
       subtype: 'OTHER',
     });
