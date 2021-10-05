@@ -15,7 +15,7 @@ import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import logger from '@utils/Logger';
 import { capitalise } from '@utils/capitalise';
 import { Miscellaneous } from '@actors/miscellaneous';
-import { HealthPotion } from '@actors/potions';
+import { SmallHealingPotion } from '@actors/potions';
 
 import { AreaMap } from '../AreaMap';
 import { AbstractLocation } from '../AbstractLocation';
@@ -469,7 +469,7 @@ export class RuinLocation extends AbstractLocation {
             message: 'Малое зелье лечения = 10 золотых (📀)',
             action: 'Купить',
             price: 10,
-            item: new HealthPotion(),
+            item: new SmallHealingPotion(),
           },
         ]);
 

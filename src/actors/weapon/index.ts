@@ -22,7 +22,10 @@ export abstract class Weapon extends AbstractItem {
 
   // TODO make equip weapon
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public use(player: AbstractActor) { return ''; }
+  public use(target: AbstractActor) {
+    target.equipWeapon(this);
+    return `${target.getType({ declension: 'nominative', capitalised: true })} надеваешь ${this.name}`;
+  }
 }
 
 export class EmptyWeapon extends Weapon {

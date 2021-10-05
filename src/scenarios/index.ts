@@ -3,7 +3,7 @@ import { DemoBattleScenario } from './DemoBattleScenario';
 import { DemoMerchantScenario } from './DemoMerchantScenario';
 import { IntroScenario } from './IntroScenario';
 import { ScenarioNo5 } from './Scenario5';
-import { ScenarioNo5Test } from './Scenario5/test';
+import { ScenarioNo5Test } from './Test1';
 import { ScenarioManager } from './ScenarioManager';
 
 const scenarioManager = new ScenarioManager();

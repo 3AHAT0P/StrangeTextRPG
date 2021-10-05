@@ -36,6 +36,19 @@ Handlebars.registerHelper(
 );
 
 Handlebars.registerHelper(
+  'updateQuestState',
+  (questId: string, value: number, ctx: any) => {
+    Reflect.get(ctx.data.root.quests, questId).updateState(value);
+    return true;
+  },
+);
+
+Handlebars.registerHelper(
+  'questStateIsEQ',
+  (questId: string, value: number, ctx: any) => Reflect.get(ctx.data.root.quests, questId).state === value,
+);
+
+Handlebars.registerHelper(
   'updateBattleImmune',
   (battleId: string, value: number, ctx: any) => {
     const oldValue = Number(Reflect.get(ctx.data.root.battles, battleId));
@@ -68,8 +81,8 @@ Handlebars.registerHelper(
 
 Handlebars.registerHelper(
   'loadMerchantInfo',
-  (merchantId: number, ctx: any) => {
-    ctx.data.root.loadMerchantGoods(merchantId);
+  (merchantId: string, ctx: any) => {
+    ctx.data.root.loadMerchantInfo(merchantId);
     return true;
   },
 );

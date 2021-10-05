@@ -8,7 +8,7 @@ import logger from '@utils/Logger';
 
 import { AbstractScenario, findActionBySubtype, interactWithBattle, processActions } from '../AbstractScenario';
 
-import { MerchantProduct, ScenarioContext } from './@types';
+import { MerchantProduct, ScenarioContext } from '../@types';
 import { buildScenarioEvent as buildScenarioEvent1 } from './events/1';
 import { merchantGoods } from './npcs/merchants';
 

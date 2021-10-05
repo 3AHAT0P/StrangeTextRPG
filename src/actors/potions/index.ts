@@ -1,11 +1,9 @@
 /* eslint-disable max-classes-per-file */
+import { getRandomFloatInclusive } from '@utils/getRandomIntInclusive';
 import { AbstractItem } from '@actors/AbstractItem';
-import { MESSAGES } from '@translations/ru';
 import type { AbstractActor } from '@actors';
 
 export type PotionTypes = 'HEALTH' | 'ATTACK_DAMAGE' | 'CRITICAL_CHANCE' | 'ARMOR';
-
-export type PotionSubtypes = 'SMALL' | 'MEDIUM' | 'BIG';
 
 export type HealthStatusEffects = 'RESTORE' | 'INCREASE' | 'REGENERATION';
 
@@ -20,37 +18,63 @@ export abstract class Potion extends AbstractItem {
 
   public abstract get description(): string;
 
-  public abstract quantity: number;
-
-  public subtype: PotionSubtypes = 'SMALL';
-
   public get name(): string {
-    return `${this.baseName} [${MESSAGES.potions[this.subtype]}]`;
+    return this.baseName;
   }
 }
 
-export class HealthPotion extends Potion {
-  protected readonly baseName = 'зелье лечения';
-
+export abstract class HealingPotion extends Potion {
   public readonly type = 'HEALTH';
 
   public readonly statusEffect = 'RESTORE';
 
+  public abstract healVolume: number;
+
+  public abstract threshold: number;
+
   public get description() {
-    return `Баночка с красным, мутным зельем.\nЕсли выпить, восстановит ${this.quantity} ОЗ`;
-  }
-
-  public quantity = 2;
-
-  constructor(options: { subtype: PotionSubtypes } = { subtype: 'SMALL' }) {
-    super();
-    this.subtype = options.subtype;
-    if (options.subtype === 'MEDIUM') this.quantity = 3;
-    if (options.subtype === 'BIG') this.quantity = 5;
+    return 'Баночка с красным, мутным зельем.\n'
+      + `Если выпить, восстановит от ${this.healVolume - this.threshold} - до ${this.healVolume + this.threshold} ОЗ(❤️)`;
   }
 
   use(player: AbstractActor): string {
-    player.heal(this.quantity);
-    return `Оно восстанавливает ${player.getType({ declension: 'dative' })} ${this.quantity} ОЗ(❤️). Всего у ${player.getType({ declension: 'genitive' })} ${player.stats.healthPoints} из ${player.stats.maxHealthPoints} ОЗ(❤️)`;
+    const realHealingVolume = getRandomFloatInclusive(
+      this.healVolume - this.threshold,
+      this.healVolume + this.threshold,
+      2,
+    );
+    player.heal(realHealingVolume);
+    return `Оно восстанавливает ${player.getType({ declension: 'dative' })} ${realHealingVolume} ОЗ(❤️). `
+      + `Всего у ${player.getType({ declension: 'genitive' })} ${player.stats.healthPoints} из ${player.stats.maxHealthPoints} ОЗ(❤️)`;
   }
+}
+
+export class SmallHealingPotion extends HealingPotion {
+  protected readonly baseName = 'маленькое зелье лечения';
+
+  protected readonly basePrice = 10;
+
+  public healVolume = 2;
+
+  public threshold = 0.5;
+}
+
+export class MediumHealingPotion extends HealingPotion {
+  protected readonly baseName = 'зелье лечения';
+
+  protected readonly basePrice = 20;
+
+  public healVolume = 5;
+
+  public threshold = 1.5;
+}
+
+export class LargeHealingPotion extends HealingPotion {
+  protected readonly baseName = 'большое зелье лечения';
+
+  protected readonly basePrice = 30;
+
+  public healVolume = 10;
+
+  public threshold = 3;
 }

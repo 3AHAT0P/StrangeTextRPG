@@ -81,25 +81,25 @@ export class MapParser {
     await this._mapSpotSubtypeMatcher.run(subtype, { currentSpot, subtype });
   }
 
-  private _createMerchant({ currentSpot }: MatcherContext): void {
-    const npc = this._nodeCollection.addContainer<NPCEntity>(
-      'NPC',
-      {
-        ...this._mapInfo,
-        NPCId: this._sequences.npcId,
-        subtype: 'MERCHANT',
-      },
-    );
-    this._nodeCollection.addLink(currentSpot, {
-      ...this._mapInfo,
-      to: npc.entity.interactionId,
-      text: `💬 Поговорить с торговцем (#${this._sequences.npcId})`,
-      operation: `{{loadMerchantInfo ${this._sequences.npcId}}}`,
-      type: 'CUSTOM',
-      subtype: 'TALK_TO_NPC',
-    });
-    this._sequences.npcId += 1;
-  }
+  // private _createMerchant({ currentSpot }: MatcherContext): void {
+  //   const npc = this._nodeCollection.addContainer<NPCEntity>(
+  //     'NPC',
+  //     {
+  //       ...this._mapInfo,
+  //       NPCId: this._sequences.npcId,
+  //       subtype: 'MERCHANT',
+  //     },
+  //   );
+  //   this._nodeCollection.addLink(currentSpot, {
+  //     ...this._mapInfo,
+  //     to: npc.entity.interactionId,
+  //     text: `💬 Поговорить с торговцем (#${this._sequences.npcId})`,
+  //     operation: `{{loadMerchantInfo ${this._sequences.npcId}}}`,
+  //     type: 'CUSTOM',
+  //     subtype: 'TALK_TO_NPC',
+  //   });
+  //   this._sequences.npcId += 1;
+  // }
 
   private _createLocationExit({ currentSpot }: MatcherContext): void {
     const { exitId } = this._customInteractions;
@@ -234,8 +234,8 @@ export class MapParser {
 
     this._mapSpotSubtypeMatcher
       .on('BATTLE', this._createBattle.bind(this))
-      .on('LOCATION_EXIT', this._createLocationExit.bind(this))
-      .on('MERCHANT', this._createMerchant.bind(this));
+      .on('LOCATION_EXIT', this._createLocationExit.bind(this));
+    //   .on('MERCHANT', this._createMerchant.bind(this));
   }
 
   public async parse(): Promise<void> {

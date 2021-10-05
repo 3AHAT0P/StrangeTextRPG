@@ -8,18 +8,7 @@ import { Inventory } from '@actors/Inventory';
 
 import {
   AbstractActor, AbstractActorOptions, TypeByDeclensionOfNounOptions,
-} from './AbstractActor';
-
-export const SkeletonDeclensionOfNouns = {
-  nominative: 'скелет',
-  genitive: 'скелета',
-  dative: 'скелету',
-  accusative: 'скелет',
-  ablative: 'скелетом',
-  prepositional: 'о скелете',
-
-  possessive: 'скелета',
-};
+} from '../AbstractActor';
 
 export const SkeletonDeclensionOfNounsPlural = {
   nominative: 'скелеты',
@@ -39,9 +28,20 @@ interface SkeletonEquipmentSlots {
 }
 
 export class Skeleton extends AbstractActor {
-  public type = 'скелет';
+  protected type = 'скелет';
 
-  public inventory: Inventory<SkeletonEquipmentSlots>;
+  protected declensionOfNouns = {
+    nominative: 'скелет',
+    genitive: 'скелета',
+    dative: 'скелету',
+    accusative: 'скелет',
+    ablative: 'скелетом',
+    prepositional: 'о скелете',
+
+    possessive: 'скелета',
+  };
+
+  public inventory: Inventory<keyof SkeletonEquipmentSlots, SkeletonEquipmentSlots>;
 
   get armor(): number {
     return truncate(
@@ -81,7 +81,7 @@ export class Skeleton extends AbstractActor {
       declension, plural = false, withPostfix = false, capitalised = false,
     }: TypeByDeclensionOfNounOptions,
   ): string {
-    let result = plural ? SkeletonDeclensionOfNounsPlural[declension] : SkeletonDeclensionOfNouns[declension];
+    let result = plural ? SkeletonDeclensionOfNounsPlural[declension] : this.declensionOfNouns[declension];
 
     if (capitalised) result = capitalise(result);
     if (this.typePostfix !== '' && withPostfix) result = `${result} ${this.typePostfix}`;
@@ -95,5 +95,16 @@ export class Skeleton extends AbstractActor {
 
   public getReward(): string {
     return 'Кости... одни кости';
+  }
+
+  public equipWeapon(weapon: BrokenShieldArmor | RustedAxeWeapon | RustedSwordWeapon | EmptyWeapon): void {
+    if (weapon instanceof BrokenShieldArmor) this.inventory.equipToSlot('leftHand', weapon);
+    if (weapon instanceof RustedAxeWeapon || weapon instanceof RustedSwordWeapon || weapon instanceof EmptyWeapon) {
+      this.inventory.equipToSlot('rightHand', weapon);
+    }
+  }
+
+  public equipArmor(armor: StrongBonesBodyArmor): void {
+    if (armor instanceof StrongBonesBodyArmor) this.inventory.equipToSlot('body', armor);
   }
 }

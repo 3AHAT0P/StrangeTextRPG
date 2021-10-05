@@ -19,19 +19,8 @@ import {
   AbstractActorOptions,
   AttackResult,
   TypeByDeclensionOfNounOptions,
-} from './AbstractActor';
-import { AbstractItem, AbstractItemContructor } from './AbstractItem';
-
-export const RatDeclensionOfNouns = {
-  nominative: 'крыса',
-  genitive: 'крысы',
-  dative: 'крысе',
-  accusative: 'крысу',
-  ablative: 'крысой',
-  prepositional: 'о крысе',
-
-  possessive: 'крысы',
-};
+} from '../AbstractActor';
+import { AbstractItem, AbstractItemContructor } from '../AbstractItem';
 
 export const RatDeclensionOfNounsPlural = {
   nominative: 'крысы',
@@ -55,9 +44,20 @@ export type RatLoot = RatSkin | RatTail | StrangeFlute;
 export type RatLootMeta = [constructor: AbstractItemContructor<RatLoot>, minAmount: number, maxAmount: number];
 
 export class Rat extends AbstractActor {
-  public type = 'крыса';
+  protected type = 'крыса';
 
-  public inventory: Inventory<RatEquipmentSlots>;
+  protected declensionOfNouns = {
+    nominative: 'крыса',
+    genitive: 'крысы',
+    dative: 'крысе',
+    accusative: 'крысу',
+    ablative: 'крысой',
+    prepositional: 'о крысе',
+
+    possessive: 'крысы',
+  };
+
+  public inventory: Inventory<keyof RatEquipmentSlots, RatEquipmentSlots>;
 
   protected _activeWeapon: TeethWeapon | PawsWeapon | EmptyWeapon;
 
@@ -83,7 +83,7 @@ export class Rat extends AbstractActor {
     this.maxHealthPoints = 5;
     this.healthPoints = 5;
 
-    this.inventory = new Inventory<RatEquipmentSlots>({
+    this.inventory = new Inventory({
       defaultEquipment: {
         body: new LeatherBodyArmor(),
         jaws: new TeethWeapon(),
@@ -107,7 +107,7 @@ export class Rat extends AbstractActor {
       declension, plural = false, withPostfix = false, capitalised = false,
     }: TypeByDeclensionOfNounOptions,
   ): string {
-    let result = plural ? RatDeclensionOfNounsPlural[declension] : RatDeclensionOfNouns[declension];
+    let result = plural ? RatDeclensionOfNounsPlural[declension] : this.declensionOfNouns[declension];
 
     if (capitalised) result = capitalise(result);
     if (this.typePostfix !== '' && withPostfix) result = `${result} ${this.typePostfix}`;
@@ -137,5 +137,14 @@ export class Rat extends AbstractActor {
       return `Вы получили: ${rewards.join(', ')}!`;
     }
     return 'Увы, но у крысы нету карманов.';
+  }
+
+  public equipWeapon(weapon: TeethWeapon | PawsWeapon): void {
+    if (weapon instanceof TeethWeapon) this.inventory.equipToSlot('jaws', weapon);
+    if (weapon instanceof PawsWeapon) this.inventory.equipToSlot('hands', weapon);
+  }
+
+  public equipArmor(armor: LeatherBodyArmor): void {
+    if (armor instanceof LeatherBodyArmor) this.inventory.equipToSlot('body', armor);
   }
 }

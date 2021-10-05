@@ -1,6 +1,6 @@
 import { Player } from '@actors';
 import { AbstractItem } from '@actors/AbstractItem';
-import { HealthPotion } from '@actors/potions';
+import { SmallHealingPotion } from '@actors/potions';
 import { InteractionModel, NPCModel } from '@db/entities';
 import { ActionsLayout } from '@ui';
 import { filterBy } from '@utils/ArrayUtils';
@@ -20,7 +20,7 @@ merchantGoods.set(1, new Set([
     internalName: 'healthPoitions',
     displayName: 'Зелье лечения',
     price: 10,
-    item: new HealthPotion(),
+    item: new SmallHealingPotion(),
   },
 ]));
 

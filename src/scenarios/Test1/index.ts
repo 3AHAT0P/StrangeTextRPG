@@ -1,5 +1,6 @@
-import { HealthPotion } from '@actors/potions';
-import { Rat } from '@actors/Rat';
+import { SmallHealingPotion } from '@actors/potions';
+import { AbstractMerchant } from '@actors/AbstractMerchant';
+import { Rat } from '@actors/bestiary/Rat';
 import {
   BattleModel, InteractionModel, MapSpotModel, OneOFNodeModel,
 } from '@db/entities';
@@ -17,20 +18,10 @@ import {
   AbstractScenario, findActionBySubtype, interactWithBattle, processActions,
 } from '../AbstractScenario';
 
-import { MerchantProduct, ScenarioContext } from './@types';
-import { buildScenarioEvent as buildScenarioEvent1 } from './events/1';
+import { ScenarioContext } from '../@types';
+import { buildScenarioEvent as buildScenarioEvent1 } from '../Scenario5/events/1';
 
-const merchantGoods = new Map<number, Set<MerchantProduct>>();
-merchantGoods.set(1, new Set([
-  {
-    internalName: 'healthPoitions',
-    displayName: 'Зелье лечения',
-    price: 10,
-    item: new HealthPotion(),
-  },
-]));
-
-const defaultGoods: Set<MerchantProduct> = new Set<MerchantProduct>();
+import { NPCManager } from './npcs';
 
 const getGoldCount = (difficult: BattleDifficulty): number => {
   if (difficult === 'VERY_EASY') return 8;
@@ -56,6 +47,8 @@ export class ScenarioNo5Test extends AbstractScenario {
   protected currentSpot: MapSpotModel | null = null;
 
   protected previousSpot: MapSpotModel | null = null;
+
+  protected npcManager: NPCManager = new NPCManager();
 
   protected async _runner(): Promise<void> {
     if (this._context === null) throw new Error('Context is null');
@@ -128,15 +121,19 @@ export class ScenarioNo5Test extends AbstractScenario {
     onDealFailureAction: ActionModel,
     otherActions: ActionModel[],
   ): Promise<OneOFNodeModel> {
-    const goodArray = this._context?.currentMerchant.goods ?? [];
+    const merchant = this._context?.currentMerchant;
+
+    if (merchant == null) throw new Error('Merchant is null');
+
+    const goodArray = merchant.showcase;
 
     const actionText = await this._state.ui.interactWithUser(
       new ActionsLayout()
-        .addRow(...goodArray.map(({ displayName }) => `Купить ${displayName} (1шт)`))
+        .addRow(...goodArray.map(({ name }) => `Купить ${name}`))
         .addRow(...otherActions.map(({ text }) => text.useContext(this._context).value)),
     );
 
-    const choosedGood = goodArray.find(({ displayName }) => `Купить ${displayName} (1шт)` === actionText) ?? null;
+    const choosedGood = goodArray.find(({ name }) => `Купить ${name}` === actionText) ?? null;
 
     if (choosedGood === null) {
       const choosedAction = otherActions.find(({ text }) => text.isEqualTo(actionText));
@@ -147,17 +144,25 @@ export class ScenarioNo5Test extends AbstractScenario {
       return await this._cursor.getNextNode(choosedAction);
     }
 
-    const exchangeResult = this._state
-      .player.exchangeGoldToItem(choosedGood.price, [choosedGood.item]);
-    if (exchangeResult) {
-      await this._sendTemplateToUser(
-        new Template(`⚙️ {{actorType player declension="nominative" capitalised=true}} купил ${choosedGood.displayName.toLowerCase()}`),
-        this._context,
-      );
-      return await this._cursor.getNextNode(onDealSuccessAction);
+    const playerExchangeResult = this._state
+      .player.exchangeGoldToItem(choosedGood.price, [choosedGood]);
+
+    if (!playerExchangeResult) return await this._cursor.getNextNode(onDealFailureAction);
+
+    const merchantExchangeResult = merchant.exchangeItemToGold(choosedGood.price, choosedGood);
+    if (!merchantExchangeResult) {
+      this._state.player.exchangeItemToGold(choosedGood.price, choosedGood);
+      return await this._cursor.getNextNode(onDealFailureAction);
     }
 
-    return await this._cursor.getNextNode(onDealFailureAction);
+    await this._sendTemplateToUser(
+      new Template(
+        `⚙️ {{actorType player declension="nominative" capitalised=true}} купил ${choosedGood.name} x1.\n`
+        + `Всего в инвентаре ${choosedGood.name} ${this._state.player.inventory.getItemsByClass(SmallHealingPotion).length}`,
+      ),
+      this._context,
+    );
+    return await this._cursor.getNextNode(onDealSuccessAction);
   }
 
   private async _sendTransitionMessage(action: ActionModel): Promise<void> {
@@ -270,14 +275,21 @@ export class ScenarioNo5Test extends AbstractScenario {
       player: this._state.player,
       events: {},
       battles: {},
-      loadMerchantGoods: (menrchantId: number): void => {
+      loadMerchantInfo: (merchantId: string): void => {
         if (this._context !== null) {
-          this._context.currentMerchant.goods = Array.from(merchantGoods.get(menrchantId) ?? defaultGoods);
+          const npc = this.npcManager.get(merchantId);
+          if (npc instanceof AbstractMerchant) {
+            this._context.currentMerchant = npc;
+          } else throw new Error(`NPC with id (${merchantId}) isn't merchant`);
         }
       },
-      currentMerchant: {
-        goods: [],
+      currentMerchant: null,
+      loadNPCInfo: (npcId: string): void => {
+        if (this._context !== null) {
+          this._context.currentNPC = this.npcManager.get(npcId);
+        }
       },
+      currentNPC: null,
     };
 
     this._context.events[1] = buildScenarioEvent1(this._context);

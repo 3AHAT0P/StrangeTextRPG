@@ -2,9 +2,12 @@ import { Armor } from '@armor';
 import { Weapon } from '@weapon';
 import logger from '@utils/Logger';
 import { Miscellaneous } from '@actors/miscellaneous';
-import { HealthPotion, Potion } from '@actors/potions';
+import { Potion } from '@actors/potions';
 import type { AbstractActor } from '@actors/AbstractActor';
 import type { AbstractItem } from '@actors/AbstractItem';
+
+// eslint-disable-next-line no-prototype-builtins
+const isPrototypeOf = (classA: any, classB: any): boolean => classA.isPrototypeOf(classB);
 
 export abstract class AbstractInventory {
   protected _gold: number = 0;
@@ -19,25 +22,27 @@ export abstract class AbstractInventory {
 
   protected _wearingEquipment: unknown;
 
+  protected _getListByItemType(item: AbstractItem): Array<Armor | Weapon | Potion | Miscellaneous> {
+    if (item instanceof Weapon) return this._weapons;
+    if (item instanceof Armor) return this._armors;
+    if (item instanceof Miscellaneous) return this._miscellaneous;
+    if (item instanceof Potion) return this._potions;
+
+    logger.info('AbstractInventory::_getListByItemType', 'Unknown item type');
+    throw new Error('Unknown item type');
+  }
+
   protected checkExists(item: AbstractItem) {
-    let searchSection;
-    if (item instanceof Weapon) searchSection = this._weapons;
-    if (item instanceof Armor) searchSection = this._armors;
-    if (item instanceof Miscellaneous) searchSection = this._miscellaneous;
-    if (item instanceof Potion) searchSection = this._potions;
-    if (searchSection == null) {
-      logger.info('AbstractInventory::checkExists', 'Unknown item type');
-      return false;
-    }
-    // TODO change to check id when items will have an id
-    return searchSection.some((inventoryItem) => inventoryItem.name === item.name);
+    const searchSection = this._getListByItemType(item);
+
+    return searchSection.some((inventoryItem) => inventoryItem.id === item.id);
   }
 
   public get armors(): Armor[] { return this._armors; }
 
   public get weapons(): Weapon[] { return this._weapons; }
 
-  public get potions(): AbstractItem[] { return this._potions; }
+  public get potions(): Potion[] { return this._potions; }
 
   public get miscellaneous(): Miscellaneous[] { return this._miscellaneous; }
 
@@ -49,24 +54,24 @@ export abstract class AbstractInventory {
 
   public exchangeGold(amount: number): void { this._gold -= amount; }
 
+  public getItemsByClass(itemClass: typeof AbstractItem): AbstractItem[] {
+    let section: AbstractItem[] = [];
+    if (isPrototypeOf(Weapon, itemClass)) section = this.weapons;
+    if (isPrototypeOf(Armor, itemClass)) section = this.armors;
+    if (isPrototypeOf(Potion, itemClass)) section = this.potions;
+    if (isPrototypeOf(Miscellaneous, itemClass)) section = this.miscellaneous;
+
+    return section.filter((item) => item instanceof itemClass);
+  }
+
   public collectItem(item: AbstractItem): void {
-    if (item instanceof Weapon) this._weapons.push(item);
-    if (item instanceof Armor) this._armors.push(item);
-    if (item instanceof Miscellaneous) this._miscellaneous.push(item);
-    if (item instanceof Potion) this._potions.push(item);
+    this._getListByItemType(item).push(item);
   }
 
   public dropItem(item: AbstractItem): string {
-    let inventorySection;
-    if (item instanceof Weapon) inventorySection = this._weapons;
-    if (item instanceof Armor) inventorySection = this._armors;
-    if (item instanceof Potion) inventorySection = this._potions;
-    if (item instanceof Miscellaneous) inventorySection = this._miscellaneous;
-    if (inventorySection == null) {
-      logger.info('AbstractInventory::dropItem', 'unknown instance of item');
-      return 'Вы никак не можете найти нужный карман';
-    }
-    const index = inventorySection.findIndex((inventoryItem: AbstractItem) => inventoryItem.name === item.name);
+    const inventorySection = this._getListByItemType(item);
+
+    const index = inventorySection.findIndex((inventoryItem: AbstractItem) => inventoryItem.id === item.id);
     if (index >= 0) {
       inventorySection.splice(index, 1);
       return `Вы выкинули ${item.name}. Идти становится легче`;

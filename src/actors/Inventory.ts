@@ -48,16 +48,37 @@ const weaponSubtypes = <const>{
   ESPECIAL: 'Особое',
 };
 
-export class Inventory<T> extends AbstractInventory {
-  protected _wearingEquipment: T;
+export class Inventory<
+  TEquipmentKeys extends string,
+  TEquipmentSlots extends { [P in TEquipmentKeys]?: AbstractItem },
+> extends AbstractInventory {
+  protected _wearingEquipment: TEquipmentSlots;
 
-  constructor({ defaultEquipment, gold }: { defaultEquipment: T, gold?: number }) {
+  constructor({ defaultEquipment, gold }: { defaultEquipment: TEquipmentSlots, gold?: number }) {
     super();
     this._wearingEquipment = defaultEquipment;
     this._gold = gold ?? 0;
   }
 
-  public get wearingEquipment(): T { return this._wearingEquipment; }
+  public get wearingEquipment(): TEquipmentSlots { return this._wearingEquipment; }
+
+  public equipToSlot<TKey extends TEquipmentKeys>(
+    slot: TKey, equipment: TEquipmentSlots[TKey],
+  ): void {
+    const item = this._wearingEquipment[slot];
+    if (item != null) this.collectItem(item);
+
+    this._wearingEquipment[slot] = equipment;
+    if (equipment != null) this.dropItem(equipment);
+  }
+
+  // public unequipFromSlot<TKey extends keyof TEquipmentSlots>(
+  //   slot: TKey,
+  // ): TEquipmentSlots[TKey] {
+  //   const item = this._wearingEquipment[slot];
+  //   this._wearingEquipment[slot] = ?????????;
+  //   return item;
+  // }
 
   public getStats(item: AbstractItem): string {
     if (item instanceof Armor) {
