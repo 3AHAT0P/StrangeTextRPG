@@ -3,8 +3,10 @@ import { AbstractItem } from '@actors/AbstractItem';
 import { AbstractMerchant } from '@actors/AbstractMerchant';
 import { SmallHealingPotion } from '@actors/potions';
 
+export const merchant1Id: `Scenario:${number | string}|Location:${number}|NPC:${number}` = 'Scenario:10001|Location:1|NPC:1';
+
 export class Merchant1 extends AbstractMerchant {
-  protected readonly _id = 'Scenario:test|Location:1|NPC:1';
+  protected readonly _id = merchant1Id;
 
   protected readonly declensionOfNouns = <const>{
     nominative: 'Олаф',

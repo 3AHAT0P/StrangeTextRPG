@@ -4,7 +4,6 @@ import { MapParser } from '@utils/LocationMapParser/MapParser';
 import {
   AbstractEntity,
   InteractionEntity,
-  NPCEntity,
   MapSpotEntity,
   DataContainer,
   createDataCollection,
@@ -55,18 +54,15 @@ export type SeedResult = Readonly<{
   outboundToReturn: ConnectorTo;
 }>;
 
-const getSpotAndRelatedMerchant = (
-  [data, spots]: [DataCollection['data'], Map<string, DataContainer<MapSpotEntity>>], x: number, y: number,
-): { spot: DataContainer<MapSpotEntity>, npc: DataContainer<NPCEntity> } => {
+const getSpot = (
+  [, spots]: [DataCollection['data'], Map<string, DataContainer<MapSpotEntity>>], x: number, y: number,
+): { spot: DataContainer<MapSpotEntity> } => {
   const spot = spots.get(`${x}:${y}`);
-  const npcLink = spot?.links.find((link) => link.subtype === 'TALK_TO_NPC');
-  const npc = data[npcLink?.to ?? ''] as DataContainer<NPCEntity>;
 
-  if (spot == null || npc == null) throw new Error('Invalid position');
+  if (spot == null) throw new Error('Invalid position');
 
   return {
     spot,
-    npc,
   };
 };
 
@@ -107,10 +103,10 @@ export const scenarioTestLocation1SeedRun = async (): Promise<SeedResult> => {
   if (startSpot == null) throw new Error('Invalid position');
 
   npcInteractionBuilder(
-    'default', {
+    1, {
       baseInfo,
       dataCollection,
-      ...getSpotAndRelatedMerchant([dataCollection.data, spots], 1, 3),
+      ...getSpot([dataCollection.data, spots], 1, 3),
     },
   );
 

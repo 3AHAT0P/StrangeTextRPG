@@ -34,7 +34,7 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
     dataCollection.addLink(spot, {
       ...baseInfo,
       to: npc.entity.interactionId,
-      text: `💬 Поговорить с торговцем (#1)`,
+      text: '💬 Поговорить с торговцем (#1)',
       operation: `{{loadMerchantInfo "${npcId}"}}`,
       type: 'CUSTOM',
       subtype: 'TALK_TO_NPC',
@@ -47,12 +47,12 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
 
     const i1 = dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
-      text: `💬 [{{get currentMerchant name}}]: Привет!`,
+      text: '💬 [{{get currentMerchant "name"}}]: Привет!',
     });
 
     const i2 = dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
-      text: `💬 [{{get currentMerchant name}}]: Извини, за столь скудный выбор.\n`
+      text: '💬 [{{get currentMerchant "name"}}]: Извини, за столь скудный выбор.\n'
         + '{{#each (get currentMerchant showcase) as | good |}}'
         + '{{trueIndex @index}}: {{good.name}} = {{good.price}} золотых (📀)\n'
         + '{{/each}}',
@@ -60,12 +60,12 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
 
     const i3 = dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
-      text: `💬 [{{get currentMerchant name}}]: Чего изволишь?`,
+      text: '💬 [{{get currentMerchant "name"}}]: Чего изволишь?',
     });
 
     const i4 = dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
-      text: `💬 [{{get currentMerchant name}}]: К сожалению, у {{actorType player declension="genitive"}} не хватает золота.`,
+      text: '💬 [{{get currentMerchant "name"}}]: К сожалению, у {{actorType player declension="genitive"}} не хватает золота.',
     });
 
     const i5 = dataCollection.addContainer<InteractionEntity>('Interaction', {
@@ -75,7 +75,7 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
 
     const i6 = dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
-      text: `💬 [{{get currentMerchant name}}]: Приходи еще :)`,
+      text: '💬 [{{get currentMerchant "name"}}]: Приходи еще :)',
     });
 
     dataCollection.addLink(npc, {
@@ -155,76 +155,77 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
       ...baseInfo,
       to: spot.entity.interactionId,
       text: '',
+      operation: '{{unloadCurrentMerchant}}',
       type: 'AUTO',
       subtype: 'OTHER',
     });
   },
-  2(options: NPCInteractBuilderOptions): void {
-    const {
-      spot, baseInfo,
-    } = options;
+  // 2(options: NPCInteractBuilderOptions): void {
+  // const {
+  //   spot, baseInfo,
+  // } = options;
 
-    const npcId = 'Scenario:test|Location:1|NPC:2';
+  // const npcId = 'Scenario:10001|Location:1|NPC:2';
 
-    load npc ?
-    const npcName = 'Незнакомец';
-    const questId = `${npcId}|Quest:1`;
+  // load npc ?
+  // const npcName = 'Незнакомец';
+  // const questId = `${npcId}|Quest:1`;
 
-    const i0 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
-      ...baseInfo,
-      text: `💬 ${npcName}: Эй, Путник! Помоги мне...`,
-    });
+  // const i0 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
+  //   ...baseInfo,
+  //   text: `💬 ${npcName}: Эй, Путник! Помоги мне...`,
+  // });
 
-    const i1 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
-      ...baseInfo,
-      text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Привет!',
-    });
+  // const i1 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
+  //   ...baseInfo,
+  //   text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Привет!',
+  // });
 
-    options.dataCollection.addLink(npc, {
-      ...baseInfo,
-      to: i0.entity.interactionId,
-      text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Привет, что случилось?',
-      condition: `{{questStateIsEQ ${questId} 0}}`,
-      type: 'CUSTOM',
-      subtype: 'START_QUEST',
-    });
+  // options.dataCollection.addLink(npc, {
+  //   ...baseInfo,
+  //   to: i0.entity.interactionId,
+  //   text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Привет, что случилось?',
+  //   condition: `{{questStateIsEQ ${questId} 0}}`,
+  //   type: 'CUSTOM',
+  //   subtype: 'START_QUEST',
+  // });
 
-    options.dataCollection.addLink(npc, {
-      ...baseInfo,
-      to: spot.entity.interactionId,
-      text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Отстань!',
-      condition: `{{questStateIsEQ ${questId} 0}}`,
-      type: 'CUSTOM',
-      subtype: 'TALK_TO_NPC',
-    });
+  // options.dataCollection.addLink(npc, {
+  //   ...baseInfo,
+  //   to: spot.entity.interactionId,
+  //   text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Отстань!',
+  //   condition: `{{questStateIsEQ ${questId} 0}}`,
+  //   type: 'CUSTOM',
+  //   subtype: 'TALK_TO_NPC',
+  // });
 
-    options.dataCollection.addLink(i0, {
-      ...baseInfo,
-      to: i1.entity.interactionId,
-      text: '',
-      type: 'AUTO',
-      subtype: 'OTHER',
-    });
+  // options.dataCollection.addLink(i0, {
+  //   ...baseInfo,
+  //   to: i1.entity.interactionId,
+  //   text: '',
+  //   type: 'AUTO',
+  //   subtype: 'OTHER',
+  // });
 
-    options.dataCollection.addLink(i1, {
-      ...baseInfo,
-      to: i2.entity.interactionId,
-      text: '',
-      type: 'AUTO',
-      subtype: 'OTHER',
-    });
+  // options.dataCollection.addLink(i1, {
+  //   ...baseInfo,
+  //   to: i2.entity.interactionId,
+  //   text: '',
+  //   type: 'AUTO',
+  //   subtype: 'OTHER',
+  // });
 
-    options.dataCollection.addLink(i6, {
-      ...baseInfo,
-      to: spot.entity.interactionId,
-      text: '',
-      type: 'AUTO',
-      subtype: 'OTHER',
-    });
-  },
+  // options.dataCollection.addLink(i6, {
+  //   ...baseInfo,
+  //   to: spot.entity.interactionId,
+  //   text: '',
+  //   type: 'AUTO',
+  //   subtype: 'OTHER',
+  // });
+  // },
 };
 
-export const npcInteractionBuilder = (id: number | 'default', options: NPCInteractBuilderOptions): void => {
+export const npcInteractionBuilder = (id: number, options: NPCInteractBuilderOptions): void => {
   if (!(id in NPCInteractions)) throw new Error('EventId is incorrect!');
 
   return NPCInteractions[id](options);

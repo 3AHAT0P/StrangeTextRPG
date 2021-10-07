@@ -4,7 +4,6 @@ import {
   DataCollection,
   DataContainer,
 } from '@db/entities';
-import { eventId as event1Id, eventStates as event1States } from '@scenarios/Scenario5/events/1';
 
 interface EventBuilderOptions {
   dataCollection: DataCollection;
@@ -17,6 +16,8 @@ interface EventBuilderOptions {
 
 const events: Record<number, (options: EventBuilderOptions) => void> = {
   1({ spot, baseInfo, dataCollection }: EventBuilderOptions) {
+    const eventId = 'Scenario:10001|Location:1|Event:1';
+
     const event1Interaction = dataCollection.addContainer<InteractionEntity>('Interaction', {
       ...baseInfo,
       text: 'Внезапно, {{actorType player declension="nominative"}} спотыкаешься о труп крысы.',
@@ -26,7 +27,7 @@ const events: Record<number, (options: EventBuilderOptions) => void> = {
       ...baseInfo,
       to: event1Interaction.entity.interactionId,
       text: '',
-      condition: `{{eventStateIsEQ ${event1Id} ${event1States.INITIAL}}}`,
+      condition: `{{eventStateIsEQ "${eventId}" "INITIAL"}}`,
       type: 'AUTO',
       subtype: 'OTHER',
     });
@@ -35,7 +36,7 @@ const events: Record<number, (options: EventBuilderOptions) => void> = {
       ...baseInfo,
       to: spot.entity.interactionId,
       text: '',
-      operation: `{{updateEventState ${event1Id} ${event1States.READY_TO_INTERACT}}}`,
+      operation: `{{updateEventState "${eventId}" "READY_TO_INTERACT"}}`,
       type: 'AUTO',
       subtype: 'OTHER',
     });
@@ -49,7 +50,7 @@ const events: Record<number, (options: EventBuilderOptions) => void> = {
       ...baseInfo,
       to: event1LookupInteraction.entity.interactionId,
       text: '👀 Осмотреть труп',
-      condition: `{{eventStateIsEQ ${event1Id} ${event1States.READY_TO_INTERACT}}}`,
+      condition: `{{eventStateIsEQ "${eventId}" "READY_TO_INTERACT"}}`,
       type: 'CUSTOM',
       subtype: 'OTHER',
       isPrintable: true,
@@ -59,7 +60,7 @@ const events: Record<number, (options: EventBuilderOptions) => void> = {
       ...baseInfo,
       to: spot.entity.interactionId,
       text: '',
-      operation: `{{updateEventState ${event1Id} ${event1States.FINISHED}}}`,
+      operation: `{{updateEventState "${eventId}" "FINISHED"}}`,
       type: 'AUTO',
       subtype: 'OTHER',
     });

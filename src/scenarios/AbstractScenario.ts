@@ -7,6 +7,7 @@ import { AbstractUI, ActionsLayout } from '@ui';
 import { Template } from '@utils/Template';
 import logger from '@utils/Logger';
 import { SessionState } from 'SessionState';
+import { BaseScenarioContext } from './@types';
 
 export interface ScenarioCallbacks {
   onChangeScenario: (scenarioId: number) => void;
@@ -20,8 +21,8 @@ export const findActionBySubtype = (
 export const interactWithBattle = async (
   ui: AbstractUI, cursor: Cursor,
   player: AbstractActor, enemies: AbstractActor[],
-  spotOnLeave: OneOFNodeModel | null = null,
-): Promise<OneOFNodeModel> => {
+  forceReturnOnLeave: boolean = false,
+): Promise<ActionModel | null> => {
   const battleInteraction = new Battle({ ui, player, enemies });
 
   const battleResult = await battleInteraction.activate();
@@ -30,21 +31,21 @@ export const interactWithBattle = async (
   if (battleResult === BATTLE_FINAL_ACTIONS.PLAYER_WIN) {
     const winAction = findActionBySubtype(actions, 'BATTLE_WIN');
     if (winAction == null) throw new Error('winAction is null');
-    return cursor.getNextNode(winAction);
+    return winAction;
   }
 
   if (battleResult === BATTLE_FINAL_ACTIONS.PLAYER_DIED) {
     const loseAction = findActionBySubtype(actions, 'BATTLE_LOSE');
     if (loseAction == null) throw new Error('loseAction is null');
-    return cursor.getNextNode(loseAction);
+    return loseAction;
   }
 
   if (battleResult === BATTLE_FINAL_ACTIONS.LEAVE) {
-    if (spotOnLeave !== null) return spotOnLeave;
+    if (forceReturnOnLeave) return null;
 
     const leaveAction = findActionBySubtype(actions, 'BATTLE_LEAVE');
     if (leaveAction == null) throw new Error('leaveAction is null');
-    return cursor.getNextNode(leaveAction);
+    return leaveAction;
   }
 
   throw new Error('Incorrect battle result');
@@ -56,7 +57,7 @@ export interface ProcessedActions {
   custom: ActionModel[];
 }
 
-export const processActions = (actions: ActionModel[], context: any): ProcessedActions => {
+export const processActions = (actions: ActionModel[], context: BaseScenarioContext): ProcessedActions => {
   const result: ProcessedActions = {
     auto: null,
     system: [],
@@ -92,6 +93,13 @@ export abstract class AbstractScenario {
 
   protected abstract _scenarioId: number;
 
+  protected _context: BaseScenarioContext | null = null;
+
+  protected get context(): this['_context'] {
+    if (this._context == null) throw new Error('context is null');
+    return this._context;
+  }
+
   protected currentNode: OneOFNodeModel | null = null;
 
   public get scenarioId(): number { return this._scenarioId; }
@@ -100,6 +108,11 @@ export abstract class AbstractScenario {
     if (!(await this._beforeRun())) return;
     await this._runner();
     await this._afterRun();
+  }
+
+  protected async _updateCurrentNode(action: ActionModel, context: BaseScenarioContext): Promise<void> {
+    action.operation?.useContext(context)?.forceBuild();
+    this.currentNode = await this._cursor.getNextNode(action);
   }
 
   protected async _beforeRun(): Promise<boolean> {
@@ -114,22 +127,29 @@ export abstract class AbstractScenario {
     if (this.currentNode instanceof InteractionModel) await this._sendTemplateToUser(this.currentNode.text);
 
     if (this.currentNode instanceof BattleModel) {
-      this.currentNode = await interactWithBattle(
+      const action = await interactWithBattle(
         this._state.ui,
         this._cursor,
         this._state.player,
         [],
       );
+      if (action != null) {
+        await this._updateCurrentNode(action, this.context);
+        return;
+      }
+
+      throw new Error('Action is null');
+    }
+
+    const processedActions = processActions(await this._cursor.getActions(), this.context);
+
+    if (processedActions.auto != null) {
+      await this._updateCurrentNode(processedActions.auto, this.context);
       return;
     }
 
-    const actions = await this._cursor.getActions();
-    if (actions.length === 1 && actions[0].type === 'AUTO') {
-      this.currentNode = await this._cursor.getNextNode(actions[0]);
-    } else {
-      const choosedAction = await this._interactWithUser(actions, {});
-      this.currentNode = await this._cursor.getNextNode(choosedAction);
-    }
+    const choosedAction = await this._interactWithUser(processedActions.custom, this.context);
+    await this._updateCurrentNode(choosedAction, this.context);
   }
 
   protected async _afterRun(): Promise<void> {
@@ -184,6 +204,11 @@ export abstract class AbstractScenario {
 
     await this._cursor.init({ scenarioId: this._scenarioId, locationId: 1, isStart: true });
     this.currentNode = this._cursor.getNode();
+
+    this._context = {
+      additionalInfo: this._state.additionalInfo,
+      player: this._state.player,
+    };
   }
 
   public run(): void {

@@ -1,10 +1,10 @@
 import { AbstractNPC } from '@actors/AbstractNPC';
 
-import { Merchant1 } from './1';
+import { Merchant1, merchant1Id } from './1';
 
 export class NPCManager {
   private static _classMap = <const>{
-    [Merchant1.prototype.id]: Merchant1,
+    [merchant1Id]: Merchant1,
   };
 
   private _npcMap: Record<string, AbstractNPC> = {};

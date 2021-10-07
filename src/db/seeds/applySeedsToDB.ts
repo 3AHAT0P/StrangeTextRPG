@@ -62,7 +62,7 @@ const main = async () => {
     await readAndFillDB(path.join(pathToGeneratedDbSeeds, 'demoBase.json'));
     await readAndFillDB(path.join(pathToGeneratedDbSeeds, 'demoBattle.json'));
     await readAndFillDB(path.join(pathToGeneratedDbSeeds, 'demoMerchant.json'));
-    await readAndFillDB(path.join(pathToGeneratedDbSeeds, 'scenario5Location1.json'));
+    // await readAndFillDB(path.join(pathToGeneratedDbSeeds, 'scenario5Location1.json'));
     await readAndFillDB(path.join(pathToGeneratedDbSeeds, 'scenarioTestLocation.json'));
 
     for (const action of actions) {

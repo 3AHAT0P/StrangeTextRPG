@@ -1,25 +1,33 @@
-import { AbstractNPC } from '@actors/AbstractNPC';
+import { Player } from '@actors';
+import { AbstractEvent, EventOptions, EventState } from '@scenarios/utils/Event';
 
-import { Merchant1 } from './1';
+import { Event1, event1Id } from './1';
 
-export class NPCManager {
+export class EventManager {
   private static _classMap = <const>{
-    [Merchant1.prototype.id]: Merchant1,
+    [event1Id]: Event1,
   };
 
-  private _npcMap: Record<string, AbstractNPC> = {};
+  private _eventMap: Record<string, AbstractEvent<EventState>> = {};
 
-  public get(npcId: string): AbstractNPC {
-    let npc = this._npcMap[npcId];
-    if (npc != null) return npc;
+  protected _player: Player;
 
-    const NPCClass = NPCManager._classMap[npcId];
-    if (NPCClass != null) {
-      npc = new NPCClass();
-      this._npcMap[npcId] = npc;
-      return npc;
+  constructor(options: EventOptions) {
+    this._player = options.player;
+  }
+
+  public get(eventId: string): AbstractEvent<EventState> {
+    let event = this._eventMap[eventId];
+    if (event != null) return event;
+
+    const EventClass = EventManager._classMap[eventId];
+    if (EventClass != null) {
+      event = new EventClass({ player: this._player });
+      this._eventMap[eventId] = event;
+      return event;
     }
 
-    throw new Error(`NPC with id (${npcId}) not exists`);
+    console.log(EventManager._classMap, this._eventMap);
+    throw new Error(`Event with id (${eventId}) not exists`);
   }
 }

@@ -13,15 +13,16 @@ import logger from '@utils/Logger';
 import { Matcher } from '@utils/Matcher';
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import { descriptions } from '@locations/LocationDescriptions';
+import { AbstractEvent, EventState } from '@scenarios/utils/Event';
 
 import {
   AbstractScenario, findActionBySubtype, interactWithBattle, processActions,
 } from '../AbstractScenario';
 
 import { ScenarioContext } from '../@types';
-import { buildScenarioEvent as buildScenarioEvent1 } from '../Scenario5/events/1';
 
 import { NPCManager } from './npcs';
+import { EventManager } from './events';
 
 const getGoldCount = (difficult: BattleDifficulty): number => {
   if (difficult === 'VERY_EASY') return 8;
@@ -44,18 +45,30 @@ export class ScenarioNo5Test extends AbstractScenario {
 
   protected _context: ScenarioContext | null = null;
 
+  protected get context(): ScenarioContext {
+    if (this._context == null) throw new Error('context is null');
+    return this._context;
+  }
+
   protected currentSpot: MapSpotModel | null = null;
 
   protected previousSpot: MapSpotModel | null = null;
 
   protected npcManager: NPCManager = new NPCManager();
 
+  protected _eventManager: EventManager | null = null;
+
+  protected get eventManager(): EventManager {
+    if (this._eventManager == null) throw new Error('eventManager is null');
+    return this._eventManager;
+  }
+
   protected async _runner(): Promise<void> {
-    if (this._context === null) throw new Error('Context is null');
+    if (this.context === null) throw new Error('Context is null');
 
     try {
       if (this.currentNode instanceof InteractionModel) {
-        await this._sendTemplateToUser(this.currentNode.text, this._context);
+        await this._sendTemplateToUser(this.currentNode.text, this.context);
       }
 
       if (this.currentNode instanceof BattleModel) {
@@ -72,10 +85,10 @@ export class ScenarioNo5Test extends AbstractScenario {
         return;
       }
 
-      const processedActions = processActions(await this._cursor.getActions(), this._context);
+      const processedActions = processActions(await this._cursor.getActions(), this.context);
 
       if (processedActions.auto != null) {
-        processedActions.auto.operation?.useContext(this._context)?.forceBuild();
+        processedActions.auto.operation?.useContext(this.context)?.forceBuild();
         this.currentNode = await this._cursor.getNextNode(processedActions.auto);
         return;
       }
@@ -92,7 +105,7 @@ export class ScenarioNo5Test extends AbstractScenario {
         throw new Error('Unprocessed system actions found');
       }
 
-      const choosedAction = await this._interactWithUser(processedActions.custom, this._context);
+      const choosedAction = await this._interactWithUser(processedActions.custom, this.context);
 
       if (choosedAction.subtype === 'MOVE_FORBIDDEN') return;
 
@@ -121,7 +134,7 @@ export class ScenarioNo5Test extends AbstractScenario {
     onDealFailureAction: ActionModel,
     otherActions: ActionModel[],
   ): Promise<OneOFNodeModel> {
-    const merchant = this._context?.currentMerchant;
+    const merchant = this.context?.currentMerchant;
 
     if (merchant == null) throw new Error('Merchant is null');
 
@@ -130,7 +143,7 @@ export class ScenarioNo5Test extends AbstractScenario {
     const actionText = await this._state.ui.interactWithUser(
       new ActionsLayout()
         .addRow(...goodArray.map(({ name }) => `Купить ${name}`))
-        .addRow(...otherActions.map(({ text }) => text.useContext(this._context).value)),
+        .addRow(...otherActions.map(({ text }) => text.useContext(this.context).value)),
     );
 
     const choosedGood = goodArray.find(({ name }) => `Купить ${name}` === actionText) ?? null;
@@ -139,7 +152,7 @@ export class ScenarioNo5Test extends AbstractScenario {
       const choosedAction = otherActions.find(({ text }) => text.isEqualTo(actionText));
       if (choosedAction == null) throw new Error('choosedGood and choosedAction is undefined');
 
-      if (choosedAction.isPrintable) await this._sendTemplateToUser(choosedAction.text, this._context);
+      if (choosedAction.isPrintable) await this._sendTemplateToUser(choosedAction.text, this.context);
 
       return await this._cursor.getNextNode(choosedAction);
     }
@@ -160,7 +173,7 @@ export class ScenarioNo5Test extends AbstractScenario {
         `⚙️ {{actorType player declension="nominative" capitalised=true}} купил ${choosedGood.name} x1.\n`
         + `Всего в инвентаре ${choosedGood.name} ${this._state.player.inventory.getItemsByClass(SmallHealingPotion).length}`,
       ),
-      this._context,
+      this.context,
     );
     return await this._cursor.getNextNode(onDealSuccessAction);
   }
@@ -267,8 +280,10 @@ export class ScenarioNo5Test extends AbstractScenario {
       + '⬅️ - W (Запад)\n');
   }
 
-  public async init() {
+  public async init(): Promise<void> {
     await super.init();
+
+    this._eventManager = new EventManager({ player: this._state.player });
 
     this._context = {
       additionalInfo: this._state.additionalInfo,
@@ -276,22 +291,20 @@ export class ScenarioNo5Test extends AbstractScenario {
       events: {},
       battles: {},
       loadMerchantInfo: (merchantId: string): void => {
-        if (this._context !== null) {
-          const npc = this.npcManager.get(merchantId);
-          if (npc instanceof AbstractMerchant) {
-            this._context.currentMerchant = npc;
-          } else throw new Error(`NPC with id (${merchantId}) isn't merchant`);
-        }
+        const npc = this.npcManager.get(merchantId);
+        if (npc instanceof AbstractMerchant) {
+          this.context.currentMerchant = npc;
+        } else throw new Error(`NPC with id (${merchantId}) isn't merchant`);
+      },
+      unloadCurrentMerchant: (): void => {
+        this.context.currentMerchant = null;
       },
       currentMerchant: null,
       loadNPCInfo: (npcId: string): void => {
-        if (this._context !== null) {
-          this._context.currentNPC = this.npcManager.get(npcId);
-        }
+        this.context.currentNPC = this.npcManager.get(npcId);
       },
       currentNPC: null,
+      getEvent: (eventId: string): AbstractEvent<EventState> => this.eventManager.get(eventId),
     };
-
-    this._context.events[1] = buildScenarioEvent1(this._context);
   }
 }

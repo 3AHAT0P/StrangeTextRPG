@@ -22,36 +22,55 @@ interface DemoMerchantConnectors {
 export const demoMerchantSeedRun = (): DemoMerchantConnectors => {
   const dataCollection = createDataCollection();
 
-  const i0 = dataCollection.addContainer<InteractionEntity>('Interaction', {
+  const intro = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
     isStart: true,
     text: '⚙️ Завернув за угол, ты увидел человека за прилавком со всякими склянками.',
   });
 
-  const merchant1 = dataCollection.addContainer<NPCEntity>('NPC', {
+  const npcId = `Scenario:${baseInfo.scenarioId}|Location:${baseInfo.locationId}|NPC:1`;
+
+  const npc = dataCollection.addContainer<NPCEntity>('NPC', {
     ...baseInfo,
     NPCId: 1,
     subtype: 'MERCHANT',
   });
 
+  dataCollection.addLink(intro, {
+    ...baseInfo,
+    to: npc.entity.interactionId,
+    text: '💬 Поговорить с торговцем (#1)',
+    operation: `{{loadMerchantInfo "${npcId}"}}`,
+    type: 'CUSTOM',
+    subtype: 'TALK_TO_NPC',
+  });
+
+  const i0 = dataCollection.addContainer<InteractionEntity>('Interaction', {
+    ...baseInfo,
+    text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Привет!',
+  });
+
   const i1 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    text: '💬 [Торговец]: Привет!',
+    text: '💬 [{{get currentMerchant "name"}}]: Привет!',
   });
 
   const i2 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    text: '💬 [Торговец]: Извини, за столь скудный выбор.\n{{#each goods}}{{trueIndex @index}}: {{this.displayName}} = {{this.price}} золотых (📀)\n{{/each}}',
+    text: '💬 [{{get currentMerchant "name"}}]: Извини, за столь скудный выбор.\n'
+      + '{{#each (get currentMerchant showcase) as | good |}}'
+      + '{{trueIndex @index}}: {{good.name}} = {{good.price}} золотых (📀)\n'
+      + '{{/each}}',
   });
 
   const i3 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    text: '💬 [Торговец]: Чего изволишь?',
+    text: '💬 [{{get currentMerchant "name"}}]: Чего изволишь?',
   });
 
   const i4 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    text: '💬 [Торговец]: К сожалению, у {{actorType player declension="genitive"}} не хватает золота.',
+    text: '💬 [{{get currentMerchant "name"}}]: К сожалению, у {{actorType player declension="genitive"}} не хватает золота.',
   });
 
   const i5 = dataCollection.addContainer<InteractionEntity>('Interaction', {
@@ -61,19 +80,18 @@ export const demoMerchantSeedRun = (): DemoMerchantConnectors => {
 
   const i6 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
-    text: '💬 [Торговец]: Приходи еще :)',
+    text: '💬 [{{get currentMerchant "name"}}]: Приходи еще :)',
+  });
+
+  dataCollection.addLink(npc, {
+    ...baseInfo,
+    to: i0.entity.interactionId,
+    text: '',
+    type: 'AUTO',
+    subtype: 'OTHER',
   });
 
   dataCollection.addLink(i0, {
-    ...baseInfo,
-    to: merchant1.entity.interactionId,
-    text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Привет!',
-    type: 'CUSTOM',
-    subtype: 'OTHER',
-    isPrintable: true,
-  });
-
-  dataCollection.addLink(merchant1, {
     ...baseInfo,
     to: i1.entity.interactionId,
     text: '',
@@ -141,7 +159,7 @@ export const demoMerchantSeedRun = (): DemoMerchantConnectors => {
   return <const>{
     data: dataCollection.data,
     inboundOnStart(connect: ConnectorTo) {
-      connect(i0, 'Попробовать демо торговца');
+      connect(intro, 'Попробовать демо торговца');
     },
     outboundToReturn(returnInteraction: DataContainer<AbstractEntity>) {
       dataCollection.addLink(i6, {

@@ -3,6 +3,11 @@ import Handlebars from 'handlebars';
 
 export type TemplateDelegate<TContext> = Handlebars.TemplateDelegate<TContext>;
 
+const logDecorator = (cb: any, name: string = 'DEFAULT') => (...args: any[]) => {
+  console.log(name, ...args);
+  return cb(...args);
+};
+
 // Define helpers
 Handlebars.registerHelper('actorType', (actor, ctx: any) => actor.getType(ctx.hash));
 
@@ -25,14 +30,14 @@ Handlebars.registerHelper('isEQ', (leftOperand: any, rightOperand: any) => leftO
 Handlebars.registerHelper(
   'updateEventState',
   (eventId: number, value: number, ctx: any) => {
-    Reflect.get(ctx.data.root.events, eventId).updateState(value);
+    Reflect.get(ctx.data, 'root').getEvent(eventId).updateState(value);
     return true;
   },
 );
 
 Handlebars.registerHelper(
   'eventStateIsEQ',
-  (eventId: number, value: number, ctx: any) => Reflect.get(ctx.data.root.events, eventId).state === value,
+  (eventId: number, value: number, ctx: any) => Reflect.get(ctx.data, 'root').getEvent(eventId).state === value,
 );
 
 Handlebars.registerHelper(
@@ -83,6 +88,14 @@ Handlebars.registerHelper(
   'loadMerchantInfo',
   (merchantId: string, ctx: any) => {
     ctx.data.root.loadMerchantInfo(merchantId);
+    return true;
+  },
+);
+
+Handlebars.registerHelper(
+  'unloadCurrentMerchant',
+  (ctx: any) => {
+    ctx.data.root.unloadCurrentMerchant();
     return true;
   },
 );
