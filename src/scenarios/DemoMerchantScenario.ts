@@ -3,12 +3,13 @@ import { AbstractActorOptions, Player } from '@actors';
 import { AbstractItem } from '@actors/AbstractItem';
 import { AbstractMerchant } from '@actors/AbstractMerchant';
 import { SmallHealingPotion } from '@actors/potions';
-import { ActionModel, InteractionModel } from '@db/entities';
-import { ActionsLayout } from '@ui';
+import { InteractionModel } from '@db/entities';
 import logger from '@utils/Logger';
-import { Template } from '@utils/Template';
 import { BaseScenarioContext, ScenarioWithMerchantsContext } from './@types';
-import { AbstractScenario, findActionBySubtype, processActions } from './AbstractScenario';
+import { AbstractScenario } from './AbstractScenario';
+import { buyOrLeaveInteract } from './utils/buyOrLeaveInteract';
+import { findActionBySubtype } from './utils/findActionBySubtype';
+import { processActions } from './utils/processActions';
 
 export class Merchant1 extends AbstractMerchant {
   protected readonly _id: `Scenario:${number}|Location:1|NPC:1` = `Scenario:${902}|Location:${1}|NPC:${1}`;
@@ -41,14 +42,24 @@ export class Merchant1 extends AbstractMerchant {
 
 export type DemoMerchantScenarioContext = BaseScenarioContext & ScenarioWithMerchantsContext;
 
-export class DemoMerchantScenario extends AbstractScenario {
+export class DemoMerchantScenario extends AbstractScenario<DemoMerchantScenarioContext> {
   protected _scenarioId: number = 902;
-
-  private _player: Player = new Player();
 
   private _merchant: Merchant1 = new Merchant1();
 
-  protected _context: DemoMerchantScenarioContext | null = null;
+  protected _buildContext(): DemoMerchantScenarioContext {
+    return {
+      additionalInfo: this._state.additionalInfo,
+      player: new Player(),
+      loadMerchantInfo: (): void => {
+        this.context.currentMerchant = this._merchant;
+      },
+      unloadCurrentMerchant: (): void => {
+        this.context.currentMerchant = null;
+      },
+      currentMerchant: null,
+    };
+  }
 
   protected async _runner(): Promise<void> {
     try {
@@ -67,10 +78,12 @@ export class DemoMerchantScenario extends AbstractScenario {
         const onDealSuccessAction = findActionBySubtype(processedActions.system, 'DEAL_SUCCESS');
         const onDealFailureAction = findActionBySubtype(processedActions.system, 'DEAL_FAILURE');
         if (onDealSuccessAction !== null && onDealFailureAction !== null) {
-          await this._buyOrLeaveInteract(
-            this._context,
+          const action = await buyOrLeaveInteract(
+            this.context, this._state.ui,
             onDealSuccessAction, onDealFailureAction, processedActions.custom,
           );
+
+          await this._updateCurrentNode(action, this.context);
           return;
         }
         throw new Error('Unprocessed system actions found');
@@ -83,70 +96,9 @@ export class DemoMerchantScenario extends AbstractScenario {
     }
   }
 
-  private async _buyOrLeaveInteract(
-    context: DemoMerchantScenarioContext,
-    onDealSuccessAction: ActionModel,
-    onDealFailureAction: ActionModel,
-    otherActions: ActionModel[],
-  ): Promise<ActionModel> {
-    const merchant = context.currentMerchant;
-
-    if (merchant == null) throw new Error('Merchant is null');
-
-    const goodArray = merchant.showcase;
-
-    const actionText = await this._state.ui.interactWithUser(
-      new ActionsLayout()
-        .addRow(...goodArray.map(({ name }) => `Купить ${name}`))
-        .addRow(...otherActions.map(({ text }) => text.useContext(context).value)),
-    );
-
-    const choosedGood = goodArray.find(({ name }) => `Купить ${name}` === actionText) ?? null;
-
-    if (choosedGood === null) {
-      const choosedAction = otherActions.find(({ text }) => text.isEqualTo(actionText));
-      if (choosedAction == null) throw new Error('choosedGood and choosedAction is undefined');
-
-      if (choosedAction.isPrintable) await this._sendTemplateToUser(choosedAction.text, context);
-
-      return choosedAction;
-    }
-
-    const playerExchangeResult = context.player.exchangeGoldToItem(choosedGood.price, [choosedGood]);
-
-    if (!playerExchangeResult) {
-      return onDealFailureAction;
-    }
-
-    const merchantExchangeResult = merchant.exchangeItemToGold(choosedGood.price, choosedGood);
-    if (!merchantExchangeResult) {
-      context.player.exchangeItemToGold(choosedGood.price, choosedGood);
-      return onDealFailureAction;
-    }
-
-    await this._sendTemplateToUser(
-      new Template(
-        `⚙️ {{actorType player declension="nominative" capitalised=true}} купил ${choosedGood.name} x1.\n`
-        + `Всего в инвентаре ${choosedGood.name} ${context.player.inventory.getItemsByClass(SmallHealingPotion).length}`,
-      ),
-      context,
-    );
-    return onDealSuccessAction;
-  }
-
   public async init(): Promise<void> {
     await super.init();
 
-    this.context.loadMerchantInfo =  (): void => {
-      this._context.currentMerchant = this._merchant;
-    },
-    unloadCurrentMerchant: (): void => {
-      this._context.currentMerchant = null;
-    },
-    currentMerchant: null,
-  }
-
-
-    this._player.inventory.collectGold(23);
+    this.context.player.inventory.collectGold(23);
   }
 }

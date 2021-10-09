@@ -1,31 +1,18 @@
 import { KnifeWeapon } from '@actors/weapon';
-import type { ScenarioEvent } from '@utils/@types/ScenarioEvent';
+import { AbstractEvent, EventState } from '@scenarios/utils/Event';
 
-import type { ScenarioContext } from '@scenarios/@types';
+export type Event1State = EventState;
 
-export const eventId = 1;
+export const event1Id: `Scenario:${number | string}|Location:${number}|Event:${number}` = 'Scenario:10001|Location:1|Event:1';
 
-export const eventStates = <const>{
-  INITIAL: 0,
-  READY_TO_INTERACT: 1,
-  FINISHED: 2,
-};
+export class Event1 extends AbstractEvent<Event1State> {
+  protected _state: Event1State = 'INITIAL';
 
-export type EventState = typeof eventStates[keyof typeof eventStates];
+  public readonly id = event1Id;
 
-export const buildScenarioEvent = (ctx: ScenarioContext): ScenarioEvent<EventState> => {
-  const event = {
-    state: 0 as EventState,
-    updateState(newState: EventState): void {
-      this.state = newState;
-      this.stateDidUpdated(this.state);
-    },
-    stateDidUpdated(state: EventState): void {
-      if (state === eventStates.FINISHED) {
-        ctx.player.equipWeapon(new KnifeWeapon());
-      }
-    },
-  };
-
-  return event;
-};
+  stateDidUpdated(state: Event1State): void {
+    if (state === 'FINISHED') {
+      this._player.equipWeapon(new KnifeWeapon());
+    }
+  }
+}

@@ -54,6 +54,14 @@ export const introSeedRun = (): SeedResult => {
     subtype: 'BACK',
   });
 
+  dataCollection.addLink(i3, {
+    ...baseInfo,
+    to: i1.entity.interactionId,
+    text: '',
+    type: 'AUTO',
+    subtype: 'OTHER',
+  });
+
   return <const>{
     data: dataCollection.data,
     inboundOnReload(connect: ConnectorTo) {

@@ -130,7 +130,7 @@ export const demoBaseSeedRun = (): DemoBaseConnectors => {
         to: exitInteraction.entity.interactionId,
         text: 'ВСЕ! ХВАТИТ С МЕНЯ!',
         type: 'CUSTOM',
-        subtype: 'OTHER',
+        subtype: 'EXIT_LOCATION',
       });
     },
     outboundToReturn(returnInteraction: DataContainer<AbstractEntity>) {

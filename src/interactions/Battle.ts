@@ -58,7 +58,7 @@ const TEMPLATES = <const>{
 
   attackMessage: new Template <{ attacker: AbstractActor; attacked: AbstractActor; attackResult: AttackResult }>(
     '{{actorType attacker declension="nominative" capitalised=true withPostfix=true}} нанес'
-    + '{{actorType attacked declension="dative" capitalised=true withPostfix=true}} {{showDamage attackResult}}',
+    + ' {{actorType attacked declension="dative" capitalised=true withPostfix=true}} {{showDamage attackResult}}',
   ),
 
   roundResultMessage: new Template<{ player: AbstractActor; aliveEnemies: AbstractActor[] }>(
@@ -193,7 +193,7 @@ export class Battle {
 
       this._aliveEnemies = this._enemies.filter((enemy) => enemy.isAlive);
 
-      await enemiesAttack(this._ui, this._player, this._enemies);
+      await enemiesAttack(this._ui, this._player, this._aliveEnemies);
 
       await this._ui.sendToUser(
         TEMPLATES.roundResultMessage.clone({ player: this._player, aliveEnemies: this._aliveEnemies }).value,

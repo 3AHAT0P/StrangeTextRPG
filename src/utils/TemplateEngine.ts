@@ -101,6 +101,22 @@ Handlebars.registerHelper(
 );
 
 Handlebars.registerHelper(
+  'loadNPCInfo',
+  (npcId: string, ctx: any) => {
+    ctx.data.root.loadNPCInfo(npcId);
+    return true;
+  },
+);
+
+Handlebars.registerHelper(
+  'unloadCurrentNPCInfo',
+  (ctx: any) => {
+    ctx.data.root.unloadCurrentNPCInfo();
+    return true;
+  },
+);
+
+Handlebars.registerHelper(
   'showDamage',
   (attackResult: AttackResult) => {
     let result = String(attackResult.damage);

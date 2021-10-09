@@ -18,6 +18,7 @@ export interface ScenarioWithMerchantsContext {
 
 export interface ScenarioWithNPCsContext {
   loadNPCInfo: (npcId: AbstractNPC['_id']) => void;
+  unloadCurrentNPCInfo: () => void;
   currentNPC: AbstractNPC | null;
 }
 

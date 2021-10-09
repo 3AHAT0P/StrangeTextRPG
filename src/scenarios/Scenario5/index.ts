@@ -1,18 +1,24 @@
 import { AbstractActor, Rat, Skeleton } from '@actors';
-import { BattleModel, InteractionModel, MapSpotModel, OneOFNodeModel } from '@db/entities';
+import { AbstractMerchant } from '@actors/AbstractMerchant';
+import { BattleModel, InteractionModel, MapSpotModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
 import { BattleDifficulty } from '@db/entities/Battle';
-import { ActionsLayout } from '@ui';
-import { Template } from '@utils/Template';
+import { MapSpotSubtype } from '@db/entities/MapSpot';
+import { descriptions } from '@locations/LocationDescriptions';
+import { buyOrLeaveInteract } from '@scenarios/utils/buyOrLeaveInteract';
+import { AbstractEvent, EventState } from '@scenarios/utils/Event';
 import logger from '@utils/Logger';
+import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
+import { Matcher } from '@utils/Matcher';
+import { ScenarioContext } from '@scenarios/@types';
+import { findActionBySubtype } from '@scenarios/utils/findActionBySubtype';
+import { interactWithBattle } from '@scenarios/utils/interactWithBattle';
+import { processActions } from '@scenarios/utils/processActions';
 
-import { AbstractScenario, findActionBySubtype, interactWithBattle, processActions } from '../AbstractScenario';
+import { AbstractScenario } from '../AbstractScenario';
 
-import { MerchantProduct, ScenarioContext } from '../@types';
-import { buildScenarioEvent as buildScenarioEvent1 } from './events/1';
-import { merchantGoods } from './npcs/merchants';
-
-const defaultGoods: Set<MerchantProduct> = new Set<MerchantProduct>();
+import { EventManager } from './events';
+import { NPCManager } from './npcs';
 
 const getEnemies = (difficult: BattleDifficulty): AbstractActor[] => {
   if (difficult === 'VERY_EASY') return [new Rat()];
@@ -39,39 +45,73 @@ const getEnemies = (difficult: BattleDifficulty): AbstractActor[] => {
   return [];
 };
 
-export class ScenarioNo5 extends AbstractScenario {
+export class ScenarioNo5 extends AbstractScenario<ScenarioContext> {
   protected _scenarioId: number = 5;
-
-  protected _context: ScenarioContext | null = null;
 
   protected currentSpot: MapSpotModel | null = null;
 
   protected previousSpot: MapSpotModel | null = null;
 
-  protected async _runner(): Promise<void> {
-    if (this._context === null) throw new Error('Context is null');
+  protected npcManager: NPCManager = new NPCManager();
 
+  protected _eventManager: EventManager | null = null;
+
+  protected get eventManager(): EventManager {
+    if (this._eventManager == null) throw new Error('eventManager is null');
+    return this._eventManager;
+  }
+
+  protected _buildContext(): ScenarioContext {
+    return {
+      additionalInfo: this._state.additionalInfo,
+      player: this._state.player,
+      events: {},
+      battles: {},
+      loadMerchantInfo: (merchantId: string): void => {
+        const npc = this.npcManager.get(merchantId);
+        if (npc instanceof AbstractMerchant) {
+          this.context.currentMerchant = npc;
+        } else throw new Error(`NPC with id (${merchantId}) isn't merchant`);
+      },
+      unloadCurrentMerchant: (): void => {
+        this.context.currentMerchant = null;
+      },
+      currentMerchant: null,
+      loadNPCInfo: (npcId: string): void => {
+        this.context.currentNPC = this.npcManager.get(npcId);
+      },
+      currentNPC: null,
+      getEvent: (eventId: string): AbstractEvent<EventState> => this.eventManager.get(eventId),
+    };
+  }
+
+  protected async _runner(): Promise<void> {
     try {
       if (this.currentNode instanceof InteractionModel) {
-        await this._sendTemplateToUser(this.currentNode.text, this._context);
+        await this._sendTemplateToUser(this.currentNode.text, this.context);
       }
 
       if (this.currentNode instanceof BattleModel) {
-        this.currentNode = await interactWithBattle(
+        const action = await interactWithBattle(
           this._state.ui,
           this._cursor,
           this._state.player,
           getEnemies(this.currentNode.difficult),
-          this.previousSpot,
+          true,
         );
+        if (action === null) {
+          this.currentSpot = this.previousSpot;
+          return;
+        }
+
+        await this._updateCurrentNode(action, this.context);
         return;
       }
 
-      const processedActions = processActions(await this._cursor.getActions(), this._context);
+      const processedActions = processActions(await this._cursor.getActions(), this.context);
 
       if (processedActions.auto != null) {
-        processedActions.auto.operation?.useContext(this._context)?.forceBuild();
-        this.currentNode = await this._cursor.getNextNode(processedActions.auto);
+        await this._updateCurrentNode(processedActions.auto, this.context);
         return;
       }
 
@@ -79,15 +119,18 @@ export class ScenarioNo5 extends AbstractScenario {
         const onDealSuccessAction = findActionBySubtype(processedActions.system, 'DEAL_SUCCESS');
         const onDealFailureAction = findActionBySubtype(processedActions.system, 'DEAL_FAILURE');
         if (onDealSuccessAction !== null && onDealFailureAction !== null) {
-          this.currentNode = await this._buyOrLeaveInteract(
+          const action = await buyOrLeaveInteract(
+            this.context, this._state.ui,
             onDealSuccessAction, onDealFailureAction, processedActions.custom,
           );
+
+          await this._updateCurrentNode(action, this.context);
           return;
         }
         throw new Error('Unprocessed system actions found');
       }
 
-      const choosedAction = await this._interactWithUser(processedActions.custom, this._context);
+      const choosedAction = await this._interactWithUser(processedActions.custom, this.context);
 
       if (choosedAction.subtype === 'MOVE_FORBIDDEN') return;
 
@@ -95,52 +138,20 @@ export class ScenarioNo5 extends AbstractScenario {
         await this._sendTransitionMessage(choosedAction);
       }
 
-      this.currentNode = await this._cursor.getNextNode(choosedAction);
+      await this._updateCurrentNode(choosedAction, this.context);
 
-      if (this.currentNode instanceof MapSpotModel) {
+      if (
+        ['MOVE_TO_WEST', 'MOVE_TO_EAST', 'MOVE_TO_NORTH', 'MOVE_TO_SOUTH'].includes(choosedAction.subtype)
+        && this.currentNode instanceof MapSpotModel
+      ) {
         this.previousSpot = this.currentSpot;
         this.currentSpot = this.currentNode;
+        await this._onAfterChangeMapSpot(this.currentSpot);
       }
     } catch (error) {
-      logger.error('ScenarioNo5::_runner', error);
+      logger.error('ScenarioNo5Test::_runner', error);
+      console.log(error);
     }
-  }
-
-  private async _buyOrLeaveInteract(
-    onDealSuccessAction: ActionModel,
-    onDealFailureAction: ActionModel,
-    otherActions: ActionModel[],
-  ): Promise<OneOFNodeModel> {
-    const goodArray = this._context?.currentMerchant.goods ?? [];
-
-    const actionText = await this._state.ui.interactWithUser(
-      new ActionsLayout()
-        .addRow(...goodArray.map(({ displayName }) => `Купить ${displayName} (1шт)`))
-        .addRow(...otherActions.map(({ text }) => text.useContext(this._context).value)),
-    );
-
-    const choosedGood = goodArray.find(({ displayName }) => `Купить ${displayName} (1шт)` === actionText) ?? null;
-
-    if (choosedGood === null) {
-      const choosedAction = otherActions.find(({ text }) => text.isEqualTo(actionText));
-      if (choosedAction == null) throw new Error('choosedGood and choosedAction is undefined');
-
-      if (choosedAction.isPrintable) await this._sendTemplateToUser(choosedAction.text, this._context);
-
-      return await this._cursor.getNextNode(choosedAction);
-    }
-
-    const exchangeResult = this._state
-      .player.exchangeGoldToItem(choosedGood.price, [choosedGood.item]);
-    if (exchangeResult) {
-      await this._sendTemplateToUser(
-        new Template(`⚙️ {{actorType player declension="nominative" capitalised=true}} купил ${choosedGood.displayName.toLowerCase()}`),
-        this._context,
-      );
-      return await this._cursor.getNextNode(onDealSuccessAction);
-    }
-
-    return await this._cursor.getNextNode(onDealFailureAction);
   }
 
   private async _sendTransitionMessage(action: ActionModel): Promise<void> {
@@ -150,24 +161,104 @@ export class ScenarioNo5 extends AbstractScenario {
     if (action.subtype === 'MOVE_TO_EAST') await this._state.ui.sendToUser('Ты идешь на восток');
   }
 
-  public async init(): Promise<void> {
-    await super.init();
+  private async _onAfterChangeMapSpot(mapSpot: MapSpotModel): Promise<void> {
+    const spotsAround = (
+      await this._cursor.getSpotsAround(mapSpot)
+    )
+      // eslint-disable-next-line no-nested-ternary
+      .sort((a, b) => (a.y > b.y ? 1 : (a.y < b.y ? -1 : 0)));
+    await this._sendAroundSpots(mapSpot, spotsAround);
+    await this._sendAroundAmbiences(spotsAround);
+  }
 
-    this._context = {
-      additionalInfo: this._state.additionalInfo,
-      player: this._state.player,
-      events: {},
-      battles: {},
-      loadMerchantGoods: (menrchantId: number): void => {
-        if (this._context !== null) {
-          this._context.currentMerchant.goods = Array.from(merchantGoods.get(menrchantId) ?? defaultGoods);
-        }
-      },
-      currentMerchant: {
-        goods: [],
-      },
+  private async _sendAroundSpots(mapSpot: MapSpotModel, spotsAround: MapSpotModel[]): Promise<void> {
+    const subtypeIconMatcher: Record<string, string> = {
+      UNREACHABLE: '⬛️',
+      WALL: '🟫',
+      BREAK: '🟪',
+      EMPTY: '⬜️',
+      MERCHANT: '🔵',
+      LOCATION_EXIT: '🟥',
+      default: '❔',
     };
 
-    this._context.events[1] = buildScenarioEvent1(this._context);
+    const mapPiece = [
+      '',
+      '',
+      '',
+    ];
+
+    for (const spot of spotsAround) {
+      if (spot.y === mapSpot.y && spot.x === mapSpot.x) mapPiece[1 + spot.y - mapSpot.y] += '🔹';
+      else {
+        mapPiece[1 + spot.y - mapSpot.y] += subtypeIconMatcher[spot.subtype] ?? subtypeIconMatcher.default;
+      }
+    }
+
+    await this._state.ui.sendToUser(mapPiece.join('\n'));
+  }
+
+  public async _sendAroundAmbiences(spotsAround: MapSpotModel[]): Promise<void> {
+    const ambiences = {
+      walls: 0,
+      enemies: 0,
+      breaks: 0,
+      npc: 0,
+    };
+
+    const mapSpotSubtypeMatcher = new Matcher<MapSpotSubtype, 'BATTLE' | 'ANY_NPC', typeof ambiences>();
+    mapSpotSubtypeMatcher.addMatcher((event) => (event.startsWith('BATTLE#') ? 'BATTLE' : null));
+    mapSpotSubtypeMatcher.addMatcher((event) => (['MERCHANT', 'NPC', 'QUEST_NPC'].includes(event) ? 'ANY_NPC' : null));
+
+    mapSpotSubtypeMatcher
+      // eslint-disable-next-line no-param-reassign
+      .on('BATTLE', (result) => { result.enemies += 1; })
+      // eslint-disable-next-line no-param-reassign
+      .on('BREAK', (result) => { result.breaks += 1; })
+      // eslint-disable-next-line no-param-reassign
+      .on('WALL', (result) => { result.walls += 1; })
+      // eslint-disable-next-line no-param-reassign
+      .on('ANY_NPC', (result) => { result.npc += 1; });
+    for (const spot of spotsAround) {
+      // eslint-disable-next-line no-await-in-loop
+      await mapSpotSubtypeMatcher.run(spot.subtype, ambiences);
+    }
+
+    const ambientDescriptions = (Object.keys(ambiences) as Array<keyof typeof ambiences>)
+      .reduce<string[]>((acc, key) => (ambiences[key] > 0 ? [...acc, ...descriptions[key]] : acc), []);
+    ambientDescriptions.push(...descriptions.default);
+    await this._state.ui.sendToUser(
+      ambientDescriptions[getRandomIntInclusive(0, ambientDescriptions.length - 1)],
+      true,
+    );
+  }
+
+  private async _printFAQ(): Promise<void> {
+    await this._state.ui.sendToUser(''
+      + '*** Общее ***\n'
+      + '💬 [кто говорит]: - диалоговая фраза\n'
+      + '⚙️ {...} - системные сообщения\n'
+      + '📀 - Золото\n'
+      + '💿 - Серебро\n'
+      + '\n*** Карта ***\n'
+      + '⬛️ - недостижимое место\n'
+      + '🟫 - wall, стена, нет прохода\n'
+      + '🟪 - break, обрыв, нет прохода\n'
+      + '⬜️ - чистое место\n'
+      + '🔵 - merchant, торговец\n'
+      + '🔹 - player, игрок\n'
+      + '🟥 - out, выход\n'
+      + '🔸 - gold, золото\n'
+      + '❔ - не разведанная территория\n'
+      + '⬆️ - N (Север)\n'
+      + '➡️ - E (Восток)\n'
+      + '⬇️ - S (Юг)\n'
+      + '⬅️ - W (Запад)\n');
+  }
+
+  public async init(): Promise<void> {
+    this._eventManager = new EventManager({ player: this._state.player });
+
+    await super.init();
   }
 }

@@ -160,69 +160,98 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
       subtype: 'OTHER',
     });
   },
-  // 2(options: NPCInteractBuilderOptions): void {
-  // const {
-  //   spot, baseInfo,
-  // } = options;
+  2(options: NPCInteractBuilderOptions): void {
+    const {
+      spot, baseInfo, dataCollection,
+    } = options;
 
-  // const npcId = 'Scenario:10001|Location:1|NPC:2';
+    const npcId = `Scenario:${baseInfo.scenarioId}|Location:${baseInfo.locationId}|NPC:2`;
+    const questId = `${npcId}|Quest:1`;
 
-  // load npc ?
-  // const npcName = 'Незнакомец';
-  // const questId = `${npcId}|Quest:1`;
+    const npc = dataCollection.addContainer<NPCEntity>(
+      'NPC',
+      {
+        ...baseInfo,
+        NPCId: 2,
+        subtype: 'WITH_QUEST',
+      },
+    );
 
-  // const i0 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
-  //   ...baseInfo,
-  //   text: `💬 ${npcName}: Эй, Путник! Помоги мне...`,
-  // });
+    dataCollection.addLink(spot, {
+      ...baseInfo,
+      to: npc.entity.interactionId,
+      text: '',
+      operation: `{{loadNPCInfo "${npcId}"}}`,
+      type: 'AUTO',
+      subtype: 'OTHER',
+    });
 
-  // const i1 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
-  //   ...baseInfo,
-  //   text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Привет!',
-  // });
+    // const npcName = 'Незнакомец';
 
-  // options.dataCollection.addLink(npc, {
-  //   ...baseInfo,
-  //   to: i0.entity.interactionId,
-  //   text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Привет, что случилось?',
-  //   condition: `{{questStateIsEQ ${questId} 0}}`,
-  //   type: 'CUSTOM',
-  //   subtype: 'START_QUEST',
-  // });
+    const i0 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
+      ...baseInfo,
+      text: '💬 [{{get currentNPC "name"}}]: Эй, Путник! Помоги мне...',
+    });
 
-  // options.dataCollection.addLink(npc, {
-  //   ...baseInfo,
-  //   to: spot.entity.interactionId,
-  //   text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Отстань!',
-  //   condition: `{{questStateIsEQ ${questId} 0}}`,
-  //   type: 'CUSTOM',
-  //   subtype: 'TALK_TO_NPC',
-  // });
+    options.dataCollection.addLink(npc, {
+      ...baseInfo,
+      to: i0.entity.interactionId,
+      text: '',
+      type: 'AUTO',
+      subtype: 'OTHER',
+    });
 
-  // options.dataCollection.addLink(i0, {
-  //   ...baseInfo,
-  //   to: i1.entity.interactionId,
-  //   text: '',
-  //   type: 'AUTO',
-  //   subtype: 'OTHER',
-  // });
+    const i1 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
+      ...baseInfo,
+      text: '💬 [{{get currentNPC "name"}}]: Проходя тут, я напаролся на большую крысу!\n'
+        + 'У нас был тяжелый бой, и я ее убил\n'
+        + 'Однако уйти из боя целым, у меня не вышло.\n'
+        + 'Принеси мне, пожалуйста, зелье лечения. Мне не у кого больше попросить.',
+    });
 
-  // options.dataCollection.addLink(i1, {
-  //   ...baseInfo,
-  //   to: i2.entity.interactionId,
-  //   text: '',
-  //   type: 'AUTO',
-  //   subtype: 'OTHER',
-  // });
+    options.dataCollection.addLink(i0, {
+      ...baseInfo,
+      to: i1.entity.interactionId,
+      text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Привет, что случилось?',
+      condition: `{{questStateIsEQ ${questId} "INITIAL"}}`,
+      operation: `{{updateQuestState ${questId} "PHASE_1"}}`,
+      type: 'CUSTOM',
+      subtype: 'START_QUEST',
+    });
 
-  // options.dataCollection.addLink(i6, {
-  //   ...baseInfo,
-  //   to: spot.entity.interactionId,
-  //   text: '',
-  //   type: 'AUTO',
-  //   subtype: 'OTHER',
-  // });
-  // },
+    options.dataCollection.addLink(i0, {
+      ...baseInfo,
+      to: spot.entity.interactionId,
+      text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Отстань!',
+      condition: `{{questStateIsEQ ${questId} "INITIAL"}}`,
+      type: 'CUSTOM',
+      subtype: 'TALK_TO_NPC',
+    });
+
+    options.dataCollection.addLink(i0, {
+      ...baseInfo,
+      to: i1.entity.interactionId,
+      text: '',
+      type: 'AUTO',
+      subtype: 'OTHER',
+    });
+
+    // options.dataCollection.addLink(i1, {
+    //   ...baseInfo,
+    //   to: i2.entity.interactionId,
+    //   text: '',
+    //   type: 'AUTO',
+    //   subtype: 'OTHER',
+    // });
+
+    // options.dataCollection.addLink(i6, {
+    //   ...baseInfo,
+    //   to: spot.entity.interactionId,
+    //   text: '',
+    //   type: 'AUTO',
+    //   subtype: 'OTHER',
+    // });
+  },
 };
 
 export const npcInteractionBuilder = (id: number, options: NPCInteractBuilderOptions): void => {
