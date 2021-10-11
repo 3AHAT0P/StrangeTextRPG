@@ -64,6 +64,16 @@ export abstract class AbstractInventory {
     return section.filter((item) => item instanceof itemClass);
   }
 
+  public getItemsByClassName(type: 'ARMOR' | 'WEAPON' | 'POTION' | 'MISC', itemClassName: string): AbstractItem[] {
+    let section: AbstractItem[] = [];
+    if (type === 'WEAPON') section = this.weapons;
+    if (type === 'ARMOR') section = this.armors;
+    if (type === 'POTION') section = this.potions;
+    if (type === 'MISC') section = this.miscellaneous;
+
+    return section.filter((item) => (item as any).consructor.name === itemClassName);
+  }
+
   public collectItem(item: AbstractItem): void {
     this._getListByItemType(item).push(item);
   }

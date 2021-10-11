@@ -41,6 +41,8 @@ export class Skeleton extends AbstractActor {
     possessive: 'скелета',
   };
 
+  protected readonly _maxHealthPoints = 7;
+
   public inventory: Inventory<keyof SkeletonEquipmentSlots, SkeletonEquipmentSlots>;
 
   get armor(): number {
@@ -70,7 +72,6 @@ export class Skeleton extends AbstractActor {
         ),
       },
     });
-    this.maxHealthPoints = 7;
     // Когда скелеты восстают из могил, или откуда там они восстают
     // У них хп не полные. Зависит от стеени разложения, количества местных собак и т.д.
     this.healthPoints = getRandomIntInclusive(3, 7);

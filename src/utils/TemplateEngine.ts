@@ -1,4 +1,5 @@
 import { AbstractActor, AttackResult } from '@actors/AbstractActor';
+import { AbstractItem } from '@actors/AbstractItem';
 import Handlebars from 'handlebars';
 
 export type TemplateDelegate<TContext> = Handlebars.TemplateDelegate<TContext>;
@@ -51,6 +52,20 @@ Handlebars.registerHelper(
 Handlebars.registerHelper(
   'questStateIsEQ',
   (questId: string, value: number, ctx: any) => Reflect.get(ctx.data.root.quests, questId).state === value,
+);
+
+Handlebars.registerHelper(
+  'inventory_dropItemById',
+  (target: AbstractActor, item: AbstractItem) => target.inventory.dropItem(item),
+);
+
+Handlebars.registerHelper(
+  'inventory_findItemByClassName',
+  (
+    target: AbstractActor,
+    type: 'ARMOR' | 'WEAPON' | 'POTION' | 'MISC',
+    className: string,
+  ) => target.inventory.getItemsByClassName(type, className),
 );
 
 Handlebars.registerHelper(

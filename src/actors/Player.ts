@@ -22,10 +22,11 @@ export class Player extends AbstractHumanoid {
     possessive: 'твои',
   };
 
+  protected readonly _maxHealthPoints = 10;
+
   constructor(options: AbstractActorOptions = {}) {
     super(options);
 
-    this.maxHealthPoints = 10;
     this.healthPoints = 8;
     this.inventory.equipToSlot('body', new CanvasCoatBodyArmor());
     this.inventory.equipToSlot('legs', new CanvasTrousersLegsArmor());

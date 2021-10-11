@@ -19,6 +19,8 @@ export class Merchant4 extends AbstractMerchant {
     possessive: 'Олафа',
   };
 
+  protected readonly _maxHealthPoints = 100;
+
   public readonly name = 'Олаф';
 
   public get showcase(): AbstractItem[] {

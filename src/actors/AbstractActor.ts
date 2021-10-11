@@ -1,8 +1,8 @@
+import { capitalise } from '@utils/capitalise';
 import type { AbstractInventory } from '@actors/AbstractInventory';
 import type { AbstractItem } from '@actors/AbstractItem';
-import { capitalise } from '@utils/capitalise';
 import type { Weapon } from '@weapon';
-import { Armor, InHandArmor } from './armor';
+import type { Armor, InHandArmor } from './armor';
 
 export interface AttackResult {
   damage: number;
@@ -45,21 +45,23 @@ export abstract class AbstractActor {
     possessive: 'undefined',
   };
 
-  protected typePostfix: string = '';
+  protected readonly typePostfix: string = '';
 
-  protected maxHealthPoints: number = 0;
+  protected readonly abstract _maxHealthPoints: number;
+
+  protected get maxHealthPoints(): number { return this._maxHealthPoints; }
 
   protected healthPoints: number = 0;
 
-  protected abstract armor: number;
+  protected readonly abstract armor: number;
 
-  protected abstract attackDamage: number;
+  protected readonly abstract attackDamage: number;
 
-  protected abstract criticalChance: number;
+  protected readonly abstract criticalChance: number;
 
-  protected abstract criticalDamageModifier: number;
+  protected readonly abstract criticalDamageModifier: number;
 
-  protected abstract accuracy: number;
+  protected readonly abstract accuracy: number;
 
   abstract inventory: AbstractInventory;
 

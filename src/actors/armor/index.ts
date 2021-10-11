@@ -23,6 +23,10 @@ export abstract class Armor extends AbstractItem {
 
   public abstract armor: number;
 
+  public customEffects?: {
+    health: number;
+  };
+
   // TODO make equip armor
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public use(target: AbstractActor) {
@@ -121,4 +125,20 @@ export class BrokenShieldArmor extends InHandArmor {
   public readonly subtype = 'LIGHT';
 
   public readonly armor = 0.2;
+}
+
+export class UniqueOldFamilyRingArmor extends FingersArmor {
+  protected readonly baseName = 'старинное фамильное кольцо с рубином';
+
+  protected readonly basePrice = 30;
+
+  public readonly type = 'RING';
+
+  public readonly subtype = 'LIGHT';
+
+  public readonly armor = 0;
+
+  public readonly customEffects = {
+    health: 20,
+  };
 }

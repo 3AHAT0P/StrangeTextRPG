@@ -61,6 +61,8 @@ export class Rat extends AbstractActor {
 
   protected _activeWeapon: TeethWeapon | PawsWeapon | EmptyWeapon;
 
+  protected readonly _maxHealthPoints = 5;
+
   protected possibleLoot: [rootMeta: RatLootMeta, chance: number][] = [
     [[StrangeFlute, 1, 1], 0.05],
     [[RatTail, 1, 1], 0.6],
@@ -80,7 +82,6 @@ export class Rat extends AbstractActor {
   constructor(options: AbstractActorOptions = {}) {
     super(options);
 
-    this.maxHealthPoints = 5;
     this.healthPoints = 5;
 
     this.inventory = new Inventory({

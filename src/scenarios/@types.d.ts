@@ -2,8 +2,8 @@ import type { Player } from '@actors/Player';
 import type { AbstractNPC } from '@actors/AbstractNPC';
 import type { AbstractMerchant } from '@actors/AbstractMerchant';
 import type { AdditionalSessionInfo } from '@ui';
-import type { ScenarioEvent } from '@utils/@types/ScenarioEvent';
 import type { AbstractEvent, EventState } from '@scenarios/utils/Event';
+import type { AbstractQuest, QuestState } from '@scenarios/utils/Quest';
 
 export interface BaseScenarioContext {
   additionalInfo: AdditionalSessionInfo;
@@ -23,8 +23,13 @@ export interface ScenarioWithNPCsContext {
 }
 
 export interface ScenarioWithEventsContext {
-  events: Record<number, ScenarioEvent>;
+  events: Record<number, AbstractEvent>;
   getEvent: (eventId: AbstractEvent<EventState>['_id']) => AbstractEvent<EventState>;
+}
+
+export interface ScenarioWithQuestsContext {
+  quests: Record<number, AbstractQuest>;
+  getQuest: (questId: AbstractQuest<QuestState>['_id']) => AbstractQuest<QuestState>;
 }
 
 export interface ScenarioWithBattlesContext {
@@ -33,5 +38,5 @@ export interface ScenarioWithBattlesContext {
 
 export interface ScenarioContext extends
   BaseScenarioContext, ScenarioWithMerchantsContext, ScenarioWithNPCsContext,
-  ScenarioWithEventsContext, ScenarioWithBattlesContext,
+  ScenarioWithEventsContext, ScenarioWithBattlesContext, ScenarioWithQuestsContext,
 { }

@@ -34,6 +34,13 @@ export interface HumanoidEquipmentSlots {
 export abstract class AbstractHumanoid extends AbstractActor {
   public inventory: Inventory<keyof HumanoidEquipmentSlots, HumanoidEquipmentSlots>;
 
+  protected get maxHealthPoints(): number {
+    const { wearingEquipment } = this.inventory;
+    return this._maxHealthPoints
+      + (wearingEquipment.fingers?.customEffects?.health ?? 0)
+      + (wearingEquipment.neck?.customEffects?.health ?? 0);
+  }
+
   public get armor(): number {
     const { wearingEquipment } = this.inventory;
     return (wearingEquipment.head?.armor ?? 0)
@@ -60,7 +67,6 @@ export abstract class AbstractHumanoid extends AbstractActor {
   constructor(options: AbstractActorOptions = {}) {
     super(options);
 
-    this.maxHealthPoints = 10;
     this.healthPoints = 8;
     this.inventory = new Inventory({
       defaultEquipment: {

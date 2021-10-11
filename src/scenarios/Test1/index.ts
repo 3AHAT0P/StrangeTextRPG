@@ -22,6 +22,8 @@ import { ScenarioContext } from '../@types';
 
 import { NPCManager } from './npcs';
 import { EventManager } from './events';
+import { QuestManager } from './quests';
+import { AbstractQuest, QuestState } from '@scenarios/utils/Quest';
 
 const getGoldCount = (difficult: BattleDifficulty): number => {
   if (difficult === 'VERY_EASY') return 8;
@@ -55,11 +57,17 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
     return this._eventManager;
   }
 
+  protected _questManager: QuestManager | null = null;
+
+  protected get questManager(): QuestManager {
+    if (this._questManager == null) throw new Error('questManager is null');
+    return this._questManager;
+  }
+
   protected _buildContext(): ScenarioContext {
     return {
       additionalInfo: this._state.additionalInfo,
       player: this._state.player,
-      events: {},
       battles: {},
       loadMerchantInfo: (merchantId: string): void => {
         const npc = this.npcManager.get(merchantId);
@@ -78,7 +86,10 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
         this.context.currentNPC = null;
       },
       currentNPC: null,
+      events: {},
       getEvent: (eventId: string): AbstractEvent<EventState> => this.eventManager.get(eventId),
+      quests: {},
+      getQuest: (questId: string): AbstractQuest<QuestState> => this.questManager.get(questId),
     };
   }
 
