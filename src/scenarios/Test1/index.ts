@@ -16,6 +16,7 @@ import { buyOrLeaveInteract } from '@scenarios/utils/buyOrLeaveInteract';
 import { findActionBySubtype } from '@scenarios/utils/findActionBySubtype';
 import { interactWithBattle } from '@scenarios/utils/interactWithBattle';
 import { processActions } from '@scenarios/utils/processActions';
+import { AbstractQuest, QuestState } from '@scenarios/utils/Quest';
 
 import { AbstractScenario } from '../AbstractScenario';
 import { ScenarioContext } from '../@types';
@@ -23,7 +24,6 @@ import { ScenarioContext } from '../@types';
 import { NPCManager } from './npcs';
 import { EventManager } from './events';
 import { QuestManager } from './quests';
-import { AbstractQuest, QuestState } from '@scenarios/utils/Quest';
 
 const getGoldCount = (difficult: BattleDifficulty): number => {
   if (difficult === 'VERY_EASY') return 8;
