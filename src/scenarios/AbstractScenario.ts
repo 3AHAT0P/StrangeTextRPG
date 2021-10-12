@@ -44,7 +44,7 @@ export abstract class AbstractScenario<TScenarioContext extends BaseScenarioCont
   protected abstract _buildContext(): TScenarioContext;
 
   protected async _updateCurrentNode(action: ActionModel, context: TScenarioContext): Promise<void> {
-    if (action.isPrintable) await this._sendTemplateToUser(action.text, context);
+    if (action.isPrintable && action.text != null) await this._sendTemplateToUser(action.text, context);
     action.operation?.useContext(context)?.forceBuild();
     this.currentNode = await this._cursor.getNextNode(action);
   }

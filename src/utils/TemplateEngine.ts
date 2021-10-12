@@ -44,14 +44,14 @@ Handlebars.registerHelper(
 Handlebars.registerHelper(
   'updateQuestState',
   (questId: string, value: number, ctx: any) => {
-    Reflect.get(ctx.data.root.quests, questId).updateState(value);
+    Reflect.get(ctx.data, 'root').getQuest(questId).updateState(value);
     return true;
   },
 );
 
 Handlebars.registerHelper(
   'questStateIsEQ',
-  (questId: string, value: number, ctx: any) => Reflect.get(ctx.data.root.quests, questId).state === value,
+  (questId: string, value: number, ctx: any) => Reflect.get(ctx.data, 'root').getQuest(questId).state === value,
 );
 
 Handlebars.registerHelper(
@@ -66,6 +66,27 @@ Handlebars.registerHelper(
     type: 'ARMOR' | 'WEAPON' | 'POTION' | 'MISC',
     className: string,
   ) => target.inventory.getItemsByClassName(type, className),
+);
+
+Handlebars.registerHelper(
+  'inventory_getItemsNumberByClassName',
+  (
+    target: AbstractActor,
+    type: 'ARMOR' | 'WEAPON' | 'POTION' | 'MISC',
+    className: string,
+  ) => target.inventory.getItemsByClassName(type, className).length,
+);
+
+Handlebars.registerHelper(
+  'call',
+  (
+    target: any,
+    key: string,
+    ...args: any[]
+  ) => {
+    const ctx = args.pop();
+    return target[key](...args);
+  },
 );
 
 Handlebars.registerHelper(

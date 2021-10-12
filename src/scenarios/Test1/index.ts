@@ -1,5 +1,6 @@
 import { AbstractMerchant } from '@actors/AbstractMerchant';
 import { Rat } from '@actors/bestiary/Rat';
+import { RatTail } from '@actors/miscellaneous';
 import {
   BattleModel, InteractionModel, MapSpotModel,
 } from '@db/entities';
@@ -268,7 +269,14 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
 
   public async init(): Promise<void> {
     this._eventManager = new EventManager({ player: this._state.player });
+    this._questManager = new QuestManager({ player: this._state.player, npcManager: this.npcManager });
 
     await super.init();
+
+    this.context.player.inventory.collectItem(new RatTail());
+    this.context.player.inventory.collectItem(new RatTail());
+    this.context.player.inventory.collectItem(new RatTail());
+    this.context.player.inventory.collectItem(new RatTail());
+    this.context.player.inventory.collectItem(new RatTail());
   }
 }

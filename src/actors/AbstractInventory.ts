@@ -71,7 +71,10 @@ export abstract class AbstractInventory {
     if (type === 'POTION') section = this.potions;
     if (type === 'MISC') section = this.miscellaneous;
 
-    return section.filter((item) => (item as any).consructor.name === itemClassName);
+    // return section.filter((item) => item.constructor.name === itemClassName);
+    const res = section.filter((item) => item.constructor.name === itemClassName);
+    console.log('!!!!!!!!!!!!', itemClassName, res);
+    return res;
   }
 
   public collectItem(item: AbstractItem): void {

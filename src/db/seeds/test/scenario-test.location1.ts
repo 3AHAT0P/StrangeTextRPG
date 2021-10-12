@@ -110,6 +110,14 @@ export const scenarioTestLocation1SeedRun = async (): Promise<SeedResult> => {
     },
   );
 
+  npcInteractionBuilder(
+    2, {
+      baseInfo,
+      dataCollection,
+      ...getSpot([dataCollection.data, spots], 2, 3),
+    },
+  );
+
   dataCollection.addLink(intro, {
     ...baseInfo,
     to: standUp.entity.interactionId,

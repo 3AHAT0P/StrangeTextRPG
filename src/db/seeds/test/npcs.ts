@@ -78,6 +78,17 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
       text: '💬 [{{get currentMerchant "name"}}]: Приходи еще :)',
     });
 
+    const i7 = dataCollection.addContainer<InteractionEntity>('Interaction', {
+      ...baseInfo,
+      text: '💬 [{{get currentMerchant "name"}}]: Хмм... Ладно, для тебя сделаю исключение.\n'
+        + 'Если принесешь мне 5 крысинных хвостов, я отдам тебе взамен 1 маленькое зелье лечения',
+    });
+
+    const i8 = dataCollection.addContainer<InteractionEntity>('Interaction', {
+      ...baseInfo,
+      text: '💬 [{{get currentMerchant "name"}}]: А, ты еще жив. Ну что ж, уговор дороже денег ;)',
+    });
+
     dataCollection.addLink(npc, {
       ...baseInfo,
       to: i0.entity.interactionId,
@@ -128,11 +139,48 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
 
     dataCollection.addLink(i3, {
       ...baseInfo,
-      to: i6.entity.interactionId,
-      text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Ничего, спасибо.',
+      to: i7.entity.interactionId,
+      text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: А можно как-то иначе получить зелье?',
       type: 'CUSTOM',
       subtype: 'OTHER',
       isPrintable: true,
+    });
+
+    dataCollection.addLink(i7, {
+      ...baseInfo,
+      to: i6.entity.interactionId,
+      text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Окей, спасибо.',
+      type: 'CUSTOM',
+      subtype: 'OTHER',
+      isPrintable: true,
+    });
+
+    dataCollection.addLink(i3, {
+      ...baseInfo,
+      to: i6.entity.interactionId,
+      text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Ничего, спасибо!',
+      type: 'CUSTOM',
+      subtype: 'OTHER',
+      isPrintable: true,
+    });
+
+    dataCollection.addLink(i3, {
+      ...baseInfo,
+      to: i8.entity.interactionId,
+      text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Я принес, вот они.',
+      condition: '{{isGTE (inventory_getItemsNumberByClassName player "MISC" "RatTail") 5}}',
+      type: 'CUSTOM',
+      subtype: 'OTHER',
+      isPrintable: true,
+    });
+
+    dataCollection.addLink(i8, {
+      ...baseInfo,
+      to: i6.entity.interactionId,
+      text: '',
+      operation: '{{call currentMerchant "exchangeTailsToHealingPoition" player}}',
+      type: 'AUTO',
+      subtype: 'OTHER',
     });
 
     dataCollection.addLink(i4, {
@@ -179,11 +227,22 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
 
     dataCollection.addLink(spot, {
       ...baseInfo,
-      to: npc.entity.interactionId,
-      text: '',
-      condition: `{{questStateIsEQ ${questId} "INITIAL"}}`,
-      operation: `{{loadNPCInfo "${npcId}"}}`,
+      to: spot.entity.interactionId,
+      text: 'Неподалеку {{actorType player declension="nominative"}} замечаешь раненого незнакомца.',
+      condition: `{{questStateIsEQ "${questId}" "PRE_INITIAL"}}`,
+      operation: `{{updateQuestState "${questId}" "INITIAL"}}`,
       type: 'AUTO',
+      subtype: 'OTHER',
+      isPrintable: true,
+    });
+
+    dataCollection.addLink(spot, {
+      ...baseInfo,
+      to: npc.entity.interactionId,
+      text: 'Поговорить с Незнакомцем',
+      condition: `{{questStateIsEQ "${questId}" "INITIAL"}}`,
+      operation: `{{loadNPCInfo "${npcId}"}}`,
+      type: 'CUSTOM',
       subtype: 'OTHER',
     });
 
@@ -198,7 +257,7 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
       ...baseInfo,
       to: i0.entity.interactionId,
       text: '',
-      condition: `{{questStateIsEQ ${questId} "INITIAL"}}`,
+      condition: `{{questStateIsEQ "${questId}" "INITIAL"}}`,
       type: 'AUTO',
       subtype: 'OTHER',
     });
@@ -233,7 +292,7 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
       ...baseInfo,
       to: spot.entity.interactionId,
       text: 'Хорошо, главное не умри пока я вернусь',
-      operation: `{{updateQuestState ${questId} "PHASE_1"}} {{unloadCurrentNPCInfo}}`,
+      operation: `{{updateQuestState "${questId}" "PHASE_1"}} {{unloadCurrentNPCInfo}}`,
       type: 'CUSTOM',
       subtype: 'OTHER',
     });
@@ -242,7 +301,7 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
       ...baseInfo,
       to: spot.entity.interactionId,
       text: 'Не, я не альтруист, другим помогать. Каждый сам за себя!',
-      operation: `{{updateQuestState ${questId} "FINISHED_BAD"}} {{unloadCurrentNPCInfo}}`,
+      operation: `{{updateQuestState "${questId}" "FINISHED_BAD"}} {{unloadCurrentNPCInfo}}`,
       type: 'CUSTOM',
       subtype: 'OTHER',
     });
@@ -250,10 +309,10 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
     dataCollection.addLink(spot, {
       ...baseInfo,
       to: npc.entity.interactionId,
-      text: '',
-      condition: `{{questStateIsEQ ${questId} "PHASE_1"}}`,
+      text: 'Поговорить с Незнакомцем',
+      condition: `{{questStateIsEQ "${questId}" "PHASE_1"}}`,
       operation: `{{loadNPCInfo "${npcId}"}}`,
-      type: 'AUTO',
+      type: 'CUSTOM',
       subtype: 'OTHER',
     });
 
@@ -266,7 +325,7 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
       ...baseInfo,
       to: i2.entity.interactionId,
       text: '',
-      condition: `{{questStateIsEQ ${questId} "PHASE_1"}}`,
+      condition: `{{questStateIsEQ "${questId}" "PHASE_1"}}`,
       type: 'AUTO',
       subtype: 'OTHER',
     });
@@ -280,8 +339,18 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
       ...baseInfo,
       to: i3.entity.interactionId,
       text: 'Вот держи! (Отдать 1 зелье лечения)',
-      condition: '{{isGTE (get (get player "inventory") "healthPotions") 1}}',
-      operation: `{{updateQuestState ${questId} "FINISHED_GOOD"}} {{unloadCurrentNPCInfo}}`,
+      condition: '{{isGTE (inventory_getItemsNumberByClassName player "POTION" "SmallHealingPotion") 1}}',
+      operation: `{{updateQuestState "${questId}" "FINISHED_GOOD"}}`,
+      type: 'CUSTOM',
+      subtype: 'OTHER',
+      isPrintable: true,
+    });
+
+    options.dataCollection.addLink(i3, {
+      ...baseInfo,
+      to: spot.entity.interactionId,
+      text: '',
+      operation: '{{unloadCurrentNPCInfo}}',
       type: 'AUTO',
       subtype: 'OTHER',
     });
@@ -291,8 +360,9 @@ const NPCInteractions: Record<number, (options: NPCInteractBuilderOptions) => vo
       to: spot.entity.interactionId,
       text: 'Нет еще',
       operation: '{{unloadCurrentNPCInfo}}',
-      type: 'AUTO',
+      type: 'CUSTOM',
       subtype: 'OTHER',
+      isPrintable: true,
     });
   },
 };
