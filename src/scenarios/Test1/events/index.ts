@@ -27,7 +27,6 @@ export class EventManager {
       return event;
     }
 
-    console.log(EventManager._classMap, this._eventMap);
     throw new Error(`Event with id (${eventId}) not exists`);
   }
 }

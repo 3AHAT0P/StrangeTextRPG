@@ -10,10 +10,12 @@ import {
   DataCollection,
 } from '@db/entities';
 
+import { npc1Seed } from '@npcs/scenario-10001/1/seed';
+import { npc2Seed } from '@npcs/scenario-10001/2/seed';
+
 import { ConnectorTo, ConnectorFrom } from '../Connector';
 
 import { eventBuilder } from './events';
-import { npcInteractionBuilder } from './npcs';
 
 const parseMap = async (
   dataCollection: DataCollection,
@@ -102,21 +104,17 @@ export const scenarioTestLocation1SeedRun = async (): Promise<SeedResult> => {
 
   if (startSpot == null) throw new Error('Invalid position');
 
-  npcInteractionBuilder(
-    1, {
-      baseInfo,
-      dataCollection,
-      ...getSpot([dataCollection.data, spots], 1, 3),
-    },
-  );
+  npc1Seed({
+    baseInfo,
+    dataCollection,
+    ...getSpot([dataCollection.data, spots], 1, 3),
+  });
 
-  npcInteractionBuilder(
-    2, {
-      baseInfo,
-      dataCollection,
-      ...getSpot([dataCollection.data, spots], 2, 3),
-    },
-  );
+  npc2Seed({
+    baseInfo,
+    dataCollection,
+    ...getSpot([dataCollection.data, spots], 2, 3),
+  });
 
   dataCollection.addLink(intro, {
     ...baseInfo,

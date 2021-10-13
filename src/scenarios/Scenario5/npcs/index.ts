@@ -1,4 +1,4 @@
-import { AbstractNPC } from '@actors/AbstractNPC';
+import { AbstractNPC } from 'npcs/AbstractNPC';
 
 import { Merchant1, merchant1Id } from './1';
 import { Merchant2, merchant2Id } from './2';

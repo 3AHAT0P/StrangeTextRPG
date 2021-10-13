@@ -1,29 +1,19 @@
-import { AbstractActorOptions } from '@actors/AbstractActor';
 import { AbstractItem } from '@actors/AbstractItem';
-import { AbstractMerchant } from '@actors/AbstractMerchant';
-import { RatTail } from '@actors/miscellaneous';
-import { Player } from '@actors/Player';
 import { SmallHealingPotion } from '@actors/potions';
+import { AbstractActorOptions } from '@actors/AbstractActor';
+import { Player } from '@actors/Player';
+import { AbstractMerchant } from '@npcs/AbstractMerchant';
 
-export const merchant1Id: `Scenario:${number | string}|Location:${number}|NPC:${number}` = 'Scenario:10001|Location:1|NPC:1';
+import { npc1Info, poitionExchangeCondition } from './info';
 
-export class Merchant1 extends AbstractMerchant {
-  protected readonly _id = merchant1Id;
+export class NPC1 extends AbstractMerchant {
+  protected readonly _id = npc1Info.id;
 
-  protected readonly declensionOfNouns = <const>{
-    nominative: 'Олаф',
-    genitive: 'Олафа',
-    dative: 'Олафу',
-    accusative: 'Олафа',
-    ablative: 'Олафом',
-    prepositional: 'об Олафе',
-
-    possessive: 'Олафа',
-  };
+  protected readonly declensionOfNouns = npc1Info.declensionOfNouns;
 
   protected readonly _maxHealthPoints = 100;
 
-  public readonly name = 'Олаф';
+  public readonly name = npc1Info.name;
 
   public get showcase(): AbstractItem[] {
     return this.inventory.potions;
@@ -41,8 +31,10 @@ export class Merchant1 extends AbstractMerchant {
     const [potion] = this.inventory.getItemsByClassName('POTION', 'SmallHealingPotion');
     if (potion == null) return false;
 
-    const tails = player.inventory.getItemsByClassName('MISC', 'RatTail');
-    if (tails.length < 5) return false;
+    const tails = player.inventory.getItemsByClassName(
+      poitionExchangeCondition.itemType, poitionExchangeCondition.className,
+    );
+    if (tails.length < poitionExchangeCondition.count) return false;
 
     tails.forEach((tail) => {
       player.inventory.dropItem(tail);

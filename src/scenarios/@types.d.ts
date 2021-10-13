@@ -1,6 +1,5 @@
 import type { Player } from '@actors/Player';
-import type { AbstractNPC } from '@actors/AbstractNPC';
-import type { AbstractMerchant } from '@actors/AbstractMerchant';
+import type { AbstractNPC, AbstractMerchant } from '@npcs';
 import type { AdditionalSessionInfo } from '@ui';
 import type { AbstractEvent, EventState } from '@scenarios/utils/Event';
 import type { AbstractQuest, QuestState } from '@scenarios/utils/Quest';

@@ -30,6 +30,12 @@
       "@actors/*": [
         "actors/*"
       ],
+      "@npcs": [
+        "npcs/index"
+      ],
+      "@npcs/*": [
+        "npcs/*"
+      ],
       "@interactions": [
         "interactions/index"
       ],

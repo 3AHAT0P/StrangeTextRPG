@@ -1,4 +1,5 @@
-import { AbstractItem } from './AbstractItem';
+import { AbstractItem } from '@actors/AbstractItem';
+
 import { AbstractNPC } from './AbstractNPC';
 
 export abstract class AbstractMerchant extends AbstractNPC {

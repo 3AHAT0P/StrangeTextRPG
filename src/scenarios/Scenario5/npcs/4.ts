@@ -1,6 +1,6 @@
 import { AbstractActorOptions } from '@actors/AbstractActor';
 import { AbstractItem } from '@actors/AbstractItem';
-import { AbstractMerchant } from '@actors/AbstractMerchant';
+import { AbstractMerchant } from '@npcs/AbstractMerchant';
 import { SmallHealingPotion } from '@actors/potions';
 
 export const merchant4Id: `Scenario:${number | string}|Location:${number}|NPC:${number}` = 'Scenario:5|Location:1|NPC:4';

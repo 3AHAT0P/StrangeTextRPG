@@ -1,6 +1,5 @@
-import { AbstractMerchant } from '@actors/AbstractMerchant';
+import { AbstractMerchant } from '@npcs/AbstractMerchant';
 import { Rat } from '@actors/bestiary/Rat';
-import { RatTail } from '@actors/miscellaneous';
 import {
   BattleModel, InteractionModel, MapSpotModel,
 } from '@db/entities';
@@ -18,11 +17,11 @@ import { findActionBySubtype } from '@scenarios/utils/findActionBySubtype';
 import { interactWithBattle } from '@scenarios/utils/interactWithBattle';
 import { processActions } from '@scenarios/utils/processActions';
 import { AbstractQuest, QuestState } from '@scenarios/utils/Quest';
+import { NPCManager } from '@npcs/scenario-10001/NPCManager';
 
 import { AbstractScenario } from '../AbstractScenario';
 import { ScenarioContext } from '../@types';
 
-import { NPCManager } from './npcs';
 import { EventManager } from './events';
 import { QuestManager } from './quests';
 
@@ -115,7 +114,6 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
 
         this._state.player.inventory.collectGold(getGoldCount(this.currentNode.difficult));
         await this._updateCurrentNode(action, this.context);
-        console.log(this._state.player.inventory);
         return;
       }
 
@@ -272,11 +270,5 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
     this._questManager = new QuestManager({ player: this._state.player, npcManager: this.npcManager });
 
     await super.init();
-
-    this.context.player.inventory.collectItem(new RatTail());
-    this.context.player.inventory.collectItem(new RatTail());
-    this.context.player.inventory.collectItem(new RatTail());
-    this.context.player.inventory.collectItem(new RatTail());
-    this.context.player.inventory.collectItem(new RatTail());
   }
 }

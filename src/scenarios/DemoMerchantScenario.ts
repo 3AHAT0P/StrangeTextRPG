@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file */
 import { AbstractActorOptions, Player } from '@actors';
 import { AbstractItem } from '@actors/AbstractItem';
-import { AbstractMerchant } from '@actors/AbstractMerchant';
+import { AbstractMerchant } from '@npcs/AbstractMerchant';
 import { SmallHealingPotion } from '@actors/potions';
 import { InteractionModel } from '@db/entities';
 import logger from '@utils/Logger';

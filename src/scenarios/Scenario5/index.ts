@@ -1,5 +1,5 @@
 import { AbstractActor, Rat, Skeleton } from '@actors';
-import { AbstractMerchant } from '@actors/AbstractMerchant';
+import { AbstractMerchant } from '@npcs/AbstractMerchant';
 import { BattleModel, InteractionModel, MapSpotModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
 import { BattleDifficulty } from '@db/entities/Battle';

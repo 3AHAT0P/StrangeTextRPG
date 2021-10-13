@@ -32,7 +32,7 @@ export abstract class AbstractInventory {
     throw new Error('Unknown item type');
   }
 
-  protected checkExists(item: AbstractItem) {
+  protected checkExists(item: AbstractItem): boolean {
     const searchSection = this._getListByItemType(item);
 
     return searchSection.some((inventoryItem) => inventoryItem.id === item.id);
@@ -71,10 +71,7 @@ export abstract class AbstractInventory {
     if (type === 'POTION') section = this.potions;
     if (type === 'MISC') section = this.miscellaneous;
 
-    // return section.filter((item) => item.constructor.name === itemClassName);
-    const res = section.filter((item) => item.constructor.name === itemClassName);
-    console.log('!!!!!!!!!!!!', itemClassName, res);
-    return res;
+    return section.filter((item) => item.constructor.name === itemClassName);
   }
 
   public collectItem(item: AbstractItem): void {

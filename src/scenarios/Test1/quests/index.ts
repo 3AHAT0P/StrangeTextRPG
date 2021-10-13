@@ -31,7 +31,6 @@ export class QuestManager {
       return quest;
     }
 
-    console.log(QuestManager._classMap, this._questMap);
     throw new Error(`Quest with id (${questId}) not exists`);
   }
 }
