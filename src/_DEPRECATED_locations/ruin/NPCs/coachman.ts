@@ -1,4 +1,4 @@
-import { AbstractInteraction, SimpleInteraction } from '@interactions';
+import { AbstractInteraction, SimpleInteraction } from '_DEPRECATED_interactions';
 import { AbstractNPC } from '@NPC/AbstractNPC';
 
 export class CoachmanNPC extends AbstractNPC {

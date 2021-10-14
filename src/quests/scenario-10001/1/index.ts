@@ -1,4 +1,4 @@
-import { KnifeWeapon } from '@actors/weapon';
+import { KnifeWeapon } from '@weapon';
 import { AbstractQuest } from '@quests/AbstractQuest';
 
 import { quest1Id, Quest1State } from './info';

@@ -9,7 +9,7 @@ import { MerchantNPC } from '@NPC/Merchant';
 import {
   AbstractInteraction, Interaction,
   BattleInteraction, BATTLE_FINAL_ACTIONS,
-} from '@interactions';
+} from '_DEPRECATED_interactions';
 import { ActionsLayout } from '@ui/ActionsLayout';
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import logger from '@utils/Logger';
@@ -19,7 +19,7 @@ import { SmallHealingPotion } from '@actors/potions';
 
 import { AreaMap } from '../AreaMap';
 import { AbstractLocation } from '../AbstractLocation';
-import { descriptions } from '../LocationDescriptions';
+import { descriptions } from '../../scenarios/LocationDescriptions';
 
 import { map, mapSize, additionalMapInfo } from './map';
 

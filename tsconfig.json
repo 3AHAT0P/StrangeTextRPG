@@ -42,12 +42,6 @@
       "@quests/*": [
         "quests/*"
       ],
-      "@interactions": [
-        "interactions/index"
-      ],
-      "@interactions/*": [
-        "interactions/*"
-      ],
       "@locations": [
         "locations/index"
       ],
@@ -59,12 +53,6 @@
       ],
       "@scenarios/*": [
         "scenarios/*"
-      ],
-      "@NPC": [
-        "interactions/NPC/index"
-      ],
-      "@NPC/*": [
-        "interactions/NPC/*"
       ],
       "@armor": [
         "actors/armor/index"

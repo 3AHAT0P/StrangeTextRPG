@@ -1,7 +1,7 @@
 import { AbstractActor } from '@actors';
 import { Cursor } from '@db';
 import { ActionModel } from '@db/entities';
-import { Battle, BATTLE_FINAL_ACTIONS } from '@interactions/Battle';
+import { Battle, BATTLE_FINAL_ACTIONS } from '@scenarios/utils/Battle';
 import { AbstractUI } from '@ui';
 
 import { findActionBySubtype } from './findActionBySubtype';

@@ -1,7 +1,6 @@
 import { Player } from '@actors/Player';
 import { DBService } from '@db/DBService';
 import { Cursor } from '@db/Cursor';
-import { SimpleInteraction } from '@interactions/SimpleInteraction';
 import {
   AbstractUI, AbstractSessionUI,
   AdditionalSessionInfo,
@@ -45,14 +44,10 @@ class App {
         sessionId,
         additionalInfo,
         player: new Player(),
-        currentInteraction: new SimpleInteraction({ ui, message: 'Hi\n' }),
         finishSession: this.closeSession.bind(null, sessionId, ui),
         status: 'ALIVE',
         ui,
         persistActionsContainers: [],
-        events: { 1: 0 },
-        merchants: {},
-        npcList: {},
       };
       this.sessionStateMap.set(sessionId, state);
 

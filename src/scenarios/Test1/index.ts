@@ -8,7 +8,6 @@ import { MapSpotSubtype } from '@db/entities/MapSpot';
 import logger from '@utils/Logger';
 import { Matcher } from '@utils/Matcher';
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
-import { descriptions } from '@locations/LocationDescriptions';
 
 import { ScenarioContext } from '@scenarios/@types';
 import { buyOrLeaveInteract } from '@scenarios/utils/buyOrLeaveInteract';
@@ -22,6 +21,7 @@ import { NPCId, AbstractMerchant } from '@npcs';
 import { NPCManager } from '@npcs/scenario-10001/NPCManager';
 
 import { AbstractScenario } from '../AbstractScenario';
+import { descriptions } from '../LocationDescriptions';
 
 const getGoldCount = (difficult: BattleDifficulty): number => {
   if (difficult === 'VERY_EASY') return 8;

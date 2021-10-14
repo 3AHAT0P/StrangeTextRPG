@@ -4,14 +4,12 @@ import { createCanvas, loadImage, ImageData } from 'node-canvas';
 import {
   InteractionEntity,
   BattleEntity,
-  NPCEntity,
   MapSpotEntity,
   DataContainer,
   DataCollection,
 } from '@db/entities';
 import { isThroughable, MapSpotSubtype } from '@db/entities/MapSpot';
 import { parseBattleSubtype, isBattleSubtype } from '@db/entities/Battle';
-import { MOVE_ACTIONS } from '@locations/AreaMap';
 import { Matcher } from '@utils/Matcher';
 import logger from '@utils/Logger';
 
@@ -28,6 +26,16 @@ export interface CustomInteractions {
   exitId: string;
   onPlayerDiedId: string;
 }
+
+export type DIRECTION = 'NORTH' | 'SOUTH' | 'WEST' | 'EAST';
+
+export const MOVE_ACTIONS = <const>{
+  TO_WEST: '👣 ⬅️',
+  TO_EAST: '👣 ➡️',
+  TO_NORTH: '👣 ⬆️',
+  TO_SOUTH: '👣 ⬇️',
+  NO_WAY: '🚷',
+};
 
 export class MapParser {
   private _mapImagePath: string;

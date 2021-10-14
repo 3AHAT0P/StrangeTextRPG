@@ -1,4 +1,4 @@
-import { AbstractInteraction } from '@interactions/AbstractInteraction';
+import { AbstractInteraction } from '_DEPRECATED_interactions/AbstractInteraction';
 import { AbstractUI } from '@ui/AbstractUI';
 import { SessionState } from '../SessionState';
 

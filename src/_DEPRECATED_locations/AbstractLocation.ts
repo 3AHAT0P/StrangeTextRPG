@@ -1,4 +1,4 @@
-import { AbstractInteraction, AbstractInteractionOptions } from '@interactions/AbstractInteraction';
+import { AbstractInteraction, AbstractInteractionOptions } from '_DEPRECATED_interactions/AbstractInteraction';
 import { SessionState } from '../SessionState';
 
 export interface AbstractLocationOptions extends AbstractInteractionOptions {
