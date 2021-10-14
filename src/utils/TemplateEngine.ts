@@ -29,19 +29,6 @@ Handlebars.registerHelper('isGTE', (leftOperand: any, rightOperand: any) => left
 Handlebars.registerHelper('isEQ', (leftOperand: any, rightOperand: any) => leftOperand === rightOperand);
 
 Handlebars.registerHelper(
-  'updateEventState',
-  (eventId: number, value: number, ctx: any) => {
-    Reflect.get(ctx.data, 'root').getEvent(eventId).updateState(value);
-    return true;
-  },
-);
-
-Handlebars.registerHelper(
-  'eventStateIsEQ',
-  (eventId: number, value: number, ctx: any) => Reflect.get(ctx.data, 'root').getEvent(eventId).state === value,
-);
-
-Handlebars.registerHelper(
   'updateQuestState',
   (questId: string, value: number, ctx: any) => {
     Reflect.get(ctx.data, 'root').getQuest(questId).updateState(value);

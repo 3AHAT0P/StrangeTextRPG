@@ -1,19 +1,14 @@
-import { NPCManager } from '@scenarios/Test1/npcs';
+import { AbstractNPCManager } from '@npcs/AbstractNPCManager';
 import type { Player } from '@actors';
 
-export type QuestState = 'INITIAL' | 'FINISHED_GOOD' | 'FINISHED_BAD';
-
-export interface QuestOptions {
-  player: Player;
-  npcManager: NPCManager;
-}
+import { QuestId, QuestOptions } from './@types';
 
 export abstract class AbstractQuest<TQuestState> {
-  public abstract readonly id: `Scenario:${number | string}|Location:${number}|Quest:${number}`;
+  public abstract readonly id: QuestId;
 
   protected _player: Player;
 
-  protected _npcManager: NPCManager;
+  protected _npcManager: AbstractNPCManager;
 
   protected abstract _state: TQuestState;
 

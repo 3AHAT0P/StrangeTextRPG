@@ -1,24 +1,27 @@
 import { AbstractActor, Rat, Skeleton } from '@actors';
-import { AbstractMerchant } from '@npcs/AbstractMerchant';
+
 import { BattleModel, InteractionModel, MapSpotModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
 import { BattleDifficulty } from '@db/entities/Battle';
 import { MapSpotSubtype } from '@db/entities/MapSpot';
-import { descriptions } from '@locations/LocationDescriptions';
-import { buyOrLeaveInteract } from '@scenarios/utils/buyOrLeaveInteract';
-import { AbstractEvent, EventState } from '@scenarios/utils/Event';
+
 import logger from '@utils/Logger';
-import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import { Matcher } from '@utils/Matcher';
+import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
+import { descriptions } from '@locations/LocationDescriptions';
+
 import { ScenarioContext } from '@scenarios/@types';
+import { buyOrLeaveInteract } from '@scenarios/utils/buyOrLeaveInteract';
 import { findActionBySubtype } from '@scenarios/utils/findActionBySubtype';
 import { interactWithBattle } from '@scenarios/utils/interactWithBattle';
 import { processActions } from '@scenarios/utils/processActions';
 
-import { AbstractScenario } from '../AbstractScenario';
+import { AbstractQuest, QuestId, QuestState } from '@quests';
+import { QuestManager } from '@quests/scenario-5/QuestManager';
+import { NPCId, AbstractMerchant } from '@npcs';
+import { NPCManager } from '@npcs/scenario-5/NPCManager';
 
-import { EventManager } from './events';
-import { NPCManager } from './npcs';
+import { AbstractScenario } from '../AbstractScenario';
 
 const getEnemies = (difficult: BattleDifficulty): AbstractActor[] => {
   if (difficult === 'VERY_EASY') return [new Rat()];
@@ -45,6 +48,13 @@ const getEnemies = (difficult: BattleDifficulty): AbstractActor[] => {
   return [];
 };
 
+export type AmbiancesType = {
+  walls: number;
+  enemies: number;
+  breaks: number;
+  npc: number;
+};
+
 export class ScenarioNo5 extends AbstractScenario<ScenarioContext> {
   protected _scenarioId: number = 5;
 
@@ -54,20 +64,19 @@ export class ScenarioNo5 extends AbstractScenario<ScenarioContext> {
 
   protected npcManager: NPCManager = new NPCManager();
 
-  protected _eventManager: EventManager | null = null;
+  protected _questManager: QuestManager | null = null;
 
-  protected get eventManager(): EventManager {
-    if (this._eventManager == null) throw new Error('eventManager is null');
-    return this._eventManager;
+  protected get questManager(): QuestManager {
+    if (this._questManager == null) throw new Error('questManager is null');
+    return this._questManager;
   }
 
   protected _buildContext(): ScenarioContext {
     return {
       additionalInfo: this._state.additionalInfo,
       player: this._state.player,
-      events: {},
       battles: {},
-      loadMerchantInfo: (merchantId: string): void => {
+      loadMerchantInfo: (merchantId: NPCId): void => {
         const npc = this.npcManager.get(merchantId);
         if (npc instanceof AbstractMerchant) {
           this.context.currentMerchant = npc;
@@ -77,11 +86,15 @@ export class ScenarioNo5 extends AbstractScenario<ScenarioContext> {
         this.context.currentMerchant = null;
       },
       currentMerchant: null,
-      loadNPCInfo: (npcId: string): void => {
+      loadNPCInfo: (npcId: NPCId): void => {
         this.context.currentNPC = this.npcManager.get(npcId);
       },
+      unloadCurrentNPCInfo: (): void => {
+        this.context.currentNPC = null;
+      },
       currentNPC: null,
-      getEvent: (eventId: string): AbstractEvent<EventState> => this.eventManager.get(eventId),
+      quests: {},
+      getQuest: (questId: QuestId): AbstractQuest<QuestState> => this.questManager.get(questId),
     };
   }
 
@@ -150,7 +163,6 @@ export class ScenarioNo5 extends AbstractScenario<ScenarioContext> {
       }
     } catch (error) {
       logger.error('ScenarioNo5Test::_runner', error);
-      console.log(error);
     }
   }
 
@@ -257,7 +269,7 @@ export class ScenarioNo5 extends AbstractScenario<ScenarioContext> {
   }
 
   public async init(): Promise<void> {
-    this._eventManager = new EventManager({ player: this._state.player });
+    this._questManager = new QuestManager({ player: this._state.player, npcManager: this.npcManager });
 
     await super.init();
   }

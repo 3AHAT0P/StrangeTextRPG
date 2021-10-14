@@ -1,6 +1,6 @@
 import { AbstractActorOptions } from '@actors/AbstractActor';
-import { AbstractNPC } from 'npcs/AbstractNPC';
-import { UniqueOldFamilyRingArmor } from '@actors/armor';
+import { Quest1Phase1GiveItemClass } from '@quests/scenario-10001/2/info';
+import { AbstractNPC } from '@npcs/AbstractNPC';
 
 import { npc2Info } from './info';
 
@@ -18,6 +18,6 @@ export class NPC2 extends AbstractNPC {
   constructor(options: AbstractActorOptions = {}) {
     super(options);
     this.inventory.collectGold(10);
-    this.inventory.collectItem(new UniqueOldFamilyRingArmor());
+    this.inventory.collectItem(new Quest1Phase1GiveItemClass());
   }
 }

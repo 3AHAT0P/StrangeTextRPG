@@ -4,14 +4,14 @@ import {
 } from '@db/entities';
 import { NPCInteractBuilderOptions } from '@npcs/@types';
 
+import { Quest1Phase1TakeItemClass, quest2Id, Quest2States } from '@quests/scenario-10001/2/info';
+
 import { npc2Info } from './info';
 
 export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
   const {
     spot, baseInfo, dataCollection,
   } = options;
-
-  const questId = `Scenario:${baseInfo.scenarioId}|Location:${baseInfo.locationId}|Quest:1`;
 
   const npc = dataCollection.addContainer<NPCEntity>(
     'NPC',
@@ -26,8 +26,8 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     ...baseInfo,
     to: spot.entity.interactionId,
     text: 'Неподалеку {{actorType player declension="nominative"}} замечаешь раненого незнакомца.',
-    condition: `{{questStateIsEQ "${questId}" "PRE_INITIAL"}}`,
-    operation: `{{updateQuestState "${questId}" "INITIAL"}}`,
+    condition: `{{questStateIsEQ "${quest2Id}" "${Quest2States.PRE_INITIAL}"}}`,
+    operation: `{{updateQuestState "${quest2Id}" "${Quest2States.INITIAL}"}}`,
     type: 'AUTO',
     subtype: 'OTHER',
     isPrintable: true,
@@ -37,7 +37,7 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     ...baseInfo,
     to: npc.entity.interactionId,
     text: 'Поговорить с Незнакомцем',
-    condition: `{{questStateIsEQ "${questId}" "INITIAL"}}`,
+    condition: `{{questStateIsEQ "${quest2Id}" "${Quest2States.INITIAL}"}}`,
     operation: `{{loadNPCInfo "${npc2Info.id}"}}`,
     type: 'CUSTOM',
     subtype: 'OTHER',
@@ -52,7 +52,7 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     ...baseInfo,
     to: i0.entity.interactionId,
     text: '',
-    condition: `{{questStateIsEQ "${questId}" "INITIAL"}}`,
+    condition: `{{questStateIsEQ "${quest2Id}" "${Quest2States.INITIAL}"}}`,
     type: 'AUTO',
     subtype: 'OTHER',
   });
@@ -87,7 +87,7 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     ...baseInfo,
     to: spot.entity.interactionId,
     text: 'Хорошо, главное не умри пока я вернусь',
-    operation: `{{updateQuestState "${questId}" "PHASE_1"}} {{unloadCurrentNPCInfo}}`,
+    operation: `{{updateQuestState "${quest2Id}" "${Quest2States.PHASE_1}"}} {{unloadCurrentNPCInfo}}`,
     type: 'CUSTOM',
     subtype: 'OTHER',
   });
@@ -96,7 +96,7 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     ...baseInfo,
     to: spot.entity.interactionId,
     text: 'Не, я не альтруист, другим помогать. Каждый сам за себя!',
-    operation: `{{updateQuestState "${questId}" "FINISHED_BAD"}} {{unloadCurrentNPCInfo}}`,
+    operation: `{{updateQuestState "${quest2Id}" "${Quest2States.FINISHED_BAD}"}} {{unloadCurrentNPCInfo}}`,
     type: 'CUSTOM',
     subtype: 'OTHER',
   });
@@ -105,7 +105,7 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     ...baseInfo,
     to: npc.entity.interactionId,
     text: 'Поговорить с Незнакомцем',
-    condition: `{{questStateIsEQ "${questId}" "PHASE_1"}}`,
+    condition: `{{questStateIsEQ "${quest2Id}" "${Quest2States.PHASE_1}"}}`,
     operation: `{{loadNPCInfo "${npc2Info.id}"}}`,
     type: 'CUSTOM',
     subtype: 'OTHER',
@@ -120,7 +120,7 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     ...baseInfo,
     to: i2.entity.interactionId,
     text: '',
-    condition: `{{questStateIsEQ "${questId}" "PHASE_1"}}`,
+    condition: `{{questStateIsEQ "${quest2Id}" "${Quest2States.PHASE_1}"}}`,
     type: 'AUTO',
     subtype: 'OTHER',
   });
@@ -134,8 +134,8 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     ...baseInfo,
     to: i3.entity.interactionId,
     text: 'Вот держи! (Отдать 1 зелье лечения)',
-    condition: '{{isGTE (inventory_getItemsNumberByClassName player "POTION" "SmallHealingPotion") 1}}',
-    operation: `{{updateQuestState "${questId}" "FINISHED_GOOD"}}`,
+    condition: `{{isGTE (inventory_getItemsNumberByClassName player "POTION" "${Quest1Phase1TakeItemClass.name}") 1}}`,
+    operation: `{{updateQuestState "${quest2Id}" "${Quest2States.FINISHED_GOOD}"}}`,
     type: 'CUSTOM',
     subtype: 'OTHER',
     isPrintable: true,

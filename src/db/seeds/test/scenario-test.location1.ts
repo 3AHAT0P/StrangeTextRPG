@@ -12,10 +12,9 @@ import {
 
 import { npc1Seed } from '@npcs/scenario-10001/1/seed';
 import { npc2Seed } from '@npcs/scenario-10001/2/seed';
+import { quest1Seed } from '@quests/scenario-10001/1/seed';
 
 import { ConnectorTo, ConnectorFrom } from '../Connector';
-
-import { eventBuilder } from './events';
 
 const parseMap = async (
   dataCollection: DataCollection,
@@ -132,11 +131,11 @@ export const scenarioTestLocation1SeedRun = async (): Promise<SeedResult> => {
     subtype: 'OTHER',
   });
 
-  const eventSpot = spots.get('2:3');
+  const quest1Spot = spots.get('2:3');
 
-  if (eventSpot == null) throw new Error('Invalid position');
+  if (quest1Spot == null) throw new Error('Invalid position');
 
-  eventBuilder(1, { baseInfo, spot: eventSpot, dataCollection });
+  quest1Seed({ baseInfo, spot: quest1Spot, dataCollection });
 
   return <const>{
     data: dataCollection.data,

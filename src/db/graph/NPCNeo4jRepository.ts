@@ -1,5 +1,6 @@
-import { NPCModel, NPCEntity, NPCSubtype } from '@db/entities/NPC';
+import { NPCModel, NPCEntity } from '@db/entities/NPC';
 import { ActionModel } from '@db/entities/Action';
+import { NPCSubtype } from '@npcs';
 
 import {
   Node, Integer, EspeciallyNode, Session,

@@ -36,6 +36,12 @@
       "@npcs/*": [
         "npcs/*"
       ],
+      "@quests": [
+        "quests/index"
+      ],
+      "@quests/*": [
+        "quests/*"
+      ],
       "@interactions": [
         "interactions/index"
       ],

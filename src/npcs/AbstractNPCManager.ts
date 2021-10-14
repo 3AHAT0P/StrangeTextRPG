@@ -1,4 +1,5 @@
-import { AbstractNPC, NPCId } from './AbstractNPC';
+import { NPCId } from './@types';
+import { AbstractNPC } from './AbstractNPC';
 
 export abstract class AbstractNPCManager {
   protected abstract _classMap: Readonly<Record<NPCId, typeof AbstractNPC>>;

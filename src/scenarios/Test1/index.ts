@@ -1,29 +1,27 @@
-import { AbstractMerchant } from '@npcs/AbstractMerchant';
 import { Rat } from '@actors/bestiary/Rat';
-import {
-  BattleModel, InteractionModel, MapSpotModel,
-} from '@db/entities';
+
+import { BattleModel, InteractionModel, MapSpotModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
 import { BattleDifficulty } from '@db/entities/Battle';
 import { MapSpotSubtype } from '@db/entities/MapSpot';
+
 import logger from '@utils/Logger';
 import { Matcher } from '@utils/Matcher';
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import { descriptions } from '@locations/LocationDescriptions';
-import { AbstractEvent, EventState } from '@scenarios/utils/Event';
 
+import { ScenarioContext } from '@scenarios/@types';
 import { buyOrLeaveInteract } from '@scenarios/utils/buyOrLeaveInteract';
 import { findActionBySubtype } from '@scenarios/utils/findActionBySubtype';
 import { interactWithBattle } from '@scenarios/utils/interactWithBattle';
 import { processActions } from '@scenarios/utils/processActions';
-import { AbstractQuest, QuestState } from '@scenarios/utils/Quest';
+
+import { AbstractQuest, QuestId, QuestState } from '@quests';
+import { QuestManager } from '@quests/scenario-10001/QuestManager';
+import { NPCId, AbstractMerchant } from '@npcs';
 import { NPCManager } from '@npcs/scenario-10001/NPCManager';
 
 import { AbstractScenario } from '../AbstractScenario';
-import { ScenarioContext } from '../@types';
-
-import { EventManager } from './events';
-import { QuestManager } from './quests';
 
 const getGoldCount = (difficult: BattleDifficulty): number => {
   if (difficult === 'VERY_EASY') return 8;
@@ -50,13 +48,6 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
 
   protected npcManager: NPCManager = new NPCManager();
 
-  protected _eventManager: EventManager | null = null;
-
-  protected get eventManager(): EventManager {
-    if (this._eventManager == null) throw new Error('eventManager is null');
-    return this._eventManager;
-  }
-
   protected _questManager: QuestManager | null = null;
 
   protected get questManager(): QuestManager {
@@ -69,7 +60,7 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
       additionalInfo: this._state.additionalInfo,
       player: this._state.player,
       battles: {},
-      loadMerchantInfo: (merchantId: string): void => {
+      loadMerchantInfo: (merchantId: NPCId): void => {
         const npc = this.npcManager.get(merchantId);
         if (npc instanceof AbstractMerchant) {
           this.context.currentMerchant = npc;
@@ -79,17 +70,15 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
         this.context.currentMerchant = null;
       },
       currentMerchant: null,
-      loadNPCInfo: (npcId: string): void => {
+      loadNPCInfo: (npcId: NPCId): void => {
         this.context.currentNPC = this.npcManager.get(npcId);
       },
       unloadCurrentNPCInfo: (): void => {
         this.context.currentNPC = null;
       },
       currentNPC: null,
-      events: {},
-      getEvent: (eventId: string): AbstractEvent<EventState> => this.eventManager.get(eventId),
       quests: {},
-      getQuest: (questId: string): AbstractQuest<QuestState> => this.questManager.get(questId),
+      getQuest: (questId: QuestId): AbstractQuest<QuestState> => this.questManager.get(questId),
     };
   }
 
@@ -159,7 +148,6 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
       }
     } catch (error) {
       logger.error('ScenarioNo5Test::_runner', error);
-      console.log(error);
     }
   }
 
@@ -266,7 +254,6 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
   }
 
   public async init(): Promise<void> {
-    this._eventManager = new EventManager({ player: this._state.player });
     this._questManager = new QuestManager({ player: this._state.player, npcManager: this.npcManager });
 
     await super.init();

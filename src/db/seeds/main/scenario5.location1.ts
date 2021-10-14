@@ -4,17 +4,20 @@ import { MapParser } from '@utils/LocationMapParser/MapParser';
 import {
   AbstractEntity,
   InteractionEntity,
-  NPCEntity,
   MapSpotEntity,
   DataContainer,
   createDataCollection,
   DataCollection,
 } from '@db/entities';
 
-import { ConnectorTo, ConnectorFrom } from '../Connector';
+import { npc1Seed } from '@npcs/scenario-5/1/seed';
+import { npc2Seed } from '@npcs/scenario-5/2/seed';
+import { npc3Seed } from '@npcs/scenario-5/3/seed';
+import { npc4Seed } from '@npcs/scenario-5/4/seed';
+import { npc5Seed } from '@npcs/scenario-5/5/seed';
+import { quest1Seed } from '@quests/scenario-5/1/seed';
 
-import { eventBuilder } from './events';
-import { npcInteractionBuilder } from './npcs';
+import { ConnectorTo, ConnectorFrom } from '../Connector';
 
 const parseMap = async (
   dataCollection: DataCollection,
@@ -55,18 +58,15 @@ export interface SeedResult {
   outboundToReturn: ConnectorTo;
 }
 
-const getSpotAndRelatedMerchant = (
-  [data, spots]: [DataCollection['data'], Map<string, DataContainer<MapSpotEntity>>], x: number, y: number,
-): { spot: DataContainer<MapSpotEntity>, npc: DataContainer<NPCEntity> } => {
+const getSpot = (
+  [, spots]: [DataCollection['data'], Map<string, DataContainer<MapSpotEntity>>], x: number, y: number,
+): { spot: DataContainer<MapSpotEntity> } => {
   const spot = spots.get(`${x}:${y}`);
-  const npcLink = spot?.links.find((link) => link.subtype === 'TALK_TO_NPC');
-  const npc = data[npcLink?.to ?? ''] as DataContainer<NPCEntity>;
 
-  if (spot == null || npc == null) throw new Error('Invalid position');
+  if (spot == null) throw new Error('Invalid position');
 
   return {
     spot,
-    npc,
   };
 };
 
@@ -106,45 +106,35 @@ export const scenario5Location1SeedRun = async (): Promise<SeedResult> => {
 
   if (startSpot == null) throw new Error('Invalid position');
 
-  npcInteractionBuilder(
-    'default', {
-      baseInfo,
-      dataCollection,
-      ...getSpotAndRelatedMerchant([dataCollection.data, spots], 1, 10),
-    },
-  );
+  npc1Seed({
+    baseInfo,
+    dataCollection,
+    ...getSpot([dataCollection.data, spots], 1, 10),
+  });
 
-  npcInteractionBuilder(
-    'default', {
-      baseInfo,
-      dataCollection,
-      ...getSpotAndRelatedMerchant([dataCollection.data, spots], 6, 14),
-    },
-  );
+  npc2Seed({
+    baseInfo,
+    dataCollection,
+    ...getSpot([dataCollection.data, spots], 6, 14),
+  });
 
-  npcInteractionBuilder(
-    'default', {
-      baseInfo,
-      dataCollection,
-      ...getSpotAndRelatedMerchant([dataCollection.data, spots], 14, 8),
-    },
-  );
+  npc3Seed({
+    baseInfo,
+    dataCollection,
+    ...getSpot([dataCollection.data, spots], 14, 8),
+  });
 
-  npcInteractionBuilder(
-    'default', {
-      baseInfo,
-      dataCollection,
-      ...getSpotAndRelatedMerchant([dataCollection.data, spots], 22, 2),
-    },
-  );
+  npc4Seed({
+    baseInfo,
+    dataCollection,
+    ...getSpot([dataCollection.data, spots], 22, 2),
+  });
 
-  npcInteractionBuilder(
-    'default', {
-      baseInfo,
-      dataCollection,
-      ...getSpotAndRelatedMerchant([dataCollection.data, spots], 23, 13),
-    },
-  );
+  npc5Seed({
+    baseInfo,
+    dataCollection,
+    ...getSpot([dataCollection.data, spots], 23, 13),
+  });
 
   dataCollection.addLink(intro, {
     ...baseInfo,
@@ -162,11 +152,11 @@ export const scenario5Location1SeedRun = async (): Promise<SeedResult> => {
     subtype: 'OTHER',
   });
 
-  const eventSpot = spots.get('4:1');
+  const quest1Spot = spots.get('4:1');
 
-  if (eventSpot == null) throw new Error('Invalid position');
+  if (quest1Spot == null) throw new Error('Invalid position');
 
-  eventBuilder(1, { baseInfo, spot: eventSpot, dataCollection });
+  quest1Seed({ baseInfo, spot: quest1Spot, dataCollection });
 
   return <const>{
     data: dataCollection.data,

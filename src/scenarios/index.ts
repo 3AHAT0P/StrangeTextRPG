@@ -1,18 +1,1 @@
-import { DemoBaseScenario } from './DemoBaseScenario';
-import { DemoBattleScenario } from './DemoBattleScenario';
-import { DemoMerchantScenario } from './DemoMerchantScenario';
-import { IntroScenario } from './IntroScenario';
-// import { ScenarioNo5 } from './Scenario5';
-import { ScenarioNo5Test } from './Test1';
-import { ScenarioManager } from './ScenarioManager';
-
-const scenarioManager = new ScenarioManager();
-
-scenarioManager.registerScenarioFactory(0, IntroScenario);
-scenarioManager.registerScenarioFactory(900, DemoBaseScenario);
-scenarioManager.registerScenarioFactory(901, DemoBattleScenario);
-scenarioManager.registerScenarioFactory(902, DemoMerchantScenario);
-scenarioManager.registerScenarioFactory(10001, ScenarioNo5Test);
-// scenarioManager.registerScenarioFactory(5, ScenarioNo5);
-
-export { scenarioManager };
+export { ScenarioFactoryOptions, ScenarioManager } from './ScenarioManager';
