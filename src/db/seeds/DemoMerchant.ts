@@ -32,7 +32,7 @@ export const demoMerchantSeedRun = (): DemoMerchantConnectors => {
 
   const npc = dataCollection.addContainer<NPCEntity>('NPC', {
     ...baseInfo,
-    NPCId: 1,
+    NPCId: 'Scenario:DEMO|NPC:1',
     subtype: 'MERCHANT',
   });
 
