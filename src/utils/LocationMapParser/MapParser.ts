@@ -4,14 +4,12 @@ import { createCanvas, loadImage, ImageData } from 'node-canvas';
 import {
   InteractionEntity,
   BattleEntity,
-  NPCEntity,
   MapSpotEntity,
   DataContainer,
   DataCollection,
 } from '@db/entities';
 import { isThroughable, MapSpotSubtype } from '@db/entities/MapSpot';
 import { parseBattleSubtype, isBattleSubtype } from '@db/entities/Battle';
-import { MOVE_ACTIONS } from '@locations/AreaMap';
 import { Matcher } from '@utils/Matcher';
 import logger from '@utils/Logger';
 
@@ -28,6 +26,16 @@ export interface CustomInteractions {
   exitId: string;
   onPlayerDiedId: string;
 }
+
+export type DIRECTION = 'NORTH' | 'SOUTH' | 'WEST' | 'EAST';
+
+export const MOVE_ACTIONS = <const>{
+  TO_WEST: '👣 ⬅️',
+  TO_EAST: '👣 ➡️',
+  TO_NORTH: '👣 ⬆️',
+  TO_SOUTH: '👣 ⬇️',
+  NO_WAY: '🚷',
+};
 
 export class MapParser {
   private _mapImagePath: string;
@@ -81,25 +89,25 @@ export class MapParser {
     await this._mapSpotSubtypeMatcher.run(subtype, { currentSpot, subtype });
   }
 
-  private _createMerchant({ currentSpot }: MatcherContext): void {
-    const npc = this._nodeCollection.addContainer<NPCEntity>(
-      'NPC',
-      {
-        ...this._mapInfo,
-        NPCId: this._sequences.npcId,
-        subtype: 'MERCHANT',
-      },
-    );
-    this._nodeCollection.addLink(currentSpot, {
-      ...this._mapInfo,
-      to: npc.entity.interactionId,
-      text: `💬 Поговорить с торговцем (#${this._sequences.npcId})`,
-      operation: `{{loadMerchantInfo ${this._sequences.npcId}}}`,
-      type: 'CUSTOM',
-      subtype: 'TALK_TO_NPC',
-    });
-    this._sequences.npcId += 1;
-  }
+  // private _createMerchant({ currentSpot }: MatcherContext): void {
+  //   const npc = this._nodeCollection.addContainer<NPCEntity>(
+  //     'NPC',
+  //     {
+  //       ...this._mapInfo,
+  //       NPCId: this._sequences.npcId,
+  //       subtype: 'MERCHANT',
+  //     },
+  //   );
+  //   this._nodeCollection.addLink(currentSpot, {
+  //     ...this._mapInfo,
+  //     to: npc.entity.interactionId,
+  //     text: `💬 Поговорить с торговцем (#${this._sequences.npcId})`,
+  //     operation: `{{loadMerchantInfo ${this._sequences.npcId}}}`,
+  //     type: 'CUSTOM',
+  //     subtype: 'TALK_TO_NPC',
+  //   });
+  //   this._sequences.npcId += 1;
+  // }
 
   private _createLocationExit({ currentSpot }: MatcherContext): void {
     const { exitId } = this._customInteractions;
@@ -131,7 +139,7 @@ export class MapParser {
       ...this._mapInfo,
       to: battle.entity.interactionId,
       text: '',
-      condition: `{{canBattleTrigger ${battle.entity.interactionId} ${chanceOfTriggering}}}`,
+      condition: `{{canBattleTrigger "${battle.entity.interactionId}" ${chanceOfTriggering}}}`,
       type: 'AUTO',
       subtype: 'BATTLE_START',
     });
@@ -164,7 +172,7 @@ export class MapParser {
       ...this._mapInfo,
       to: currentSpot.entity.interactionId,
       text: '',
-      operation: `{{updateBattleImmune ${battle.entity.interactionId} 10}}`,
+      operation: `{{updateBattleImmune "${battle.entity.interactionId}" 10}}`,
       type: 'AUTO',
       subtype: 'OTHER',
     });
@@ -234,8 +242,8 @@ export class MapParser {
 
     this._mapSpotSubtypeMatcher
       .on('BATTLE', this._createBattle.bind(this))
-      .on('LOCATION_EXIT', this._createLocationExit.bind(this))
-      .on('MERCHANT', this._createMerchant.bind(this));
+      .on('LOCATION_EXIT', this._createLocationExit.bind(this));
+    //   .on('MERCHANT', this._createMerchant.bind(this));
   }
 
   public async parse(): Promise<void> {

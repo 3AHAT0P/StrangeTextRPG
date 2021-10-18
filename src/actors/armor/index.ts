@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import { AbstractItem } from '@actors/AbstractItem';
-import type { AbstractActor } from '@actors';
+import type { AbstractActor } from '@actors/AbstractActor';
 
 export type HeadArmorType = 'HELMET' | 'HOOD' | 'HAT';
 export type NeckArmorType = 'NECKLE';
@@ -23,9 +23,16 @@ export abstract class Armor extends AbstractItem {
 
   public abstract armor: number;
 
+  public customEffects?: {
+    health: number;
+  };
+
   // TODO make equip armor
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public use(player: AbstractActor) { return ''; }
+  public use(target: AbstractActor) {
+    target.equipArmor(this);
+    return `${target.getType({ declension: 'nominative', capitalised: true })} надеваешь ${this.name}`;
+  }
 }
 
 export abstract class HeadArmor extends Armor {
@@ -63,6 +70,8 @@ export abstract class InHandArmor extends Armor {
 export class LeatherBodyArmor extends BodyArmor {
   protected readonly baseName = 'шкура';
 
+  protected readonly basePrice = 5;
+
   public readonly type = 'LEATHER';
 
   public readonly subtype = 'LIGHT';
@@ -72,6 +81,8 @@ export class LeatherBodyArmor extends BodyArmor {
 
 export class StrongBonesBodyArmor extends BodyArmor {
   protected readonly baseName = 'твердые кости';
+
+  protected readonly basePrice = 5;
 
   public readonly type = 'SKELETON';
 
@@ -83,6 +94,8 @@ export class StrongBonesBodyArmor extends BodyArmor {
 export class CanvasCoatBodyArmor extends BodyArmor {
   protected readonly baseName = 'поношеная куртка из грубой парусины';
 
+  protected readonly basePrice = 0;
+
   public readonly type = 'COAT';
 
   public readonly subtype = 'LIGHT';
@@ -92,6 +105,8 @@ export class CanvasCoatBodyArmor extends BodyArmor {
 
 export class CanvasTrousersLegsArmor extends LegsArmor {
   protected readonly baseName = 'поношеные штаны из грубой парусины';
+
+  protected readonly basePrice = 0;
 
   public readonly type = 'TROUSERS';
 
@@ -103,9 +118,27 @@ export class CanvasTrousersLegsArmor extends LegsArmor {
 export class BrokenShieldArmor extends InHandArmor {
   protected readonly baseName = 'старый сломаный щит';
 
+  protected readonly basePrice = 3;
+
   public readonly type = 'SHIELD';
 
   public readonly subtype = 'LIGHT';
 
   public readonly armor = 0.2;
+}
+
+export class UniqueOldFamilyRingArmor extends FingersArmor {
+  protected readonly baseName = 'старинное фамильное кольцо с рубином';
+
+  protected readonly basePrice = 30;
+
+  public readonly type = 'RING';
+
+  public readonly subtype = 'LIGHT';
+
+  public readonly armor = 0;
+
+  public readonly customEffects = {
+    health: 20,
+  };
 }

@@ -1,103 +1,106 @@
-import { Player } from '@actors';
+/* eslint-disable max-classes-per-file */
+import { AbstractActorOptions, Player } from '@actors';
 import { AbstractItem } from '@actors/AbstractItem';
-import { HealthPotion } from '@actors/potions';
-import { InteractionModel, NPCModel } from '@db/entities';
-import { ActionsLayout } from '@ui';
-import { filterBy } from '@utils/ArrayUtils';
-import { Template } from '@utils/Template';
-import { AbstractScenario, findActionBySubtype } from './AbstractScenario';
+import { AbstractMerchant } from '@npcs/AbstractMerchant';
+import { SmallHealingPotion } from '@actors/potions';
+import { InteractionModel } from '@db/entities';
+import logger from '@utils/Logger';
+import { BaseScenarioContext, ScenarioWithMerchantsContext } from './@types';
+import { AbstractScenario } from './AbstractScenario';
+import { buyOrLeaveInteract } from './utils/buyOrLeaveInteract';
+import { findActionBySubtype } from './utils/findActionBySubtype';
+import { processActions } from './utils/processActions';
 
-interface MerchantProduct {
-  internalName: string;
-  displayName: string;
-  price: number;
-  item: AbstractItem;
+export class Merchant1 extends AbstractMerchant {
+  protected readonly _id: `Scenario:${number}|Location:1|NPC:1` = `Scenario:${902}|Location:${1}|NPC:${1}`;
+
+  protected readonly declensionOfNouns = <const>{
+    nominative: 'Олаф',
+    genitive: 'Олафа',
+    dative: 'Олафу',
+    accusative: 'Олафа',
+    ablative: 'Олафом',
+    prepositional: 'об Олафе',
+
+    possessive: 'Олафа',
+  };
+
+  protected readonly _maxHealthPoints = 100;
+
+  public readonly name = 'Олаф';
+
+  public get showcase(): AbstractItem[] {
+    return this.inventory.potions;
+  }
+
+  constructor(options: AbstractActorOptions = {}) {
+    super(options);
+    this.inventory.collectGold(200);
+    for (let i = 0; i < 3; i += 1) {
+      this.inventory.collectItem(new SmallHealingPotion());
+    }
+  }
 }
 
-const merchantGoods = new Map<number, Set<MerchantProduct>>();
-merchantGoods.set(1, new Set([
-  {
-    internalName: 'healthPoitions',
-    displayName: 'Зелье лечения',
-    price: 10,
-    item: new HealthPotion(),
-  },
-]));
+export type DemoMerchantScenarioContext = BaseScenarioContext & ScenarioWithMerchantsContext;
 
-export class DemoMerchantScenario extends AbstractScenario {
+export class DemoMerchantScenario extends AbstractScenario<DemoMerchantScenarioContext> {
   protected _scenarioId: number = 902;
 
-  private _goods: Set<MerchantProduct> = new Set<MerchantProduct>();
+  private _merchant: Merchant1 = new Merchant1();
 
-  private _player: Player = new Player();
+  protected _buildContext(): DemoMerchantScenarioContext {
+    return {
+      additionalInfo: this._state.additionalInfo,
+      player: new Player(),
+      loadMerchantInfo: (): void => {
+        this.context.currentMerchant = this._merchant;
+      },
+      unloadCurrentMerchant: (): void => {
+        this.context.currentMerchant = null;
+      },
+      currentMerchant: null,
+    };
+  }
 
   protected async _runner(): Promise<void> {
-    if (this.currentNode instanceof NPCModel) {
-      this._goods = merchantGoods.get(this.currentNode.NPCId) ?? this._goods;
-    }
+    try {
+      if (this.currentNode instanceof InteractionModel) {
+        await this._sendTemplateToUser(this.currentNode.text, this.context);
+      }
 
-    const templateContext = {
-      goods: this._goods,
-      player: this._player,
-    };
+      const processedActions = processActions(await this._cursor.getActions(), this.context);
 
-    if (this.currentNode instanceof InteractionModel) {
-      await this._sendTemplateToUser(this.currentNode.text, templateContext);
-    }
-
-    const actions = await this._cursor.getActions();
-
-    if (actions.length === 1 && actions[0].type === 'AUTO') {
-      this.currentNode = await this._cursor.getNextNode(actions[0]);
-
-      return;
-    }
-
-    const onDealSuccessAction = findActionBySubtype(actions, 'DEAL_SUCCESS');
-    const onDealFailureAction = findActionBySubtype(actions, 'DEAL_FAILURE');
-
-    if (onDealSuccessAction !== null && onDealFailureAction !== null) {
-      // buy
-      const goodArray = Array.from(this._goods);
-      const otherActions = filterBy(actions, 'type', 'CUSTOM');
-
-      const actionText = await this._state.ui.interactWithUser(
-        new ActionsLayout()
-          .addRow(...goodArray.map(({ displayName }) => `Купить ${displayName} (1шт)`))
-          .addRow(...otherActions.map(({ text }) => text.useContext(templateContext).value)),
-      );
-
-      const choosedGood = goodArray.find(({ displayName }) => `Купить ${displayName} (1шт)` === actionText) ?? null;
-
-      if (choosedGood === null) {
-        const choosedAction = otherActions.find(({ text }) => text.isEqualTo(actionText));
-        if (choosedAction == null) throw new Error('choosedGood and choosedAction is undefined');
-
-        if (choosedAction.isPrintable) await this._sendTemplateToUser(choosedAction.text, templateContext);
-        this.currentNode = await this._cursor.getNextNode(choosedAction);
-
+      if (processedActions.auto != null) {
+        await this._updateCurrentNode(processedActions.auto, this.context);
         return;
       }
 
-      const exchangeResult = this._player.exchangeGoldToItem(choosedGood.price, [choosedGood.item]);
-      if (exchangeResult) {
-        await this._sendTemplateToUser(
-          new Template(`⚙️ {{actorType player declension="nominative" capitalised=true}} купил ${choosedGood.displayName.toLowerCase()}`),
-          templateContext,
-        );
-        this.currentNode = await this._cursor.getNextNode(onDealSuccessAction);
-      } else this.currentNode = await this._cursor.getNextNode(onDealFailureAction);
+      if (processedActions.system.length > 0) {
+        const onDealSuccessAction = findActionBySubtype(processedActions.system, 'DEAL_SUCCESS');
+        const onDealFailureAction = findActionBySubtype(processedActions.system, 'DEAL_FAILURE');
+        if (onDealSuccessAction !== null && onDealFailureAction !== null) {
+          const action = await buyOrLeaveInteract(
+            this.context, this._state.ui,
+            onDealSuccessAction, onDealFailureAction, processedActions.custom,
+          );
 
-      return;
+          await this._updateCurrentNode(action, this.context);
+          return;
+        }
+        throw new Error('Unprocessed system actions found');
+      }
+
+      const choosedAction = await this._interactWithUser(processedActions.custom, this.context);
+      await this._updateCurrentNode(choosedAction, this.context);
+    } catch (error) {
+      logger.error('DemoMerchantScenario::_runner', error);
     }
-
-    const choosedAction = await this._interactWithUser(actions, templateContext);
-    this.currentNode = await this._cursor.getNextNode(choosedAction);
   }
 
-  public async init() {
+  public async init(): Promise<void> {
     await super.init();
 
-    this._player.inventory.collectGold(23);
+    this.context.player.inventory.collectGold(23);
   }
 }

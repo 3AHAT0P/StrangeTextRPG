@@ -1,14 +1,14 @@
+import type { NPCSubtype } from '@npcs/@types';
+
 import { AbstractEntity, AbstractModel } from './Abstract';
 
-export type NPCSubtype = 'USUAL' | 'WITH_QUEST' | 'MERCHANT';
-
 export interface NPCEntity extends AbstractEntity {
-  NPCId: number;
+  NPCId: string;
   subtype: NPCSubtype;
 }
 
 export class NPCModel extends AbstractModel {
-  public readonly NPCId: number;
+  public readonly NPCId: string;
 
   public readonly subtype: NPCSubtype;
 

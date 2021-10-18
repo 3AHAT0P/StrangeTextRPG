@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import { Randomizer } from '@utils/Randomizer';
 import { MESSAGES } from '@translations/ru';
@@ -35,14 +37,28 @@ export abstract class AbstractItem {
     return result;
   }
 
+  private _id: string = uuidv4();
+
   protected abstract baseName: string;
 
+  protected abstract basePrice: number;
+
   public readonly rarity: ItemRarity = 'COMMON';
+
+  public get id(): string { return this._id; }
 
   public get name(): string {
     if (this.rarity === 'COMMON') return this.baseName;
 
     return `${this.baseName} [${MESSAGES[this.rarity]}]`;
+  }
+
+  public get price(): number {
+    if (this.rarity === 'DIVINE') return this.basePrice * 10;
+    if (this.rarity === 'LEGENDARY') return this.basePrice * 5;
+    if (this.rarity === 'EPIC') return this.basePrice * 2;
+    if (this.rarity === 'RARE') return this.basePrice * 1.5;
+    return this.basePrice;
   }
 
   constructor(rarity: ItemRarity = 'COMMON') {

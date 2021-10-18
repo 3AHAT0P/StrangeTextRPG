@@ -1,8 +1,9 @@
-import { Transaction, Session, QueryResult } from 'neo4j-driver-core';
+import { Transaction, QueryResult } from 'neo4j-driver-core';
 import { AbstractModel, AbstractEntity } from '@db/entities/Abstract';
 
 import {
   isNode, Node, Relationship,
+  Session,
 } from './common';
 
 export interface DBConnectionOptions {
@@ -82,7 +83,7 @@ export abstract class AbstractNeo4jRepository<
     const data = this.extractFromNode(node);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return new (this.modelClass as any)(data);
+    return new (this.modelClass as any)(data, this.session);
   }
 
   public async create(params: TProperties, options?: DBConnectionOptions): Promise<TModel> {

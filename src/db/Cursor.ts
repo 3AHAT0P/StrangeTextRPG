@@ -1,5 +1,5 @@
 import type { DBService } from './DBService';
-import { OneOFNodeModel } from './entities';
+import { MapSpotModel, OneOFNodeModel } from './entities';
 import { ActionModel } from './entities/Action';
 import { InteractionProperties } from './graph/InteractionNeo4jRepository';
 
@@ -60,5 +60,9 @@ export class Cursor {
 
   public jumpToNode(node: OneOFNodeModel): void {
     this.currentNode = node;
+  }
+
+  public getSpotsAround(mapSpot: MapSpotModel): Promise<MapSpotModel[]> {
+    return this._dbService.repositories.mapSpotRepo.getSpotsAround(mapSpot.scenarioId, mapSpot.x, mapSpot.y);
   }
 }

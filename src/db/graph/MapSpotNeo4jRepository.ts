@@ -55,4 +55,17 @@ export class MapSpotNeo4jRepository extends AbstractNeo4jRepository<
     const actionNeo4jRepository = new ActionNeo4jRepository(this.session);
     return result.records.map((item) => actionNeo4jRepository.fromRecord(item.get(0)));
   }
+
+  public async getSpotsAround(
+    scenarioId: number, x: number, y: number, options?: DBConnectionOptions,
+  ): Promise<MapSpotModel[]> {
+    const result = await this.runQuery(
+      `MATCH (a${this.label} { scenarioId: $scenarioId }) where a.x in $x and a.y in $y RETURN a`,
+      { scenarioId, x: [x - 1, x, x + 1], y: [y - 1, y, y + 1] },
+      false,
+      options,
+    );
+
+    return result.records.map((item) => this.fromRecord(item.get(0)));
+  }
 }

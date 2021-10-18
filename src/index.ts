@@ -1,19 +1,15 @@
 import { Player } from '@actors/Player';
 import { DBService } from '@db/DBService';
 import { Cursor } from '@db/Cursor';
-import { AbstractInteraction } from '@interactions/AbstractInteraction';
-import { SimpleInteraction } from '@interactions/SimpleInteraction';
 import {
   AbstractUI, AbstractSessionUI,
   AdditionalSessionInfo,
   NodeUI, TelegramBotUi,
 } from '@ui';
 import { TelegramBotInlineUi } from '@ui/TelegramBotInlineUI';
-import { DropSessionError } from '@utils/Error/DropSessionError';
 import logger from '@utils/Logger';
 import { getConfig } from 'ConfigProvider';
-import { scenarioManager } from '@scenarios';
-import { ScenarioFactoryOptions } from '@scenarios/ScenarioManager';
+import { ScenarioFactoryOptions, ScenarioManager } from '@scenarios';
 
 import { SessionState } from './SessionState';
 
@@ -23,21 +19,6 @@ class App {
   private sessionStateMap: Map<string, SessionState> = new Map<string, SessionState>();
 
   private dbService = new DBService();
-
-  private async treeTraversal(state: SessionState): Promise<void> {
-    try {
-      const nextInteractions: AbstractInteraction | null = await state.currentInteraction.interact();
-      if (nextInteractions == null || state.status === 'DEAD') return;
-
-      // eslint-disable-next-line no-param-reassign
-      state.currentInteraction = nextInteractions;
-      setTimeout(this.treeTraversal, 16, state);
-    } catch (error) {
-      if (error instanceof DropSessionError) return;
-      logger.error('App::treeTraversal', error);
-      await state.ui.sendToUser('Извините, что-то поломалось.\nЕсли вы не входите в команду разработки, напишите пожалуйста автору.\nСпасибо за понимание ;-)\n');
-    }
-  }
 
   private async closeSession(sessionId: string, ui: AbstractSessionUI | AbstractUI) {
     const state = this.sessionStateMap.get(sessionId);
@@ -63,16 +44,14 @@ class App {
         sessionId,
         additionalInfo,
         player: new Player(),
-        currentInteraction: new SimpleInteraction({ ui, message: 'Hi\n' }),
         finishSession: this.closeSession.bind(null, sessionId, ui),
         status: 'ALIVE',
         ui,
         persistActionsContainers: [],
-        events: { 1: 0 },
-        merchants: {},
-        npcList: {},
       };
       this.sessionStateMap.set(sessionId, state);
+
+      const scenarioManager = new ScenarioManager();
 
       const cursor = new Cursor(this.dbService);
 
@@ -109,7 +88,6 @@ class App {
 
     this.runSession = this.runSession.bind(this);
     this.closeSession = this.closeSession.bind(this);
-    this.treeTraversal = this.treeTraversal.bind(this);
 
     if (type === 'TELEGRAM') this.ui = new TelegramBotUi();
     else if (type === 'TELEGRAM_INLINE') this.ui = new TelegramBotInlineUi();

@@ -1,14 +1,15 @@
-import { NPCModel, NPCEntity, NPCSubtype } from '@db/entities/NPC';
+import { NPCModel, NPCEntity } from '@db/entities/NPC';
 import { ActionModel } from '@db/entities/Action';
+import { NPCSubtype } from '@npcs';
 
 import {
-  Node, Integer, getIntValue, EspeciallyNode, Session,
+  Node, Integer, EspeciallyNode, Session,
 } from './common';
 import { AbstractProperties, AbstractNeo4jRepository, DBConnectionOptions } from './AbstractNeo4jRepository';
 import { ActionNeo4jRepository } from './ActionNeo4jRepository';
 
 export interface NPCProperties extends AbstractProperties {
-  NPCId: Integer | number;
+  NPCId: string;
   subtype: NPCSubtype;
 }
 
@@ -29,7 +30,7 @@ export class NPCNeo4jRepository extends AbstractNeo4jRepository<
 
     return {
       ...entity,
-      NPCId: getIntValue(node.properties.NPCId),
+      NPCId: node.properties.NPCId,
       subtype: node.properties.subtype,
     };
   }

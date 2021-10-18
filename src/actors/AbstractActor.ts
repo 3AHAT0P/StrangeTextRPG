@@ -1,6 +1,8 @@
+import { capitalise } from '@utils/capitalise';
 import type { AbstractInventory } from '@actors/AbstractInventory';
 import type { AbstractItem } from '@actors/AbstractItem';
 import type { Weapon } from '@weapon';
+import type { Armor, InHandArmor } from './armor';
 
 export interface AttackResult {
   damage: number;
@@ -30,23 +32,36 @@ export type DeclensionOfNouns =
   'possessive';
 
 export abstract class AbstractActor {
-  protected type: string = 'unknown';
+  protected abstract type: string;
 
-  protected typePostfix: string = '';
+  protected declensionOfNouns: Record<DeclensionOfNouns, string> = {
+    nominative: 'undefined',
+    genitive: 'undefined',
+    dative: 'undefined',
+    accusative: 'undefined',
+    ablative: 'undefined',
+    prepositional: 'undefined',
 
-  protected maxHealthPoints: number = 0;
+    possessive: 'undefined',
+  };
+
+  protected readonly typePostfix: string = '';
+
+  protected readonly abstract _maxHealthPoints: number;
+
+  protected get maxHealthPoints(): number { return this._maxHealthPoints; }
 
   protected healthPoints: number = 0;
 
-  protected abstract armor: number;
+  protected readonly abstract armor: number;
 
-  protected abstract attackDamage: number;
+  protected readonly abstract attackDamage: number;
 
-  protected abstract criticalChance: number;
+  protected readonly abstract criticalChance: number;
 
-  protected abstract criticalDamageModifier: number;
+  protected readonly abstract criticalDamageModifier: number;
 
-  protected abstract accuracy: number;
+  protected readonly abstract accuracy: number;
 
   abstract inventory: AbstractInventory;
 
@@ -68,9 +83,15 @@ export abstract class AbstractActor {
     if (options.typePostfix != null && options.typePostfix !== '') this.typePostfix = options.typePostfix;
   }
 
-  public abstract getType(options: TypeByDeclensionOfNounOptions): string;
+  public getType({ declension, capitalised = false }: TypeByDeclensionOfNounOptions): string {
+    if (capitalised) return capitalise(this.declensionOfNouns[declension]);
 
-  public abstract getDeathMessage(): string;
+    return this.declensionOfNouns[declension];
+  }
+
+  public getDeathMessage(): string {
+    return `${this.getType({ declension: 'nominative', capitalised: true })} умер!`;
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public exchangeGoldToItem(goldCount: number, items: AbstractItem[]) { return false; }
@@ -107,8 +128,9 @@ export abstract class AbstractActor {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public getReward(player: AbstractActor): string { return ''; }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public equipWeapon(weapon: Weapon, hand: 'LEFT' | 'RIGHT' = 'RIGHT'): void { /* pass */ }
+  public abstract equipWeapon(weapon: Weapon | InHandArmor): void;
+
+  public abstract equipArmor(armor: Armor): void;
 
   public heal(quantity: number): void {
     this.healthPoints += quantity;

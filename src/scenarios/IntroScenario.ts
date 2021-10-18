@@ -1,10 +1,19 @@
 import { InteractionModel } from '@db/entities';
+import { BaseScenarioContext } from './@types';
 import { AbstractScenario } from './AbstractScenario';
+import { processActions } from './utils/processActions';
 
-export class IntroScenario extends AbstractScenario {
+export class IntroScenario extends AbstractScenario<BaseScenarioContext> {
   protected _scenarioId: number = 0;
 
-  protected async _runner() {
+  protected _buildContext(): BaseScenarioContext {
+    return {
+      additionalInfo: this._state.additionalInfo,
+      player: this._state.player,
+    };
+  }
+
+  protected async _runner(): Promise<void> {
     if (this.currentNode instanceof InteractionModel) {
       if (this.currentNode.interactionId === '3') {
         this._callbacks.onExit();
@@ -13,12 +22,14 @@ export class IntroScenario extends AbstractScenario {
       await this._sendTemplateToUser(this.currentNode.text);
     }
 
-    const actions = await this._cursor.getActions();
-    if (actions.length === 1 && actions[0].type === 'AUTO') {
-      this.currentNode = await this._cursor.getNextNode(actions[0]);
-    } else {
-      const choosedAction = await this._interactWithUser(actions);
-      this.currentNode = await this._cursor.getNextNode(choosedAction);
+    const processedActions = processActions(await this._cursor.getActions(), this.context);
+
+    if (processedActions.auto != null) {
+      await this._updateCurrentNode(processedActions.auto, this.context);
+      return;
     }
+
+    const choosedAction = await this._interactWithUser(processedActions.custom, this.context);
+    await this._updateCurrentNode(choosedAction, this.context);
   }
 }

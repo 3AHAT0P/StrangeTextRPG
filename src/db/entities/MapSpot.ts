@@ -3,7 +3,7 @@ import type { BattleSpotSubtype } from './Battle';
 
 export type MapSpotSubtype = 'UNREACHABLE' | 'BREAK' | 'WALL' | 'LOCATION_EXIT' | 'HOUSE' | 'HOUSE_DOOR'
 | 'EMPTY'
-| 'MERCHANT' | 'NPC' | 'QUEST_NPC'| 'GUARD' | 'BANDIT_GUARD'
+| 'MERCHANT' | 'NPC' | 'QUEST_NPC' | 'GUARD' | 'BANDIT_GUARD'
 | BattleSpotSubtype;
 
 export interface MapSpotEntity extends AbstractEntity {

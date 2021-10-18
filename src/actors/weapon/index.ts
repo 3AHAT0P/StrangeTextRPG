@@ -22,11 +22,16 @@ export abstract class Weapon extends AbstractItem {
 
   // TODO make equip weapon
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public use(player: AbstractActor) { return ''; }
+  public use(target: AbstractActor) {
+    target.equipWeapon(this);
+    return `${target.getType({ declension: 'nominative', capitalised: true })} надеваешь ${this.name}`;
+  }
 }
 
 export class EmptyWeapon extends Weapon {
   protected readonly baseName = 'ничего';
+
+  protected readonly basePrice = 0;
 
   public readonly type = 'NONE';
 
@@ -43,6 +48,8 @@ export class EmptyWeapon extends Weapon {
 
 export class TeethWeapon extends Weapon {
   protected readonly baseName = 'острые зубы';
+
+  protected readonly basePrice = 1;
 
   public readonly type = 'TEETH';
 
@@ -61,6 +68,8 @@ export class TeethWeapon extends Weapon {
 export class PawsWeapon extends Weapon {
   protected readonly baseName = 'острые когти';
 
+  protected readonly basePrice = 1;
+
   public readonly type = 'PAWS';
 
   public readonly subtype = 'ESPECIAL';
@@ -77,6 +86,8 @@ export class PawsWeapon extends Weapon {
 export class FistWeapon extends Weapon {
   protected readonly baseName = 'кулаки';
 
+  protected readonly basePrice = 0;
+
   public readonly type = 'FIST';
 
   public readonly subtype = 'ESPECIAL';
@@ -92,6 +103,8 @@ export class FistWeapon extends Weapon {
 
 export class KnifeWeapon extends Weapon {
   protected readonly baseName: string = 'нож';
+
+  protected readonly basePrice = 5;
 
   public readonly professions = <const>{ skinning: 1 };
 
@@ -118,6 +131,8 @@ export class KnifeWeapon extends Weapon {
 export class RustedSwordWeapon extends Weapon {
   protected readonly baseName: string = 'ржавый меч';
 
+  protected readonly basePrice = 1;
+
   readonly type = 'SWORD';
 
   readonly subtype = 'ONE_HAND';
@@ -139,6 +154,8 @@ export class RustedSwordWeapon extends Weapon {
 
 export class RustedAxeWeapon extends Weapon {
   protected readonly baseName: string = 'ржавый топор';
+
+  protected readonly basePrice = 2;
 
   readonly type = 'AXE';
 

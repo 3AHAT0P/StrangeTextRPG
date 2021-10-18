@@ -1,7 +1,13 @@
 import { AbstractActor, AttackResult } from '@actors/AbstractActor';
+import { AbstractItem } from '@actors/AbstractItem';
 import Handlebars from 'handlebars';
 
 export type TemplateDelegate<TContext> = Handlebars.TemplateDelegate<TContext>;
+
+const logDecorator = (cb: any, name: string = 'DEFAULT') => (...args: any[]) => {
+  console.log(name, ...args);
+  return cb(...args);
+};
 
 // Define helpers
 Handlebars.registerHelper('actorType', (actor, ctx: any) => actor.getType(ctx.hash));
@@ -23,21 +29,56 @@ Handlebars.registerHelper('isGTE', (leftOperand: any, rightOperand: any) => left
 Handlebars.registerHelper('isEQ', (leftOperand: any, rightOperand: any) => leftOperand === rightOperand);
 
 Handlebars.registerHelper(
-  'updateEventState',
-  (eventId: number, value: number, ctx: any) => {
-    Reflect.get(ctx.data.root.events, eventId).updateState(value);
+  'updateQuestState',
+  (questId: string, value: number, ctx: any) => {
+    Reflect.get(ctx.data, 'root').getQuest(questId).updateState(value);
     return true;
   },
 );
 
 Handlebars.registerHelper(
-  'eventStateIsEQ',
-  (eventId: number, value: number, ctx: any) => Reflect.get(ctx.data.root.events, eventId).state === value,
+  'questStateIsEQ',
+  (questId: string, value: number, ctx: any) => Reflect.get(ctx.data, 'root').getQuest(questId).state === value,
+);
+
+Handlebars.registerHelper(
+  'inventory_dropItemById',
+  (target: AbstractActor, item: AbstractItem) => target.inventory.dropItem(item),
+);
+
+Handlebars.registerHelper(
+  'inventory_findItemByClassName',
+  (
+    target: AbstractActor,
+    type: 'ARMOR' | 'WEAPON' | 'POTION' | 'MISC',
+    className: string,
+  ) => target.inventory.getItemsByClassName(type, className),
+);
+
+Handlebars.registerHelper(
+  'inventory_getItemsNumberByClassName',
+  (
+    target: AbstractActor,
+    type: 'ARMOR' | 'WEAPON' | 'POTION' | 'MISC',
+    className: string,
+  ) => target.inventory.getItemsByClassName(type, className).length,
+);
+
+Handlebars.registerHelper(
+  'call',
+  (
+    target: any,
+    key: string,
+    ...args: any[]
+  ) => {
+    const ctx = args.pop();
+    return target[key](...args);
+  },
 );
 
 Handlebars.registerHelper(
   'updateBattleImmune',
-  (battleId: number, value: number, ctx: any) => {
+  (battleId: string, value: number, ctx: any) => {
     const oldValue = Number(Reflect.get(ctx.data.root.battles, battleId));
     const newValue = Number.isNaN(oldValue) ? value : oldValue + value;
     Reflect.set(
@@ -51,7 +92,7 @@ Handlebars.registerHelper(
 
 Handlebars.registerHelper(
   'canBattleTrigger',
-  (battleId: number, chance: number, ctx: any) => {
+  (battleId: string, chance: number, ctx: any) => {
     const rawValue = Number(Reflect.get(ctx.data.root.battles, battleId));
     const value = Number.isNaN(rawValue) ? 0 : rawValue;
     if (value !== 0) {
@@ -68,8 +109,32 @@ Handlebars.registerHelper(
 
 Handlebars.registerHelper(
   'loadMerchantInfo',
-  (merchantId: number, ctx: any) => {
-    ctx.data.root.loadMerchantGoods(merchantId);
+  (merchantId: string, ctx: any) => {
+    ctx.data.root.loadMerchantInfo(merchantId);
+    return true;
+  },
+);
+
+Handlebars.registerHelper(
+  'unloadCurrentMerchant',
+  (ctx: any) => {
+    ctx.data.root.unloadCurrentMerchant();
+    return true;
+  },
+);
+
+Handlebars.registerHelper(
+  'loadNPCInfo',
+  (npcId: string, ctx: any) => {
+    ctx.data.root.loadNPCInfo(npcId);
+    return true;
+  },
+);
+
+Handlebars.registerHelper(
+  'unloadCurrentNPCInfo',
+  (ctx: any) => {
+    ctx.data.root.unloadCurrentNPCInfo();
     return true;
   },
 );
