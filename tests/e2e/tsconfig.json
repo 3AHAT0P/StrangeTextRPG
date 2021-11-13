@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "target": "ESNEXT",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./",
+    "removeComments": true,
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
+    "noUncheckedIndexedAccess": false,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": [
+        "../../../src/*"
+      ],
+      "@ui": [
+        "../../../src/ui/index"
+      ],
+      "@ui/*": [
+        "../../../src/ui/*"
+      ],
+      "@translations": [
+        "../../../src/translations/index"
+      ],
+      "@translations/*": [
+        "../../../src/translations/*"
+      ]
+    },
+    "types": [
+      "node",
+      "jest"
+    ],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true
+  }
+}

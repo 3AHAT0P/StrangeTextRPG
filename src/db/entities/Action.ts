@@ -5,6 +5,8 @@ export type ActionType = 'SYSTEM' | 'AUTO' | 'CUSTOM';
 export type ActionSubtype = 'TALK_TO_NPC' | 'START_QUEST' | 'DEAL_SUCCESS' | 'DEAL_FAILURE'
 | 'MOVE_TO_WEST' | 'MOVE_TO_EAST' | 'MOVE_TO_NORTH' | 'MOVE_TO_SOUTH' | 'MOVE_FORBIDDEN'
 | 'EXIT_LOCATION' | 'OTHER' | 'BACK' | 'RELOAD'
+| 'SHOW_HELP' | 'SHOW_MAP' | 'INVENTORY_OPEN' | 'INVENTORY_CLOSE' | 'TAKE_A_REST' | 'OPEN_MAIN_MENU'
+| 'START_NEW_GAME' | 'DONATE_LINK' | 'MAIN_CONTACT' // handshacke
 | 'BATTLE_START' | 'BATTLE_WIN' | 'BATTLE_LOSE' | 'BATTLE_LEAVE';
 
 export interface ActionEntity extends AbstractEntity {

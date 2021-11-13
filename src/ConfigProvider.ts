@@ -1,11 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import config from '../.env.json';
 
+export const MainUIKinds = <const>['NODE', 'TELEGRAM', 'TELEGRAM_INLINE', 'SOCKET'];
+
+export type MainUIType = typeof MainUIKinds[number];
+
 export interface Config {
   TELEGRAM_BOT_TOKEN: string;
   DONATE_LINK: string;
   MAIN_CONTACT: string;
-  MAIN_UI: 'NODE' | 'TELEGRAM' | 'TELEGRAM_INLINE';
+  MAIN_UI: MainUIType;
   NEO4J_URL: string;
   NEO4J_LOGIN: string;
   NEO4J_PASSWORD: string;
@@ -16,7 +20,7 @@ const cache: Config = {
   TELEGRAM_BOT_TOKEN: '',
   DONATE_LINK: '',
   MAIN_CONTACT: '',
-  MAIN_UI: 'NODE',
+  MAIN_UI: 'SOCKET',
   NEO4J_URL: '',
   NEO4J_LOGIN: '',
   NEO4J_PASSWORD: '',
@@ -26,10 +30,10 @@ class ConfigValidationError extends Error {}
 
 const isEmptyStringOrNull = (value: string | void): value is void => value == null || value === '';
 
-const validateMainUIType = (value: string | void): value is Config['MAIN_UI'] => {
+const validateMainUIType = (value: any): value is MainUIType => {
   if (isEmptyStringOrNull(value)) throw new ConfigValidationError('MAIN_UI is required');
 
-  if (!['NODE', 'TELEGRAM', 'TELEGRAM_INLINE'].includes(value)) {
+  if (!MainUIKinds.includes(value)) {
     throw new ConfigValidationError('MAIN_UI value is incorrect');
   }
 
