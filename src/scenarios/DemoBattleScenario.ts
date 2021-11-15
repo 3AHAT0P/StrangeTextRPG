@@ -1,9 +1,11 @@
 import { Player, Rat } from '@actors';
 import { KnifeWeapon } from '@actors/weapon';
 import { BattleModel, InteractionModel } from '@db/entities';
+import { safeGet, throwTextFnCarried } from '@utils';
 import { BaseScenarioContext } from './@types';
 import { AbstractScenario } from './AbstractScenario';
-import { interactWithBattle } from './utils/interactWithBattle';
+import { Battle } from './utils/Battle';
+import { findActionBySubtype } from './utils/findActionBySubtype';
 import { processActions } from './utils/processActions';
 
 export class DemoBattleScenario extends AbstractScenario<BaseScenarioContext> {
@@ -18,25 +20,29 @@ export class DemoBattleScenario extends AbstractScenario<BaseScenarioContext> {
 
   protected async _runner(): Promise<void> {
     if (this.currentNode instanceof InteractionModel) await this._sendTemplateToUser(this.currentNode.text);
+
+    const actions = await this._cursor.getActions();
+
     if (this.currentNode instanceof BattleModel) {
       const player = new Player();
       player.equipWeapon(new KnifeWeapon());
-      const action = await interactWithBattle(
-        this._state.ui,
-        this._cursor,
+
+      const battleInteraction = new Battle({
+        ui: this._state.ui,
         player,
-        [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' })],
+        enemies: [new Rat({ typePostfix: '№1' }), new Rat({ typePostfix: '№2' })],
+      });
+
+      const actionType = await battleInteraction.activate();
+      const action = safeGet(
+        findActionBySubtype(actions, actionType),
+        throwTextFnCarried('Action type is wrong'),
       );
-
-      if (action != null) {
-        await this._updateCurrentNode(action, this.context);
-        return;
-      }
-
-      throw new Error('Action is null');
+      await this._updateCurrentNode(action, this.context);
+      return;
     }
 
-    const processedActions = processActions(await this._cursor.getActions(), this.context);
+    const processedActions = processActions(actions, this.context);
 
     if (processedActions.auto != null) {
       await this._updateCurrentNode(processedActions.auto, this.context);

@@ -1,4 +1,4 @@
-import { AbstractUI } from '@ui/AbstractUI';
+import { AbstractUI } from '@ui/@types';
 import { ActionsLayout } from '@ui/ActionsLayout';
 import logger from '@utils/Logger';
 // eslint-disable-next-line import/no-cycle

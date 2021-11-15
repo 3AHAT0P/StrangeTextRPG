@@ -12,7 +12,7 @@ import {
   AdditionalSessionInfo,
 } from '../@types';
 import { SessionUIProxy } from '../SessionUIProxy';
-import { UserActSelectorManager } from '../UserActSelectors/UserActSelectorManager';
+import { UserActSelectorManager, UserActSelectorType } from '../UserActSelectors/UserActSelectorManager';
 import { BaseUserActSelector } from '../UserActSelectors/BaseUserActSelector';
 
 import { UserActSelectorSocketAdapter } from './UserActSelectorSocketAdapter';
@@ -91,25 +91,22 @@ export class SocketUI implements AbstractSessionUI {
     return this;
   }
 
-  public createUserActSelector(sessionId: string, id: string, type: string): BaseUserActSelector {
-    console.log('!@#!@#!@#!@#!@#', sessionId, [...this._clientMap.entries()]);
+  public createUserActSelector(sessionId: string, type: UserActSelectorType): BaseUserActSelector {
     const { manager } = safeGet(
       this._clientMap.get(sessionId),
       throwTextFnCarried('Manager is null. Incorrect sessionId'),
     );
     const actSelector = manager.create(type);
-    manager.add(id, actSelector);
     return actSelector;
   }
 
-  public getUserActSelector(sessionId: string, id: string): BaseUserActSelector {
-    console.log('!@#!@#!@#!@#!@#', sessionId, [...this._clientMap.entries()]);
+  public getUserActSelector(sessionId: string, type: UserActSelectorType): BaseUserActSelector {
     const { manager } = safeGet(
       this._clientMap.get(sessionId),
       throwTextFnCarried('Manager is null. Incorrect sessionId'),
     );
-    const actSelector = manager.takeOrCreate(id);
-    manager.add(id, actSelector);
+    const actSelector = manager.takeOrCreate(type);
+    manager.add(type, actSelector);
     return actSelector;
   }
 

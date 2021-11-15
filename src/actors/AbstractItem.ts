@@ -50,7 +50,7 @@ export abstract class AbstractItem {
   public get name(): string {
     if (this.rarity === 'COMMON') return this.baseName;
 
-    return `${this.baseName} [${MESSAGES[this.rarity]}]`;
+    return `${this.baseName} [${MESSAGES.rarity.male[this.rarity]}]`;
   }
 
   public get price(): number {

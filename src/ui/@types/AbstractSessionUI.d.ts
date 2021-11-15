@@ -1,13 +1,14 @@
-import type { BaseUserActSelector } from '@ui/UserActSelectors/BaseUserActSelector';
+import type { BaseUserActSelector } from '../UserActSelectors/BaseUserActSelector';
+import type { UserActSelectorType } from '../UserActSelectors/UserActSelectorManager';
 
 import { StartTheGameCallback, FinishTheGameCallback } from './GameCallbacks';
 
 export interface AbstractSessionUI {
   init(runOnStart: StartTheGameCallback, runOnFinish: FinishTheGameCallback): this;
 
-  createUserActSelector(sessionId: string, id: string, type: string): BaseUserActSelector;
+  createUserActSelector(sessionId: string, type: UserActSelectorType): BaseUserActSelector;
 
-  getUserActSelector(sessionId: string, id: string): BaseUserActSelector;
+  getUserActSelector(sessionId: string, type: UserActSelectorType): BaseUserActSelector;
 
   sendToUser(sessionId: string, message: string, cleanAcions?: boolean): Promise<void>;
 

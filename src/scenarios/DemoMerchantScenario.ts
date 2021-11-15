@@ -77,18 +77,13 @@ export class DemoMerchantScenario extends AbstractScenario<DemoMerchantScenarioC
       }
 
       if (processedActions.system.length > 0) {
-        const onDealSuccessAction = findActionBySubtype(processedActions.system, 'DEAL_SUCCESS');
-        const onDealFailureAction = findActionBySubtype(processedActions.system, 'DEAL_FAILURE');
-        if (onDealSuccessAction !== null && onDealFailureAction !== null) {
-          const action = await buyOrLeaveInteract(
-            this.context, this._state.ui,
-            onDealSuccessAction, onDealFailureAction, processedActions.custom,
-          );
+        // @TODO: if (this.context.uiStatus === 'TRADE') {}
+        const actionType = await buyOrLeaveInteract(this.context, this._state.ui, processedActions.custom);
+        const action = findActionBySubtype(processedActions.system.concat(processedActions.custom), actionType);
 
-          await this._updateCurrentNode(action, this.context);
-          return;
-        }
-        throw new Error('Unprocessed system actions found');
+        if (action === null) throw new Error('Unprocessed system actions found');
+        await this._updateCurrentNode(action, this.context);
+        return;
       }
 
       const choosedAction = await this._interactWithUser(processedActions.custom, this.context);

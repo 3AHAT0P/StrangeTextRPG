@@ -1,14 +1,15 @@
 import { Cursor } from '@db/Cursor';
 import { OneOFNodeModel, InteractionModel, BattleModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
-import { ActionsLayout } from '@ui';
 import { Template } from '@utils/Template';
 import logger from '@utils/Logger';
+import { safeGet, throwTextFnCarried } from '@utils';
 import { SessionState } from 'SessionState';
 
 import { BaseScenarioContext } from './@types';
-import { interactWithBattle } from './utils/interactWithBattle';
 import { processActions } from './utils/processActions';
+import { Battle } from './utils/Battle';
+import { findActionBySubtype } from './utils/findActionBySubtype';
 
 export interface ScenarioCallbacks {
   onChangeScenario: (scenarioId: number) => void;
@@ -30,6 +31,8 @@ export abstract class AbstractScenario<TScenarioContext extends BaseScenarioCont
     if (this._context == null) throw new Error('context is null');
     return this._context;
   }
+
+  protected _userActSelectorId: string | null = null;
 
   protected currentNode: OneOFNodeModel | null = null;
 
@@ -60,19 +63,22 @@ export abstract class AbstractScenario<TScenarioContext extends BaseScenarioCont
   protected async _runner(): Promise<void> {
     if (this.currentNode instanceof InteractionModel) await this._sendTemplateToUser(this.currentNode.text);
 
-    if (this.currentNode instanceof BattleModel) {
-      const action = await interactWithBattle(
-        this._state.ui,
-        this._cursor,
-        this._state.player,
-        [],
-      );
-      if (action != null) {
-        await this._updateCurrentNode(action, this.context);
-        return;
-      }
+    const actions = await this._cursor.getActions();
 
-      throw new Error('Action is null');
+    if (this.currentNode instanceof BattleModel) {
+      const battleInteraction = new Battle({
+        ui: this._state.ui,
+        player: this._state.player,
+        enemies: [],
+      });
+
+      const actionType = await battleInteraction.activate();
+      const action = safeGet(
+        findActionBySubtype(actions, actionType),
+        throwTextFnCarried('Action type is wrong'),
+      );
+      await this._updateCurrentNode(action, this.context);
+      return;
     }
 
     const processedActions = processActions(await this._cursor.getActions(), this.context);
@@ -109,11 +115,17 @@ export abstract class AbstractScenario<TScenarioContext extends BaseScenarioCont
     actions: ActionModel[],
     context: TScenarioContext = this.context,
   ): Promise<ActionModel> {
-    const actionText = await this._state.ui.interactWithUser(
-      new ActionsLayout().addRow(...actions.map(({ text }) => text.useContext(context).value)),
-    );
+    const actSelector = this._state.ui.createUserActSelector('BASE');
 
-    const choosedAction = actions.find(({ text }) => text.isEqualTo(actionText));
+    let index: number = 0;
+    for (const action of actions) {
+      actSelector.addAction(action.text.useContext(context).value, action.subtype, Math.trunc(index / 3));
+      index += 1;
+    }
+
+    const actionType = await actSelector.show();
+
+    const choosedAction = actions.find(({ subtype }) => subtype === actionType);
 
     if (choosedAction == null) throw new Error('choosedAction is null');
 

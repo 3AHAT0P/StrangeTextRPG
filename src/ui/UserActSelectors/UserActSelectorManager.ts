@@ -3,10 +3,13 @@ import { UserActSelectorAbstractAdapter } from '@ui/UserActSelectorAbstractAdapt
 import { BaseUserActSelector, UserActSelectorOptions } from './BaseUserActSelector';
 import { OnMapUserActSelector } from './OnMapUserActSelector';
 import { HandshakeUserActSelector } from './HandshakeUserActSelector';
+import { BattleUserActSelector } from './BattleUserActSelector';
 
 interface UserActSelectorFactory {
   new(options: UserActSelectorOptions): BaseUserActSelector;
 }
+
+export type UserActSelectorType = 'BASE' | 'ON_MAP' | 'HANDSHAKE' | 'BATTLE';
 
 export class UserActSelectorManager {
   private static readonly _unitFactoryMap: Map<string, UserActSelectorFactory> = new Map();
@@ -57,3 +60,4 @@ export class UserActSelectorManager {
 UserActSelectorManager.registerFactory('BASE', BaseUserActSelector);
 UserActSelectorManager.registerFactory('ON_MAP', OnMapUserActSelector);
 UserActSelectorManager.registerFactory('HANDSHAKE', HandshakeUserActSelector);
+UserActSelectorManager.registerFactory('BATTLE', BattleUserActSelector);

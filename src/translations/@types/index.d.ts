@@ -31,15 +31,22 @@ export interface PoitionTranslations {
 }
 
 export interface OnMapActionsTranslations {
-  SHOW_HELP: '❓ Справка',
-  MOVE_TO_NORTH: '⬆️ На север',
-  SHOW_MAP: '🗺 Карта',
-  MOVE_TO_WEST: '⬅️ На запад',
-  INVENTORY_OPEN: '🎒 Инвентарь',
-  MOVE_TO_EAST: '➡️ На восток',
-  TAKE_A_REST: '🛏 Отдохнуть',
-  MOVE_TO_SOUTH: '⬇️ На юг',
-  OPEN_MAIN_MENU: '⚙️ Меню',
+  SHOW_HELP: string;
+  MOVE_TO_NORTH: string;
+  SHOW_MAP: string;
+  MOVE_TO_WEST: string;
+  INVENTORY_OPEN: string;
+  MOVE_TO_EAST: string;
+  TAKE_A_REST: string;
+  MOVE_TO_SOUTH: string;
+  OPEN_MAIN_MENU: string;
+}
+
+export interface BattleActionsTranslations {
+  ATTACK: string;
+  EXAMINE: string;
+  BACK: string;
+  LEAVE: string;
 }
 
 export interface Translations {
@@ -48,6 +55,7 @@ export interface Translations {
   readonly potions: PoitionTranslations;
 
   readonly onMapActions: OnMapActionsTranslations;
+  readonly battleActions: BattleActionsTranslations;
 
   readonly actionPlaceholder: string;
 

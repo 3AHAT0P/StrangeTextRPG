@@ -2,7 +2,7 @@ import { Telegraf, Markup } from 'telegraf';
 
 import { getConfig } from 'ConfigProvider';
 import logger from '@utils/Logger';
-import { safeGet, throwTextFn } from '@utils';
+import { safeGet, throwTextFn, throwTextFnCarried } from '@utils';
 
 import {
   AbstractSessionUI,
@@ -11,7 +11,7 @@ import {
 } from '../@types';
 import { SessionUIProxy } from '../SessionUIProxy';
 import { BaseUserActSelector } from '../UserActSelectors/BaseUserActSelector';
-import { UserActSelectorManager } from '../UserActSelectors/UserActSelectorManager';
+import { UserActSelectorManager, UserActSelectorType } from '../UserActSelectors/UserActSelectorManager';
 
 const config = getConfig();
 
@@ -85,23 +85,22 @@ export class TelegramBotInlineUi implements AbstractSessionUI {
     return this;
   }
 
-  public createUserActSelector(sessionId: string, id: string, type: string): BaseUserActSelector {
+  public createUserActSelector(sessionId: string, type: UserActSelectorType): BaseUserActSelector {
     const manager = safeGet(
       this._clientMap.get(sessionId),
-      throwTextFn('Manager is null. Incorrect sessionId'),
+      throwTextFnCarried('Manager is null. Incorrect sessionId'),
     );
     const actSelector = manager.create(type);
-    manager.add(id, actSelector);
     return actSelector;
   }
 
-  public getUserActSelector(sessionId: string, id: string): BaseUserActSelector {
+  public getUserActSelector(sessionId: string, type: UserActSelectorType): BaseUserActSelector {
     const manager = safeGet(
       this._clientMap.get(sessionId),
-      throwTextFn('Manager is null. Incorrect sessionId'),
+      throwTextFnCarried('Manager is null. Incorrect sessionId'),
     );
-    const actSelector = manager.takeOrCreate(id);
-    manager.add(id, actSelector);
+    const actSelector = manager.takeOrCreate(type);
+    manager.add(type, actSelector);
     return actSelector;
   }
 

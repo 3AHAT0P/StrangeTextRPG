@@ -1,20 +1,19 @@
 import { MainUIType } from 'ConfigProvider';
-// import { Player } from '@actors/Player';
+import { Player } from '@actors/Player';
 import { DBService } from '@db/DBService';
-// import { Cursor } from '@db/Cursor';
+import { Cursor } from '@db/Cursor';
 
 import {
   AbstractUI, AbstractSessionUI,
   AdditionalSessionInfo,
 } from '@ui/@types';
 import {
-  // TelegramBotUi, TelegramBotInlineUI,
+  TelegramBotUi, TelegramBotInlineUi,
   SocketUI,
 } from '@ui';
 
-// import { TelegramBotInlineUi } from '@ui/TelegramBotInlineUI';
 import logger from '@utils/Logger';
-// import { ScenarioFactoryOptions, ScenarioManager } from '@scenarios';
+import { ScenarioFactoryOptions, ScenarioManager } from '@scenarios';
 
 import { SessionState } from './SessionState';
 
@@ -31,7 +30,6 @@ export class App {
 
     await ui.closeSession(sessionId);
     state.status = 'DEAD';
-    await Promise.all(state.persistActionsContainers.map((container) => container.delete()));
     this.sessionStateMap.delete(sessionId);
   }
 
@@ -41,41 +39,40 @@ export class App {
     additionalInfo: AdditionalSessionInfo,
   ): Promise<void> {
     try {
-      // if (this.sessionStateMap.get(sessionId) != null) {
-      //   await ui.sendToUser('У тебя уже начата игровая сессия. Если хочешь начать с начала нажми на кнопку "Finish", а затем "Start" в закрепленном сообщении');
-      //   return;
-      // }
-      // const state: SessionState = {
-      //   sessionId,
-      //   additionalInfo,
-      //   player: new Player(),
-      //   finishSession: this.closeSession.bind(null, sessionId, ui),
-      //   status: 'ALIVE',
-      //   ui,
-      //   persistActionsContainers: [],
-      // };
-      // this.sessionStateMap.set(sessionId, state);
+      if (this.sessionStateMap.get(sessionId) != null) {
+        await ui.sendToUser('У тебя уже начата игровая сессия. Если хочешь начать с начала нажми на кнопку "Finish", а затем "Start" в закрепленном сообщении');
+        return;
+      }
+      const state: SessionState = {
+        sessionId,
+        additionalInfo,
+        player: new Player(),
+        finishSession: this.closeSession.bind(null, sessionId, ui),
+        status: 'ALIVE',
+        ui,
+      };
+      this.sessionStateMap.set(sessionId, state);
 
-      // const scenarioManager = new ScenarioManager();
+      const scenarioManager = new ScenarioManager();
 
-      // const cursor = new Cursor(this.dbService);
+      const cursor = new Cursor(this.dbService);
 
-      // const onChangeScenario = async (scenarioId: number) => {
-      //   // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      //   const nextScenario = await scenarioManager.takeOrCreateScenario(scenarioId, scenarioFactoryOptions);
-      //   nextScenario.run();
-      // };
+      const onChangeScenario = async (scenarioId: number) => {
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        const nextScenario = await scenarioManager.takeOrCreateScenario(scenarioId, scenarioFactoryOptions);
+        nextScenario.run();
+      };
 
-      // const scenarioFactoryOptions: ScenarioFactoryOptions = {
-      //   cursor,
-      //   state,
-      //   callbacks: {
-      //     onChangeScenario,
-      //     onExit: state.finishSession,
-      //   },
-      // };
+      const scenarioFactoryOptions: ScenarioFactoryOptions = {
+        cursor,
+        state,
+        callbacks: {
+          onChangeScenario,
+          onExit: state.finishSession,
+        },
+      };
 
-      // await onChangeScenario(0);
+      await onChangeScenario(0);
     } catch (error) {
       logger.error('App::runSession', error);
     }
@@ -94,15 +91,13 @@ export class App {
     this.runSession = this.runSession.bind(this);
     this.closeSession = this.closeSession.bind(this);
 
-    this.ui = new SocketUI();
-    console.log('!!!!!!!!!!!');
-    // if (type === 'TELEGRAM') this.ui = new TelegramBotUi();
-    // else if (type === 'TELEGRAM_INLINE') this.ui = new TelegramBotInlineUi();
-    // else this.ui = new NodeUI();
+    if (type === 'TELEGRAM') this.ui = new TelegramBotUi();
+    else if (type === 'TELEGRAM_INLINE') this.ui = new TelegramBotInlineUi();
+    else if (type === 'SOCKET') this.ui = new SocketUI();
+    else throw new Error('Invalid UIType');
   }
 
   public init() {
-    console.log('!!!!!!!!!!!2');
     this.ui.init(this.runSession, this.closeSession);
   }
 }

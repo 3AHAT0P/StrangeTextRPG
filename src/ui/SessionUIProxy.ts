@@ -4,6 +4,7 @@ import {
 } from './@types';
 
 import { BaseUserActSelector } from './UserActSelectors/BaseUserActSelector';
+import { UserActSelectorType } from './UserActSelectors/UserActSelectorManager';
 
 export class SessionUIProxy implements AbstractUI {
   constructor(
@@ -16,12 +17,12 @@ export class SessionUIProxy implements AbstractUI {
     return this;
   }
 
-  public createUserActSelector(id: string, type: string): BaseUserActSelector {
-    return this._baseUI.createUserActSelector(this._sessionId, id, type);
+  public createUserActSelector(type: UserActSelectorType): BaseUserActSelector {
+    return this._baseUI.createUserActSelector(this._sessionId, type);
   }
 
-  public getUserActSelector(id: string): BaseUserActSelector {
-    return this._baseUI.getUserActSelector(this._sessionId, id);
+  public getUserActSelector(type: UserActSelectorType): BaseUserActSelector {
+    return this._baseUI.getUserActSelector(this._sessionId, type);
   }
 
   public sendToUser(message: string, cleanAcions?: boolean): Promise<void> {
