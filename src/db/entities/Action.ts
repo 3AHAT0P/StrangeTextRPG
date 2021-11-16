@@ -13,7 +13,8 @@ export type ActionBattleSubtypes = 'ATTACK' | `ATTACK_${number}` | 'EXAMINE' | `
 | 'BATTLE_START' | 'BATTLE_WIN' | 'BATTLE_LOSE' | 'BATTLE_LEAVE' | 'BACK';
 
 export type ActionSubtype = 'TALK_TO_NPC' | 'START_QUEST'
-| 'EXIT_LOCATION' | 'OTHER' | 'BACK' | 'RELOAD'
+| 'FINISH_SESSION'
+| 'EXIT_LOCATION' | 'OTHER' | `OTHER_${number}` | 'BACK' | 'RELOAD'
 | 'DEAL_SUCCESS' | 'DEAL_FAILURE' | `BUY_${number}`
 | ActionMoveSubtypes
 | ActionGlobalSubtypes

@@ -11,13 +11,11 @@ import { HandshakeTranslations } from '@translations/@types';
 import {
   createConnection,
   waitConnection,
-  waitMessage,
   createMessageFromServer,
   createMessageToServer,
   closeConnection,
 
   Transport,
-  sendAnswer,
   MessageFromServer,
   createMessageQueue,
 } from './utils/index';

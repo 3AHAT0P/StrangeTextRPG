@@ -1,25 +1,25 @@
 import { MESSAGES } from '@translations/ru';
 
-import { BaseUserActSelector, UserAction } from './BaseUserActSelector';
+import { BaseUserActSelector, createUserAction, UserAction } from './BaseUserActSelector';
 
 const { onMapActions } = MESSAGES;
 
 export class OnMapUserActSelector extends BaseUserActSelector {
   protected _layout: UserAction[][] = [
     [
-      { id: 1, text: onMapActions.SHOW_HELP, type: 'SHOW_HELP' },
-      { id: 2, text: onMapActions.MOVE_TO_NORTH, type: 'MOVE_TO_NORTH' },
-      { id: 3, text: onMapActions.SHOW_MAP, type: 'SHOW_MAP' },
+      createUserAction(1, onMapActions.SHOW_HELP, 'SHOW_HELP'),
+      createUserAction(2, onMapActions.MOVE_TO_NORTH, 'MOVE_TO_NORTH'),
+      createUserAction(3, onMapActions.SHOW_MAP, 'SHOW_MAP'),
     ],
     [
-      { id: 4, text: onMapActions.MOVE_TO_WEST, type: 'MOVE_TO_WEST' },
-      { id: 5, text: onMapActions.INVENTORY_OPEN, type: 'INVENTORY_OPEN' },
-      { id: 6, text: onMapActions.MOVE_TO_EAST, type: 'MOVE_TO_EAST' },
+      createUserAction(4, onMapActions.MOVE_TO_WEST, 'MOVE_TO_WEST'),
+      createUserAction(5, onMapActions.INVENTORY_OPEN, 'INVENTORY_OPEN'),
+      createUserAction(6, onMapActions.MOVE_TO_EAST, 'MOVE_TO_EAST'),
     ],
     [
-      { id: 7, text: onMapActions.TAKE_A_REST, type: 'TAKE_A_REST' },
-      { id: 8, text: onMapActions.MOVE_TO_SOUTH, type: 'MOVE_TO_SOUTH' },
-      { id: 9, text: onMapActions.OPEN_MAIN_MENU, type: 'OPEN_MAIN_MENU' },
+      createUserAction(7, onMapActions.TAKE_A_REST, 'TAKE_A_REST'),
+      createUserAction(8, onMapActions.MOVE_TO_SOUTH, 'MOVE_TO_SOUTH'),
+      createUserAction(9, onMapActions.OPEN_MAIN_MENU, 'OPEN_MAIN_MENU'),
     ],
   ];
 

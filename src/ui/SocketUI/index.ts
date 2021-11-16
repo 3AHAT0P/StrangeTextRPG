@@ -62,7 +62,7 @@ export class SocketUI implements AbstractSessionUI {
 
     while (true) {
       // eslint-disable-next-line no-await-in-loop
-      const actionType = await actSelector.show();
+      const [actionType] = await actSelector.show();
 
       if (actionType === 'START_NEW_GAME') {
         const additionalSessionInfo: AdditionalSessionInfo = {
@@ -92,6 +92,7 @@ export class SocketUI implements AbstractSessionUI {
   }
 
   public createUserActSelector(sessionId: string, type: UserActSelectorType): BaseUserActSelector {
+    // console.log('@@@@@@@', sessionId, this._clientMap);
     const { manager } = safeGet(
       this._clientMap.get(sessionId),
       throwTextFnCarried('Manager is null. Incorrect sessionId'),

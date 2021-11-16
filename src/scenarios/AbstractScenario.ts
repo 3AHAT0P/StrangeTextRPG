@@ -119,15 +119,13 @@ export abstract class AbstractScenario<TScenarioContext extends BaseScenarioCont
 
     let index: number = 0;
     for (const action of actions) {
-      actSelector.addAction(action.text.useContext(context).value, action.subtype, Math.trunc(index / 3));
+      actSelector.addAction(action.text.useContext(context).value, action.subtype, Math.trunc(index / 3), action);
       index += 1;
     }
 
-    const actionType = await actSelector.show();
+    const [, choosedAction] = await actSelector.show();
 
-    const choosedAction = actions.find(({ subtype }) => subtype === actionType);
-
-    if (choosedAction == null) throw new Error('choosedAction is null');
+    if (choosedAction === null) throw new Error('choosedAction is null');
 
     return choosedAction;
   }

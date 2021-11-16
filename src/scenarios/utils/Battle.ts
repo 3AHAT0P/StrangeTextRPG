@@ -64,7 +64,7 @@ const attack = async (
       type: `ATTACK_${index}`,
     }),
   );
-  const currentActionType = await userActSelector.show(actions);
+  const [currentActionType] = await userActSelector.show(actions);
 
   if (currentActionType === 'BACK') return 'BACK';
 
@@ -92,7 +92,7 @@ const examine = async (
       type: `EXAMINE_${index}`,
     }),
   );
-  const currentActionType = await userActSelector.show(actions);
+  const [currentActionType] = await userActSelector.show(actions);
 
   if (currentActionType === 'BACK') return 'BACK';
 
@@ -164,7 +164,7 @@ export class Battle {
 
     while (!this.battleFinished) {
       if (currentActionType === 'BATTLE_START') {
-        currentActionType = await this._actSelector.show();
+        [currentActionType] = await this._actSelector.show();
       }
 
       switch (currentActionType) {

@@ -6,7 +6,7 @@ import { UserActionsAdapterOptions, UserActSelectorAbstractAdapter } from '../Us
 
 export interface MessageToClient {
   text: string;
-  userActLayout?: UserAction[][];
+  userActLayout?: Omit<UserAction, 'originalAction'>[][];
   needAnswer?: boolean;
   hideActLayout?: boolean;
 }
@@ -14,6 +14,10 @@ export interface MessageToClient {
 export interface AnswerFromClient {
   answer: UserAction['id'];
 }
+
+const removeOriginalAction = (
+  layout: UserAction[][],
+): Omit<UserAction, 'originalAction'>[][] => layout.map((arr) => arr.map(({ id, text, type }) => ({ id, text, type })));
 
 export class UserActSelectorSocketAdapter extends UserActSelectorAbstractAdapter {
   declare protected _transport: Server;
@@ -30,7 +34,7 @@ export class UserActSelectorSocketAdapter extends UserActSelectorAbstractAdapter
   async show(layout: UserAction[][]): Promise<number> {
     const eventData: MessageToClient = {
       text: this._defaultMessageText,
-      userActLayout: layout,
+      userActLayout: removeOriginalAction(layout),
       needAnswer: true,
     };
     return new Promise((resolve, reject) => {

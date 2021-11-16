@@ -27,7 +27,7 @@ export const buyOrLeaveInteract = async <T extends BaseScenarioContext & Scenari
     actSelector.addAction(text.useContext(context).value, subtype, Math.trunc(goodArray.length / 2 + 1 + i / 2));
   }
 
-  const actionType = await actSelector.show();
+  const [actionType] = await actSelector.show();
 
   if (!actionType.startsWith('BUY_')) return actionType;
 

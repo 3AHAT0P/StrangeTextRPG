@@ -1,9 +1,9 @@
-import { ActionBattleSubtypes } from '@db/entities/Action';
+import { ActionBattleSubtypes, ActionModel } from '@db/entities/Action';
 import { MESSAGES } from '@translations/ru';
 
-import { BaseUserActSelector, UserAction } from './BaseUserActSelector';
+import { BaseUserActSelector, createUserAction, UserAction } from './BaseUserActSelector';
 
-const { battleActions } = MESSAGES;
+const { battleActions, commonActions } = MESSAGES;
 
 export interface BattleAtcWithEnemy {
   text: string;
@@ -13,17 +13,17 @@ export interface BattleAtcWithEnemy {
 export class BattleUserActSelector extends BaseUserActSelector {
   private _firstLayout: UserAction[][] = [
     [
-      { id: 1, text: battleActions.ATTACK, type: 'ATTACK' },
-      { id: 2, text: battleActions.EXAMINE, type: 'EXAMINE' },
+      createUserAction(1, battleActions.ATTACK, 'ATTACK'),
+      createUserAction(2, battleActions.EXAMINE, 'EXAMINE'),
     ],
     [
-      { id: 3, text: battleActions.LEAVE, type: 'BATTLE_LEAVE' },
+      createUserAction(3, battleActions.LEAVE, 'BATTLE_LEAVE'),
     ],
   ];
 
   protected _layout: UserAction[][] = [];
 
-  protected _idSequence: number = 4;
+  protected _idSequence: number = 1;
 
   // eslint-disable-next-line class-methods-use-this
   protected _buildLayout(enemies: BattleAtcWithEnemy[]): UserAction[][] {
@@ -31,25 +31,21 @@ export class BattleUserActSelector extends BaseUserActSelector {
 
     let index: number = 0;
     for (const enemy of enemies) {
-      layout[Math.trunc(index / 3)].push({
-        id: index + 1,
-        text: enemy.text,
-        type: enemy.type,
-      });
+      layout[Math.trunc(index / 3)].push(createUserAction(index + 1, enemy.text, enemy.type));
       index += 1;
     }
 
-    layout.push([
-      { id: index + 1, text: battleActions.BACK, type: 'BACK' },
-    ]);
+    layout.push([createUserAction(index + 1, commonActions.BACK, 'BACK')]);
 
     return layout;
   }
 
-  public override show(enemies: BattleAtcWithEnemy[] | null = null): Promise<ActionBattleSubtypes> {
+  public override show(
+    enemies: BattleAtcWithEnemy[] | null = null,
+  ): Promise<[ActionBattleSubtypes, ActionModel | null]> {
     if (enemies !== null) this._layout = this._buildLayout(enemies);
     else this._layout = this._firstLayout;
 
-    return super.show() as Promise<ActionBattleSubtypes>;
+    return super.show() as Promise<[ActionBattleSubtypes, ActionModel | null]>;
   }
 }

@@ -1,17 +1,17 @@
 import { MESSAGES } from '@translations/ru';
 
-import { BaseUserActSelector, UserAction } from './BaseUserActSelector';
+import { BaseUserActSelector, createUserAction, UserAction } from './BaseUserActSelector';
 
 const { handshake } = MESSAGES;
 
 export class HandshakeUserActSelector extends BaseUserActSelector {
   protected _layout: UserAction[][] = [
     [
-      { id: 1, text: handshake.START_NEW_GAME, type: 'START_NEW_GAME' },
+      createUserAction(1, handshake.START_NEW_GAME, 'START_NEW_GAME'),
     ],
     [
-      { id: 2, text: handshake.DONATE_LINK, type: 'DONATE_LINK' },
-      { id: 3, text: handshake.MAIN_CONTACT, type: 'MAIN_CONTACT' },
+      createUserAction(2, handshake.DONATE_LINK, 'DONATE_LINK'),
+      createUserAction(3, handshake.MAIN_CONTACT, 'MAIN_CONTACT'),
     ],
   ];
 

@@ -6,24 +6,22 @@ import { BattleDifficulty } from '@db/entities/Battle';
 import { MapSpotSubtype } from '@db/entities/MapSpot';
 
 import logger from '@utils/Logger';
+import { safeGet, throwTextFnCarried, getRandomIntInclusive } from '@utils';
 import { Matcher } from '@utils/Matcher';
-import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 
 import { ScenarioContext } from '@scenarios/@types';
 import { buyOrLeaveInteract } from '@scenarios/utils/buyOrLeaveInteract';
 import { findActionBySubtype } from '@scenarios/utils/findActionBySubtype';
-import { interactWithBattle } from '@scenarios/utils/interactWithBattle';
 import { processActions } from '@scenarios/utils/processActions';
 
 import { AbstractQuest, QuestId, QuestState } from '@quests';
 import { QuestManager } from '@quests/scenario-10001/QuestManager';
 import { NPCId, AbstractMerchant } from '@npcs';
 import { NPCManager } from '@npcs/scenario-10001/NPCManager';
+import { Battle } from '@scenarios/utils/Battle';
 
 import { AbstractScenario } from '../AbstractScenario';
 import { descriptions } from '../LocationDescriptions';
-import { Battle } from '@scenarios/utils/Battle';
-import { safeGet, throwTextFnCarried } from '@utils';
 
 const getGoldCount = (difficult: BattleDifficulty): number => {
   if (difficult === 'VERY_EASY') return 8;

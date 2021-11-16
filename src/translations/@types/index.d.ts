@@ -1,8 +1,24 @@
+export interface CommonActionsTranslations {
+  readonly BACK: string;
+}
+
 export interface HandshakeTranslations {
   readonly text: string;
   readonly START_NEW_GAME: string;
   readonly DONATE_LINK: string;
   readonly MAIN_CONTACT: string;
+}
+
+export interface IntroTranslations {
+  readonly welcome: string;
+  readonly START_MAIN_SCENARIO: string;
+  readonly GO_TO_TEST_MECHANICS: string;
+
+  readonly testDescription: string;
+  readonly TRY_SIMPLE_SCENARIO: string;
+  readonly TRY_DEMO_MERCHANT: string;
+  readonly TRY_DEMO_BATTLE: string;
+  readonly TRY_DEMO_LOCATION: string;
 }
 
 export interface RarityTranslations {
@@ -45,17 +61,19 @@ export interface OnMapActionsTranslations {
 export interface BattleActionsTranslations {
   ATTACK: string;
   EXAMINE: string;
-  BACK: string;
   LEAVE: string;
 }
 
 export interface Translations {
   readonly handshake: HandshakeTranslations;
+  readonly intro: IntroTranslations;
+
   readonly rarity: RarityTranslations;
   readonly potions: PoitionTranslations;
 
   readonly onMapActions: OnMapActionsTranslations;
   readonly battleActions: BattleActionsTranslations;
+  readonly commonActions: CommonActionsTranslations;
 
   readonly actionPlaceholder: string;
 

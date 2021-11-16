@@ -71,7 +71,7 @@ export const closeConnection = (socket: Transport): void => {
 
 export const createMessageFromServer = (
   text: MessageFromServer['text'],
-  options: UserAction[][] | null = null,
+  options: MessageFromServer['userActLayout'] | null = null,
 ): MessageFromServer => {
   if (options === null) return { text };
 

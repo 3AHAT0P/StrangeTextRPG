@@ -1,7 +1,7 @@
 import type { BaseUserActSelector } from '../UserActSelectors/BaseUserActSelector';
 import type { UserActSelectorType } from '../UserActSelectors/UserActSelectorManager';
 
-import { StartTheGameCallback, FinishTheGameCallback } from './GameCallbacks';
+import type { StartTheGameCallback, FinishTheGameCallback } from './GameCallbacks';
 
 export interface AbstractUI {
   init(runOnStart: StartTheGameCallback, runOnFinish: FinishTheGameCallback): this;
