@@ -77,6 +77,7 @@ export class ScenarioNo5 extends AbstractScenario<ScenarioContext> {
     return {
       additionalInfo: this._state.additionalInfo,
       player: this._state.player,
+      currentStatus: 'DEFAULT',
       battles: {},
       loadMerchantInfo: (merchantId: NPCId): void => {
         const npc = this.npcManager.get(merchantId);

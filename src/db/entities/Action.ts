@@ -12,7 +12,8 @@ export type ActionHandshakeSubtypes = 'START_NEW_GAME' | 'DONATE_LINK' | 'MAIN_C
 export type ActionBattleSubtypes = 'ATTACK' | `ATTACK_${number}` | 'EXAMINE' | `EXAMINE_${number}`
 | 'BATTLE_START' | 'BATTLE_WIN' | 'BATTLE_LOSE' | 'BATTLE_LEAVE' | 'BACK';
 
-export type ActionSubtype = 'TALK_TO_NPC' | 'START_QUEST'
+export type ActionSubtype = 'DIALOG_START' | 'DIALOG_END'
+| 'TRADE_START' | 'TRADE_END'
 | 'FINISH_SESSION'
 | 'EXIT_LOCATION' | 'OTHER' | `OTHER_${number}` | 'BACK' | 'RELOAD'
 | 'DEAL_SUCCESS' | 'DEAL_FAILURE' | `BUY_${number}`

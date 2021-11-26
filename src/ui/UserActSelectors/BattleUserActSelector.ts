@@ -31,6 +31,7 @@ export class BattleUserActSelector extends BaseUserActSelector {
 
     let index: number = 0;
     for (const enemy of enemies) {
+      if (layout[Math.trunc(index / 3)] == null) layout[Math.trunc(index / 3)] = [];
       layout[Math.trunc(index / 3)].push(createUserAction(index + 1, enemy.text, enemy.type));
       index += 1;
     }

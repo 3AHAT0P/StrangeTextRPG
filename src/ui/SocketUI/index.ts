@@ -30,7 +30,6 @@ export class SocketUI implements AbstractSessionUI {
     socket: Socket,
   ): Promise<void> {
     const sessionId = socket.id;
-    console.log(sessionId);
 
     const adapter = new UserActSelectorSocketAdapter({
       sessionId,
@@ -43,6 +42,7 @@ export class SocketUI implements AbstractSessionUI {
 
     socket.on('disconnect', (reason: string) => {
       this._clientMap.delete(sessionId);
+      console.log(sessionId, this._clientMap);
       setTimeout(runOnFinish, 16, sessionId, this);
       logger.warn(`Client are disconnected with reason: ${reason}`);
     });

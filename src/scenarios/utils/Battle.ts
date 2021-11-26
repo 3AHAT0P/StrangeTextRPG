@@ -57,7 +57,7 @@ const TEMPLATES = <const>{
 const attack = async (
   ui: AbstractUI, userActSelector: BattleUserActSelector,
   player: AbstractActor, aliveEnemies: AbstractActor[],
-): Promise<'ATTACK' | 'BATTLE_LOSE' | 'BACK'> => {
+): Promise<'ATTACK' | 'BACK'> => {
   const actions: BattleAtcWithEnemy[] = aliveEnemies.map(
     (enemy, index) => ({
       text: TEMPLATES.attackEnemyAction.clone({ enemy }).value,
@@ -76,7 +76,7 @@ const attack = async (
 
   for (const aliveEnemy of aliveEnemies) {
     if (!aliveEnemy.isAlive) await ui.sendToUser(`${aliveEnemy.getDeathMessage()}.`);
-    return 'BATTLE_LOSE';
+    return 'ATTACK';
   }
 
   return 'ATTACK';
@@ -85,7 +85,7 @@ const attack = async (
 const examine = async (
   ui: AbstractUI, userActSelector: BattleUserActSelector,
   player: AbstractActor, aliveEnemies: AbstractActor[],
-): Promise<'EXAMINE' | 'BATTLE_LOSE' | 'BACK'> => {
+): Promise<'EXAMINE' | 'BACK'> => {
   const actions: BattleAtcWithEnemy[] = aliveEnemies.map(
     (enemy, index) => ({
       text: TEMPLATES.examineEnemyAction.clone({ enemy }).value,

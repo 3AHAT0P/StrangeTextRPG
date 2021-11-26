@@ -29,6 +29,12 @@
       ],
       "@translations/*": [
         "../../../src/translations/*"
+      ],
+      "@utils": [
+        "../../../src/utils/index"
+      ],
+      "@utils/*": [
+        "../../../src/utils/*"
       ]
     },
     "types": [

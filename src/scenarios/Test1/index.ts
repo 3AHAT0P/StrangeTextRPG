@@ -1,6 +1,6 @@
 import { Rat } from '@actors/bestiary/Rat';
 
-import { BattleModel, InteractionModel, MapSpotModel } from '@db/entities';
+import { InteractionModel, MapSpotModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
 import { BattleDifficulty } from '@db/entities/Battle';
 import { MapSpotSubtype } from '@db/entities/MapSpot';
@@ -59,6 +59,7 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
     return {
       additionalInfo: this._state.additionalInfo,
       player: this._state.player,
+      currentStatus: 'DEFAULT',
       battles: {},
       loadMerchantInfo: (merchantId: NPCId): void => {
         const npc = this.npcManager.get(merchantId);
@@ -90,8 +91,12 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
 
       const actions = await this._cursor.getActions();
 
-      // @TODO: if (this.context.uiStatus === 'BATTLE') {}
-      if (this.currentNode instanceof BattleModel) {
+      if (this.context.currentStatus === 'BATTLE') {
+        const battleInfo = safeGet(
+          this.context.battles.__CURRENT__,
+          throwTextFnCarried('battleInfo is null'),
+        );
+
         const battleInteraction = new Battle({
           ui: this._state.ui,
           player: this._state.player,
@@ -107,7 +112,8 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
           findActionBySubtype(actions, actionType),
           throwTextFnCarried('Action type is wrong'),
         );
-        this._state.player.inventory.collectGold(getGoldCount(this.currentNode.difficult));
+        this._state.player.inventory.collectGold(getGoldCount(battleInfo.difficult));
+        this.context.currentStatus = 'DEFAULT';
         await this._updateCurrentNode(action, this.context);
         return;
       }

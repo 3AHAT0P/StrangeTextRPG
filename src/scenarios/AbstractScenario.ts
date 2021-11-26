@@ -7,7 +7,7 @@ import { safeGet, throwTextFnCarried } from '@utils';
 import { SessionState } from 'SessionState';
 
 import { BaseScenarioContext } from './@types';
-import { processActions } from './utils/processActions';
+import { processActions, ProcessedActions } from './utils/processActions';
 import { Battle } from './utils/Battle';
 import { findActionBySubtype } from './utils/findActionBySubtype';
 
@@ -32,6 +32,10 @@ export abstract class AbstractScenario<TScenarioContext extends BaseScenarioCont
     return this._context;
   }
 
+  protected get processedActions(): Promise<ProcessedActions> {
+    return this._cursor.getActions().then((actions) => processActions(actions, this.context));
+  }
+
   protected _userActSelectorId: string | null = null;
 
   protected currentNode: OneOFNodeModel | null = null;
@@ -49,6 +53,37 @@ export abstract class AbstractScenario<TScenarioContext extends BaseScenarioCont
   protected async _updateCurrentNode(action: ActionModel, context: TScenarioContext): Promise<void> {
     if (action.isPrintable && action.text != null) await this._sendTemplateToUser(action.text, context);
     action.operation?.useContext(context)?.forceBuild();
+    switch (action.subtype) {
+      case 'BATTLE_START': {
+        this.context.currentStatus = 'BATTLE';
+        break;
+      }
+      case 'BATTLE_WIN':
+      case 'BATTLE_LOSE':
+      case 'BATTLE_LEAVE': {
+        this.context.currentStatus = 'DEFAULT';
+        break;
+      }
+      case 'DIALOG_START': {
+        this.context.currentStatus = 'DIALOG';
+        break;
+      }
+      case 'DIALOG_END': {
+        this.context.currentStatus = 'DEFAULT';
+        break;
+      }
+      case 'TRADE_START': {
+        this.context.currentStatus = 'TRADING';
+        break;
+      }
+      case 'TRADE_END': {
+        this.context.currentStatus = 'DEFAULT';
+        break;
+      }
+      default: {
+        break;
+      }
+    }
     this.currentNode = await this._cursor.getNextNode(action);
   }
 

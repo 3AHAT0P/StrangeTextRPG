@@ -2,6 +2,7 @@ import { ActionModel } from '@db/entities';
 import { BaseScenarioContext } from '@scenarios/@types';
 
 export interface ProcessedActions {
+  all: ActionModel[];
   auto: ActionModel | null;
   system: ActionModel[];
   custom: ActionModel[];
@@ -9,6 +10,7 @@ export interface ProcessedActions {
 
 export const processActions = (actions: ActionModel[], context: BaseScenarioContext): ProcessedActions => {
   const result: ProcessedActions = {
+    all: actions,
     auto: null,
     system: [],
     custom: [],

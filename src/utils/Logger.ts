@@ -21,8 +21,7 @@ export class Logger {
   }
 
   constructor(mode?: LogLevel) {
-    if ((console as any).context != null) this._context = (console as any).context();
-    else this._context = console;
+    this._context = console;
 
     if (mode != null) this._mode = mode;
   }
