@@ -57,6 +57,15 @@ export const MESSAGES: Translations = {
     OPEN_MAIN_MENU: '⚙️ Меню',
   },
 
+  inventoryActions: {
+    OPEN_WEAPON: 'Оружие',
+    OPEN_ARMOR: 'Броня',
+    OPEN_POTIONS: 'Зелья',
+    OPEN_MISCELLANEOUS: 'Разное',
+    CLOSE_INVENTORY: 'Закрыть инвентарь',
+    DROP: 'Выбросить',
+  },
+
   battleActions: {
     ATTACK: 'Атаковать 🗡',
     EXAMINE: 'Осмотреть 👀',
@@ -64,6 +73,7 @@ export const MESSAGES: Translations = {
   },
 
   commonActions: {
+    EXIT: 'Закончить приключение',
     BACK: 'Назад',
   },
 

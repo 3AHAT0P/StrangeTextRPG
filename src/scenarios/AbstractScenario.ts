@@ -1,5 +1,5 @@
 import { Cursor } from '@db/Cursor';
-import { OneOFNodeModel, InteractionModel, BattleModel } from '@db/entities';
+import { OneOFNodeModel, InteractionModel, BattleModel, MapSpotModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
 import { Template } from '@utils/Template';
 import logger from '@utils/Logger';
@@ -85,6 +85,11 @@ export abstract class AbstractScenario<TScenarioContext extends BaseScenarioCont
       }
     }
     this.currentNode = await this._cursor.getNextNode(action);
+
+    if (this.currentNode instanceof MapSpotModel && this.context.currentStatus !== 'ON_MAP') {
+      this.context.currentStatus = 'ON_MAP';
+      console.log('_updateCurrentNode', 'ON_MAP');
+    }
   }
 
   protected async _beforeRun(): Promise<boolean> {

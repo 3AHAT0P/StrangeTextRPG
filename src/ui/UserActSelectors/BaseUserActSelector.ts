@@ -8,15 +8,17 @@ export interface UserAction {
   text: string;
   type: ActionSubtype;
   originalAction: ActionModel | null;
+  additionalData: any | null;
 }
 
 export const createUserAction = (
   id: number,
   text: string,
   type: ActionSubtype,
-  originalAction: ActionModel | null = null,
+  originalAction: UserAction['originalAction'] = null,
+  additionalData: UserAction['additionalData'] = null,
 ): UserAction => ({
-  id, text, type, originalAction,
+  id, text, type, originalAction, additionalData,
 });
 
 export interface UserActSelectorOptions {
@@ -38,19 +40,24 @@ export class BaseUserActSelector {
     text: string,
     type: ActionSubtype,
     rowIndex: number = 0,
-    originalAction: ActionModel | null = null,
+    originalAction: UserAction['originalAction'] = null,
+    additionalData: UserAction['additionalData'] = null,
   ): this {
     while (this._layout.length <= rowIndex) this._layout.push([]);
-    this._layout[rowIndex].push(createUserAction(this._idSequence, text, type, originalAction));
+    this._layout[rowIndex].push(createUserAction(this._idSequence, text, type, originalAction, additionalData));
     this._idSequence += 1;
     return this;
   }
 
-  public async show(): Promise<[ActionSubtype, ActionModel | null]> {
+  public clear() {
+    this._layout = [];
+  }
+
+  public async show<T = any>(): Promise<[ActionSubtype, UserAction['originalAction'], T]> {
     try {
       const actionId = await this._adapter.show(this._layout);
       const userAction = this._layout.flat(1).find(({ id }) => id === actionId);
-      if (userAction != null) return [userAction.type, userAction.originalAction];
+      if (userAction != null) return [userAction.type, userAction.originalAction, userAction.additionalData];
 
       throw new Error('userAction is null');
     } catch (error) {
@@ -59,7 +66,7 @@ export class BaseUserActSelector {
     }
   }
 
-  hide(): Promise<boolean> {
+  public hide(): Promise<boolean> {
     return this._adapter.hide();
   }
 }

@@ -17,6 +17,7 @@ export type ActionSubtype = 'DIALOG_START' | 'DIALOG_END'
 | 'FINISH_SESSION'
 | 'EXIT_LOCATION' | 'OTHER' | `OTHER_${number}` | 'BACK' | 'RELOAD'
 | 'DEAL_SUCCESS' | 'DEAL_FAILURE' | `BUY_${number}`
+| `INVENTORY_${string}`
 | ActionMoveSubtypes
 | ActionGlobalSubtypes
 | ActionHandshakeSubtypes

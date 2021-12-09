@@ -1,4 +1,4 @@
-import { UserAction } from './UserActSelectors/BaseUserActSelector';
+import type { UserAction } from './UserActSelectors/BaseUserActSelector';
 
 export interface UserActionsAdapterOptions {
   transport: any;
@@ -22,7 +22,7 @@ export abstract class UserActSelectorAbstractAdapter {
 
   public init(): void { }
 
-  public abstract show(layout: UserAction[][]): Promise<number>;
+  public abstract show(layout: UserAction<unknown>[][]): Promise<number>;
 
   public abstract hide(): Promise<boolean>;
 }

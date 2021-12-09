@@ -1,4 +1,5 @@
 import { Rat } from '@actors/bestiary/Rat';
+import { getConfig } from 'ConfigProvider';
 
 import { InteractionModel, MapSpotModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
@@ -7,6 +8,7 @@ import { MapSpotSubtype } from '@db/entities/MapSpot';
 
 import logger from '@utils/Logger';
 import { safeGet, throwTextFnCarried, getRandomIntInclusive } from '@utils';
+import { DropSessionError } from '@utils/Error/DropSessionError';
 import { Matcher } from '@utils/Matcher';
 
 import { ScenarioContext } from '@scenarios/@types';
@@ -22,6 +24,8 @@ import { Battle } from '@scenarios/utils/Battle';
 
 import { AbstractScenario } from '../AbstractScenario';
 import { descriptions } from '../LocationDescriptions';
+
+const config = getConfig();
 
 const getGoldCount = (difficult: BattleDifficulty): number => {
   if (difficult === 'VERY_EASY') return 8;
@@ -135,7 +139,15 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
         return;
       }
 
-      const choosedAction = await this._interactWithUser(processedActions.custom, this.context);
+      let choosedAction: ActionModel;
+      if (this.context.currentStatus === 'ON_MAP') {
+        const actionType = await this._onMapContextRunner();
+
+        choosedAction = safeGet(
+          processedActions.all.find((action) => action.subtype === actionType),
+          throwTextFnCarried('choosedAction is null'),
+        );
+      } else choosedAction = await this._interactWithUser(processedActions.custom, this.context);
 
       if (choosedAction.subtype === 'MOVE_FORBIDDEN') return;
 
@@ -155,6 +167,66 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
       }
     } catch (error) {
       logger.error('ScenarioNo5Test::_runner', error);
+      if (error instanceof DropSessionError) throw error;
+    }
+  }
+
+  protected async _onMapContextRunner(): Promise<ActionModel['subtype']> {
+    const actSelector = this._state.ui.getUserActSelector('ON_MAP');
+
+    while (true) {
+      const [choosedActionType] = await actSelector.show();
+      switch (choosedActionType) {
+        case 'SHOW_HELP': {
+          await this._printFAQ();
+          break;
+        }
+        case 'SHOW_MAP': {
+          const spotsAround = (
+            await this._cursor.getSpotsAround(this.currentNode as MapSpotModel)
+          )
+            // eslint-disable-next-line no-nested-ternary
+            .sort((a, b) => (a.y > b.y ? 1 : (a.y < b.y ? -1 : 0)));
+          await this._sendAroundSpots(this.currentNode as MapSpotModel, spotsAround);
+          break;
+        }
+        case 'INVENTORY_OPEN': {
+          break;
+        }
+        case 'TAKE_A_REST': {
+          await this._state.ui.sendToUser('Ты разводишь костер и ложишься рядом с ним.');
+          await this._state.ui.sendToUser('...');
+          await this._state.ui.sendToUser('Небольшого отдыха хватило, чтобы немного восстановить сил и заживить раны.');
+          this.context.player.heal(3);
+          await this._state.ui.sendToUser(`+3 ОЗ (❤️). Всего ${this.context.player.stats.healthPoints} из ${this.context.player.stats.maxHealthPoints}`);
+          break;
+        }
+        case 'OPEN_MAIN_MENU': {
+          const mainMenuActSelector = this._state.ui.getUserActSelector('MAIN_MENU');
+          // repeat ?
+          while (true) {
+            const [mainMenuActionType] = await mainMenuActSelector.show();
+
+            if (mainMenuActionType === 'FINSIH_SESSION') {
+              // @TODO:
+              // ???????????????
+              // I don't know how finish game from this
+              // and exit from all that code with clear all promises
+              // and etc
+              await this._state.finishSession();
+              throw new DropSessionError('EXIT!');
+            } else if (mainMenuActionType === 'BACK') {
+              break;
+            } else if (mainMenuActionType === 'DONATE_LINK') {
+              await this._state.ui.sendToUser(config.DONATE_LINK);
+            } else if (mainMenuActionType === 'MAIN_CONTACT') {
+              await this._state.ui.sendToUser(config.MAIN_CONTACT);
+            }
+          }
+          break;
+        }
+        default: return choosedActionType;
+      }
     }
   }
 
@@ -224,7 +296,6 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
       // eslint-disable-next-line no-param-reassign
       .on('ANY_NPC', (result) => { result.npc += 1; });
     for (const spot of spotsAround) {
-      // eslint-disable-next-line no-await-in-loop
       await mapSpotSubtypeMatcher.run(spot.subtype, ambiences);
     }
 

@@ -1,4 +1,4 @@
-import { ActionBattleSubtypes, ActionModel } from '@db/entities/Action';
+import { ActionBattleSubtypes } from '@db/entities/Action';
 import { MESSAGES } from '@translations/ru';
 
 import { BaseUserActSelector, createUserAction, UserAction } from './BaseUserActSelector';
@@ -41,12 +41,12 @@ export class BattleUserActSelector extends BaseUserActSelector {
     return layout;
   }
 
-  public override show(
+  public override show<T = any>(
     enemies: BattleAtcWithEnemy[] | null = null,
-  ): Promise<[ActionBattleSubtypes, ActionModel | null]> {
+  ): Promise<[ActionBattleSubtypes, UserAction['originalAction'], T]> {
     if (enemies !== null) this._layout = this._buildLayout(enemies);
     else this._layout = this._firstLayout;
 
-    return super.show() as Promise<[ActionBattleSubtypes, ActionModel | null]>;
+    return super.show() as Promise<[ActionBattleSubtypes, UserAction['originalAction'], T]>;
   }
 }

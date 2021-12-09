@@ -38,9 +38,7 @@ const waitUntil = async (
   queue: MessageQueue,
   condition: (message: MessageFromServer) => boolean,
 ): Promise<MessageFromServer> => {
-  console.log('@@@@@@@@@@@@@@@@@3');
   while (true) {
-    // eslint-disable-next-line no-await-in-loop
     const message = await queue.take();
     if (message == null) throw new Error('Message is null');
     if (condition(message)) return message;
@@ -241,7 +239,6 @@ describe('Demo mechanics test', () => {
 
       // wait until
       while (true) {
-        // eslint-disable-next-line no-await-in-loop
         const message = await queue.take();
         if (message == null) throw new Error('Message is null');
         if (/Чего изволишь\?/.test(message.text)) break;
@@ -304,7 +301,6 @@ describe('Demo mechanics test', () => {
 
       // wait until
       while (true) {
-        // eslint-disable-next-line no-await-in-loop
         const message = await queue.take();
         // logObj(message);
         if (message == null) throw new Error('Message is null');
@@ -333,7 +329,6 @@ describe('Demo mechanics test', () => {
 
       // wait until
       while (true) {
-        // eslint-disable-next-line no-await-in-loop
         const message = await queue.take();
         if (message == null) throw new Error('Message is null');
         if (/ты умер/.test(message.text)) break;

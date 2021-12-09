@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@3ahat0p/strange-utils": "^1.1.0",
     "@jest/globals": "^27.3.1",
     "@types/jest": "^27.0.2",
     "jest": "^27.3.1",

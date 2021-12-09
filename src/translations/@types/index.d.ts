@@ -1,5 +1,16 @@
 export interface CommonActionsTranslations {
+  readonly EXIT: string;
   readonly BACK: string;
+}
+
+export interface InventoryActionsTranslations {
+  readonly OPEN_WEAPON: string;
+  readonly OPEN_ARMOR: string;
+  readonly OPEN_POTIONS: string;
+  readonly OPEN_MISCELLANEOUS: string;
+  readonly CLOSE_INVENTORY: string;
+
+  readonly DROP: string;
 }
 
 export interface HandshakeTranslations {
@@ -47,21 +58,21 @@ export interface PoitionTranslations {
 }
 
 export interface OnMapActionsTranslations {
-  SHOW_HELP: string;
-  MOVE_TO_NORTH: string;
-  SHOW_MAP: string;
-  MOVE_TO_WEST: string;
-  INVENTORY_OPEN: string;
-  MOVE_TO_EAST: string;
-  TAKE_A_REST: string;
-  MOVE_TO_SOUTH: string;
-  OPEN_MAIN_MENU: string;
+  readonly SHOW_HELP: string;
+  readonly MOVE_TO_NORTH: string;
+  readonly SHOW_MAP: string;
+  readonly MOVE_TO_WEST: string;
+  readonly INVENTORY_OPEN: string;
+  readonly MOVE_TO_EAST: string;
+  readonly TAKE_A_REST: string;
+  readonly MOVE_TO_SOUTH: string;
+  readonly OPEN_MAIN_MENU: string;
 }
 
 export interface BattleActionsTranslations {
-  ATTACK: string;
-  EXAMINE: string;
-  LEAVE: string;
+  readonly ATTACK: string;
+  readonly EXAMINE: string;
+  readonly LEAVE: string;
 }
 
 export interface Translations {
@@ -74,6 +85,7 @@ export interface Translations {
   readonly onMapActions: OnMapActionsTranslations;
   readonly battleActions: BattleActionsTranslations;
   readonly commonActions: CommonActionsTranslations;
+  readonly inventoryActions: InventoryActionsTranslations;
 
   readonly actionPlaceholder: string;
 

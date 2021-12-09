@@ -42,7 +42,6 @@ export class SocketUI implements AbstractSessionUI {
 
     socket.on('disconnect', (reason: string) => {
       this._clientMap.delete(sessionId);
-      console.log(sessionId, this._clientMap);
       setTimeout(runOnFinish, 16, sessionId, this);
       logger.warn(`Client are disconnected with reason: ${reason}`);
     });
@@ -61,7 +60,6 @@ export class SocketUI implements AbstractSessionUI {
     await this.sendToUser(sessionId, handshake.text);
 
     while (true) {
-      // eslint-disable-next-line no-await-in-loop
       const [actionType] = await actSelector.show();
 
       if (actionType === 'START_NEW_GAME') {
@@ -73,10 +71,8 @@ export class SocketUI implements AbstractSessionUI {
         setTimeout(runOnStart, 16, sessionId, sessionUI, additionalSessionInfo);
         break;
       } else if (actionType === 'DONATE_LINK') {
-        // eslint-disable-next-line no-await-in-loop
         await this.sendToUser(sessionId, config.DONATE_LINK);
       } else if (actionType === 'MAIN_CONTACT') {
-        // eslint-disable-next-line no-await-in-loop
         await this.sendToUser(sessionId, config.MAIN_CONTACT);
       }
     }
@@ -92,7 +88,6 @@ export class SocketUI implements AbstractSessionUI {
   }
 
   public createUserActSelector(sessionId: string, type: UserActSelectorType): BaseUserActSelector {
-    // console.log('@@@@@@@', sessionId, this._clientMap);
     const { manager } = safeGet(
       this._clientMap.get(sessionId),
       throwTextFnCarried('Manager is null. Incorrect sessionId'),

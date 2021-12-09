@@ -4,12 +4,14 @@ import { BaseUserActSelector, UserActSelectorOptions } from './BaseUserActSelect
 import { OnMapUserActSelector } from './OnMapUserActSelector';
 import { HandshakeUserActSelector } from './HandshakeUserActSelector';
 import { BattleUserActSelector } from './BattleUserActSelector';
+import { MainMenuUserActSelector } from './MainMenuUserActSelector';
+import { InventoryUserActSelector } from './InventoryUserActSelector';
 
 interface UserActSelectorFactory {
   new(options: UserActSelectorOptions): BaseUserActSelector;
 }
 
-export type UserActSelectorType = 'BASE' | 'ON_MAP' | 'HANDSHAKE' | 'BATTLE';
+export type UserActSelectorType = 'BASE' | 'ON_MAP' | 'HANDSHAKE' | 'BATTLE' | 'MAIN_MENU' | 'INVENTORY_MENU';
 
 export class UserActSelectorManager {
   private static readonly _unitFactoryMap: Map<string, UserActSelectorFactory> = new Map();
@@ -61,3 +63,5 @@ UserActSelectorManager.registerFactory('BASE', BaseUserActSelector);
 UserActSelectorManager.registerFactory('ON_MAP', OnMapUserActSelector);
 UserActSelectorManager.registerFactory('HANDSHAKE', HandshakeUserActSelector);
 UserActSelectorManager.registerFactory('BATTLE', BattleUserActSelector);
+UserActSelectorManager.registerFactory('MAIN_MENU', MainMenuUserActSelector);
+UserActSelectorManager.registerFactory('INVENTORY_MENU', InventoryUserActSelector);

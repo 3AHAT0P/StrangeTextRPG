@@ -1,8 +1,5 @@
 import { io, Socket } from 'socket.io-client';
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import { pipe, pipeAsync } from '../../../../src/utils/pipe';
+import { pipe, asyncPipe } from '@3ahat0p/strange-utils/dist/pipe';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -143,4 +140,4 @@ export const createMessageQueue = (socket: Transport, needLog: boolean = false):
   return queue;
 };
 
-export { pipe, pipeAsync };
+export { pipe, asyncPipe };

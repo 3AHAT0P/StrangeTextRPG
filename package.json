@@ -59,6 +59,7 @@
     "typescript": "^4.4.3"
   },
   "dependencies": {
+    "@3ahat0p/strange-utils": "^1.3.1",
     "@types/uuid": "^8.3.1",
     "bufferutil": "^4.0.5",
     "handlebars": "^4.7.7",

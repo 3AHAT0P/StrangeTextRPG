@@ -235,7 +235,6 @@ export class ScenarioNo5 extends AbstractScenario<ScenarioContext> {
       // eslint-disable-next-line no-param-reassign
       .on('ANY_NPC', (result) => { result.npc += 1; });
     for (const spot of spotsAround) {
-      // eslint-disable-next-line no-await-in-loop
       await mapSpotSubtypeMatcher.run(spot.subtype, ambiences);
     }
 
