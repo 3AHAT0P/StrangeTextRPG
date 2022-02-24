@@ -5,7 +5,7 @@ import { BaseUserActSelector, createUserAction, UserAction } from './BaseUserAct
 const { handshake, commonActions } = MESSAGES;
 
 export class MainMenuUserActSelector extends BaseUserActSelector {
-  protected _layout: UserAction[][] = [
+  protected _staticLayout: UserAction[][] = [
     [
       createUserAction(1, commonActions.EXIT, 'FINISH_SESSION'),
       createUserAction(2, commonActions.BACK, 'BACK'),

@@ -5,7 +5,7 @@ import { BaseUserActSelector, createUserAction, UserAction } from './BaseUserAct
 const { handshake } = MESSAGES;
 
 export class HandshakeUserActSelector extends BaseUserActSelector {
-  protected _layout: UserAction[][] = [
+  protected _staticLayout: UserAction[][] = [
     [
       createUserAction(1, handshake.START_NEW_GAME, 'START_NEW_GAME'),
     ],

@@ -24,6 +24,7 @@ export class UserActSelectorTelegramBotInlineAdapter extends UserActSelectorAbst
     this._transport.on('callback_query', async (ctx) => {
       if ('data' in ctx.callbackQuery) {
         const [sessionId, , actionId] = ctx.callbackQuery.data.split('.');
+        console.log('callback_query ->>', this._sessionId, sessionId, actionId);
         if (this._sessionId === sessionId && !Number.isNaN(Number(actionId))) {
           const defer = this._defer;
           this._defer = null;

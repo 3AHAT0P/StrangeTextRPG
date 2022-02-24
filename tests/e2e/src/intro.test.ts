@@ -21,7 +21,7 @@ import {
   getOptionIdByText,
   logObj,
   getOptionIdByType,
-  pipeAsync,
+  asyncPipe,
 } from './utils/index';
 
 const skipHandshake = async (queue: MessageQueue): Promise<void> => {
@@ -385,10 +385,10 @@ describe('Demo mechanics test', () => {
       );
 
       const skipTextAndMove = async (moveActType: `MOVE_TO_${'WEST' | 'NORTH' | 'SOUTH' | 'EAST'}`): Promise<void> => {
-        await pipeAsync(
+        await asyncPipe(
           boundedWaitUntilActionSelector,
           async (message: MessageFromServer): Promise<void> => queue.sendByType(message, moveActType),
-        )(void 0);
+        )();
       };
 
       await skipTextAndMove('MOVE_TO_WEST');

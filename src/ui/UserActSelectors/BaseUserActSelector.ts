@@ -28,7 +28,13 @@ export interface UserActSelectorOptions {
 export class BaseUserActSelector {
   protected _adapter: UserActSelectorAbstractAdapter;
 
-  protected _layout: UserAction[][] = [[]];
+  protected _staticLayout: UserAction[][] = [[]];
+
+  protected _dynamicLayout: UserAction[][] = [];
+
+  protected get _layout(): UserAction[][] {
+    return this._dynamicLayout.concat(this._staticLayout);
+  }
 
   protected _idSequence: number = 1;
 
@@ -43,14 +49,32 @@ export class BaseUserActSelector {
     originalAction: UserAction['originalAction'] = null,
     additionalData: UserAction['additionalData'] = null,
   ): this {
-    while (this._layout.length <= rowIndex) this._layout.push([]);
-    this._layout[rowIndex].push(createUserAction(this._idSequence, text, type, originalAction, additionalData));
+    while (this._dynamicLayout.length <= rowIndex) this._dynamicLayout.push([]);
+    this._dynamicLayout[rowIndex].push(createUserAction(this._idSequence, text, type, originalAction, additionalData));
     this._idSequence += 1;
     return this;
   }
 
-  public clear() {
-    this._layout = [];
+  public clear(): void {
+    this._staticLayout = [[]];
+    this._dynamicLayout = [];
+  }
+
+  public reset(): void {
+    this._dynamicLayout = [];
+  }
+
+  public setDynamicLayout(actions: ActionModel[]) {
+    const layout: UserAction[][] = [];
+
+    let index: number = 0;
+    for (const action of actions) {
+      layout[index] = [];
+      layout[index].push(createUserAction(this._idSequence + index + 1, action.text.value, action.subtype, action));
+      index += 1;
+    }
+
+    this._dynamicLayout = layout;
   }
 
   public async show<T = any>(): Promise<[ActionSubtype, UserAction['originalAction'], T]> {

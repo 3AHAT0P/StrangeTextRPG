@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client';
-import { pipe, asyncPipe } from '@3ahat0p/strange-utils/dist/pipe';
+import { pipe, asyncPipe } from '@3ahat0p/strange-utils/src/pipe';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -120,7 +120,7 @@ export const createMessageQueue = (socket: Transport, needLog: boolean = false):
         getOptionIdByType.bind(null, message.userActLayout, type),
         createMessageToServer,
         queue.send,
-      )(void 0);
+      )();
     },
     takeAndAnswerByText: async (text: string): Promise<void> => {
       const message = await queue.take();

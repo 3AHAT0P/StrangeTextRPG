@@ -12,6 +12,7 @@ import {
 import { SessionUIProxy } from '../SessionUIProxy';
 import { BaseUserActSelector } from '../UserActSelectors/BaseUserActSelector';
 import { UserActSelectorManager, UserActSelectorType } from '../UserActSelectors/UserActSelectorManager';
+import { UserActSelectorTelegramBotInlineAdapter } from './UserActSelectorTelegramBotInlineAdapter';
 
 const config = getConfig();
 
@@ -46,6 +47,14 @@ export class TelegramBotInlineUi implements AbstractSessionUI {
     });
 
     this.bot.start(async (ctx) => {
+      const sessionId = ctx.chat.id.toString();
+      const adapter = new UserActSelectorTelegramBotInlineAdapter({
+        sessionId,
+        transport: this.bot,
+      });
+      adapter.init();
+      const manager = new UserActSelectorManager(adapter);
+      this._clientMap.set(sessionId, manager);
       const listOfCommands = Markup.inlineKeyboard([
         Markup.button.callback('Начать новую игру', 'startNewGame'),
         Markup.button.callback('Закончить игру', 'finishGame'),
@@ -53,11 +62,10 @@ export class TelegramBotInlineUi implements AbstractSessionUI {
         Markup.button.url('Написать автору отзыв/идею/предложение', config.MAIN_CONTACT),
       ], { columns: 2 });
       await ctx.unpinAllChatMessages();
-      const message = await ctx.reply(
+      await ctx.reply(
         'Привет!\nЯ бот-рассказчик одной маленькой текстовой РПГ.\nЧто тебе интересно?',
         { disable_notification: true, ...listOfCommands },
       );
-      await ctx.pinChatMessage(message.message_id, { disable_notification: true });
     });
 
     this.bot.action('startNewGame', (ctx) => {

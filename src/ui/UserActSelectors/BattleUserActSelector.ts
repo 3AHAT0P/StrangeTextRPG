@@ -11,7 +11,11 @@ export interface BattleAtcWithEnemy {
 }
 
 export class BattleUserActSelector extends BaseUserActSelector {
-  private _firstLayout: UserAction[][] = [
+  protected _staticLayout: UserAction[][] = [];
+
+  protected _dynamicLayout: UserAction[][] = [];
+
+  protected _firstLayout: UserAction[][] = [
     [
       createUserAction(1, battleActions.ATTACK, 'ATTACK'),
       createUserAction(2, battleActions.EXAMINE, 'EXAMINE'),
@@ -20,8 +24,6 @@ export class BattleUserActSelector extends BaseUserActSelector {
       createUserAction(3, battleActions.LEAVE, 'BATTLE_LEAVE'),
     ],
   ];
-
-  protected _layout: UserAction[][] = [];
 
   protected _idSequence: number = 1;
 
@@ -44,8 +46,8 @@ export class BattleUserActSelector extends BaseUserActSelector {
   public override show<T = any>(
     enemies: BattleAtcWithEnemy[] | null = null,
   ): Promise<[ActionBattleSubtypes, UserAction['originalAction'], T]> {
-    if (enemies !== null) this._layout = this._buildLayout(enemies);
-    else this._layout = this._firstLayout;
+    if (enemies !== null) this._dynamicLayout = this._buildLayout(enemies);
+    else this._dynamicLayout = this._firstLayout;
 
     return super.show() as Promise<[ActionBattleSubtypes, UserAction['originalAction'], T]>;
   }

@@ -5,7 +5,7 @@ import { BaseUserActSelector, createUserAction, UserAction } from './BaseUserAct
 const { inventoryActions } = MESSAGES;
 
 export class InventoryUserActSelector extends BaseUserActSelector {
-  protected _layout: UserAction[][] = [
+  protected _staticLayout: UserAction[][] = [
     [
       createUserAction(1, inventoryActions.OPEN_WEAPON, 'INVENTORY_CHOOSE_WEAPON'),
       createUserAction(2, inventoryActions.OPEN_ARMOR, 'INVENTORY_CHOOSE_ARMOR'),

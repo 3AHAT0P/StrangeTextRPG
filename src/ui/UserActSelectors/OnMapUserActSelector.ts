@@ -5,7 +5,7 @@ import { BaseUserActSelector, createUserAction, UserAction } from './BaseUserAct
 const { onMapActions } = MESSAGES;
 
 export class OnMapUserActSelector extends BaseUserActSelector {
-  protected _layout: UserAction[][] = [
+  protected _staticLayout: UserAction[][] = [
     [
       createUserAction(1, onMapActions.SHOW_HELP, 'SHOW_HELP'),
       createUserAction(2, onMapActions.MOVE_TO_NORTH, 'MOVE_TO_NORTH'),

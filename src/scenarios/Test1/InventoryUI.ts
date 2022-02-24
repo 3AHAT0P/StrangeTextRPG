@@ -1,4 +1,4 @@
-import { createSelector, repeat } from '@3ahat0p/strange-utils';
+import { createSelector, repeat } from '@3ahat0p/strange-utils/node';
 
 import { Player } from '@actors';
 import { AbstractInventory } from '@actors/AbstractInventory';
@@ -36,7 +36,7 @@ export interface InvetoryUiOptions {
   player: Player;
 }
 
-export class InvetoryUi {
+export class InvetoryUI {
   private _ui!: AbstractUI;
 
   private _player!: Player;

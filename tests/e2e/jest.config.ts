@@ -12,4 +12,17 @@ module.exports = {
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths),
+  transform: {
+    '^.+\\.[tj]s$': 'ts-jest',
+  },
+  transformIgnorePatterns: [
+    '<rootDir>/node_modules/(?!@3ahat0p/strange-utils)',
+  ],
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        allowJs: true,
+      },
+    },
+  },
 };

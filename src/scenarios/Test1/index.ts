@@ -24,6 +24,7 @@ import { Battle } from '@scenarios/utils/Battle';
 
 import { AbstractScenario } from '../AbstractScenario';
 import { descriptions } from '../LocationDescriptions';
+import { InvetoryUI } from './InventoryUI';
 
 const config = getConfig();
 
@@ -51,6 +52,8 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
   protected previousSpot: MapSpotModel | null = null;
 
   protected npcManager: NPCManager = new NPCManager();
+
+  protected _inventoryUI!: InvetoryUI;
 
   protected _questManager: QuestManager | null = null;
 
@@ -141,12 +144,15 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
 
       let choosedAction: ActionModel;
       if (this.context.currentStatus === 'ON_MAP') {
-        const actionType = await this._onMapContextRunner();
+        processedActions.custom.forEach((action) => action.text.useContext(this.context));
+        const [actionType, selectedAction] = await this._onMapContextRunner(processedActions.custom);
 
-        choosedAction = safeGet(
-          processedActions.all.find((action) => action.subtype === actionType),
-          throwTextFnCarried('choosedAction is null'),
-        );
+        if (selectedAction == null) {
+          choosedAction = safeGet(
+            processedActions.all.find((action) => action.subtype === actionType),
+            throwTextFnCarried('choosedAction is null'),
+          );
+        } else choosedAction = selectedAction;
       } else choosedAction = await this._interactWithUser(processedActions.custom, this.context);
 
       if (choosedAction.subtype === 'MOVE_FORBIDDEN') return;
@@ -171,11 +177,16 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
     }
   }
 
-  protected async _onMapContextRunner(): Promise<ActionModel['subtype']> {
+  protected async _onMapContextRunner(customActions: ActionModel[]): Promise<[ActionModel['subtype'], ActionModel | null]> {
     const actSelector = this._state.ui.getUserActSelector('ON_MAP');
 
+    const dynamicActions = customActions
+      .filter((action) => !action.subtype.startsWith('MOVE_'));
+
     while (true) {
-      const [choosedActionType] = await actSelector.show();
+      actSelector.reset();
+      actSelector.setDynamicLayout(dynamicActions);
+      const [choosedActionType, choosedAction, additionalData] = await actSelector.show();
       switch (choosedActionType) {
         case 'SHOW_HELP': {
           await this._printFAQ();
@@ -186,11 +197,12 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
             await this._cursor.getSpotsAround(this.currentNode as MapSpotModel)
           )
             // eslint-disable-next-line no-nested-ternary
-            .sort((a, b) => (a.y > b.y ? 1 : (a.y < b.y ? -1 : 0)));
+            .sort((a, b) => (a.y > b.y ? 1 : (a.y < b.y ? -1 : (a.x > b.x ? 1 : (a.x < b.x ? -1 : 0)))));
           await this._sendAroundSpots(this.currentNode as MapSpotModel, spotsAround);
           break;
         }
         case 'INVENTORY_OPEN': {
+          await this._inventoryUI.showInventory();
           break;
         }
         case 'TAKE_A_REST': {
@@ -225,7 +237,7 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
           }
           break;
         }
-        default: return choosedActionType;
+        default: return [choosedActionType, choosedAction];
       }
     }
   }
@@ -242,7 +254,7 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
       await this._cursor.getSpotsAround(mapSpot)
     )
       // eslint-disable-next-line no-nested-ternary
-      .sort((a, b) => (a.y > b.y ? 1 : (a.y < b.y ? -1 : 0)));
+      .sort((a, b) => (a.y > b.y ? 1 : (a.y < b.y ? -1 : (a.x > b.x ? 1 : (a.x < b.x ? -1 : 0)))));
     await this._sendAroundSpots(mapSpot, spotsAround);
     await this._sendAroundAmbiences(spotsAround);
   }
@@ -265,6 +277,7 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
     ];
 
     for (const spot of spotsAround) {
+      console.log(spot)
       if (spot.y === mapSpot.y && spot.x === mapSpot.x) mapPiece[1 + spot.y - mapSpot.y] += '🔹';
       else {
         mapPiece[1 + spot.y - mapSpot.y] += subtypeIconMatcher[spot.subtype] ?? subtypeIconMatcher.default;
@@ -333,6 +346,8 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
 
   public async init(): Promise<void> {
     this._questManager = new QuestManager({ player: this._state.player, npcManager: this.npcManager });
+
+    this._inventoryUI = new InvetoryUI({ ui: this._state.ui, player: this._state.player });
 
     await super.init();
   }

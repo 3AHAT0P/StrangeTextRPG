@@ -1,19 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import config from '../.env.json';
+import type { Config, MainUIKindsType, MainUIType } from '../.env';
 
-export const MainUIKinds = <const>['NODE', 'TELEGRAM', 'TELEGRAM_INLINE', 'SOCKET'];
-
-export type MainUIType = typeof MainUIKinds[number];
-
-export interface Config {
-  TELEGRAM_BOT_TOKEN: string;
-  DONATE_LINK: string;
-  MAIN_CONTACT: string;
-  MAIN_UI: MainUIType;
-  NEO4J_URL: string;
-  NEO4J_LOGIN: string;
-  NEO4J_PASSWORD: string;
-}
+export { Config, MainUIType };
+export const MainUIKinds: MainUIKindsType = <const>['NODE', 'TELEGRAM', 'TELEGRAM_INLINE', 'SOCKET'];
 
 let cacheIsDirty = true;
 const cache: Config = {

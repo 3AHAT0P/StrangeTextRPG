@@ -22,7 +22,7 @@ export abstract class UserActSelectorAbstractAdapter {
 
   public init(): void { }
 
-  public abstract show(layout: UserAction<unknown>[][]): Promise<number>;
+  public abstract show(layout: UserAction[][]): Promise<number>;
 
   public abstract hide(): Promise<boolean>;
 }
