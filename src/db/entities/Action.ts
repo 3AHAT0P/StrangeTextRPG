@@ -2,10 +2,26 @@ import { Template } from '@utils/Template';
 import { AbstractEntity, AbstractModel } from './Abstract';
 
 export type ActionType = 'SYSTEM' | 'AUTO' | 'CUSTOM';
-export type ActionSubtype = 'TALK_TO_NPC' | 'START_QUEST' | 'DEAL_SUCCESS' | 'DEAL_FAILURE'
-| 'MOVE_TO_WEST' | 'MOVE_TO_EAST' | 'MOVE_TO_NORTH' | 'MOVE_TO_SOUTH' | 'MOVE_FORBIDDEN'
-| 'EXIT_LOCATION' | 'OTHER' | 'BACK' | 'RELOAD'
-| 'BATTLE_START' | 'BATTLE_WIN' | 'BATTLE_LOSE' | 'BATTLE_LEAVE';
+
+export type ActionMoveSubtypes = 'MOVE_TO_WEST' | 'MOVE_TO_EAST' | 'MOVE_TO_NORTH' | 'MOVE_TO_SOUTH' | 'MOVE_FORBIDDEN';
+
+export type ActionGlobalSubtypes = 'SHOW_HELP' | 'SHOW_MAP' | 'INVENTORY_OPEN' | 'INVENTORY_CLOSE' | 'TAKE_A_REST' | 'OPEN_MAIN_MENU';
+
+export type ActionHandshakeSubtypes = 'START_NEW_GAME' | 'DONATE_LINK' | 'MAIN_CONTACT';
+
+export type ActionBattleSubtypes = 'ATTACK' | `ATTACK_${number}` | 'EXAMINE' | `EXAMINE_${number}`
+| 'BATTLE_START' | 'BATTLE_WIN' | 'BATTLE_LOSE' | 'BATTLE_LEAVE' | 'BACK';
+
+export type ActionSubtype = 'DIALOG_START' | 'DIALOG_END'
+| 'TRADE_START' | 'TRADE_END'
+| 'FINISH_SESSION'
+| 'EXIT_LOCATION' | 'OTHER' | `OTHER_${number}` | 'BACK' | 'RELOAD'
+| 'DEAL_SUCCESS' | 'DEAL_FAILURE' | `BUY_${number}`
+| `INVENTORY_${string}`
+| ActionMoveSubtypes
+| ActionGlobalSubtypes
+| ActionHandshakeSubtypes
+| ActionBattleSubtypes;
 
 export interface ActionEntity extends AbstractEntity {
   toInteractionId: string;

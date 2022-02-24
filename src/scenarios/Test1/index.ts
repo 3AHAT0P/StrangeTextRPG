@@ -1,27 +1,32 @@
 import { Rat } from '@actors/bestiary/Rat';
+import { getConfig } from 'ConfigProvider';
 
-import { BattleModel, InteractionModel, MapSpotModel } from '@db/entities';
+import { InteractionModel, MapSpotModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
 import { BattleDifficulty } from '@db/entities/Battle';
 import { MapSpotSubtype } from '@db/entities/MapSpot';
 
 import logger from '@utils/Logger';
+import { safeGet, throwTextFnCarried, getRandomIntInclusive } from '@utils';
+import { DropSessionError } from '@utils/Error/DropSessionError';
 import { Matcher } from '@utils/Matcher';
-import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 
 import { ScenarioContext } from '@scenarios/@types';
 import { buyOrLeaveInteract } from '@scenarios/utils/buyOrLeaveInteract';
 import { findActionBySubtype } from '@scenarios/utils/findActionBySubtype';
-import { interactWithBattle } from '@scenarios/utils/interactWithBattle';
 import { processActions } from '@scenarios/utils/processActions';
 
 import { AbstractQuest, QuestId, QuestState } from '@quests';
 import { QuestManager } from '@quests/scenario-10001/QuestManager';
 import { NPCId, AbstractMerchant } from '@npcs';
 import { NPCManager } from '@npcs/scenario-10001/NPCManager';
+import { Battle } from '@scenarios/utils/Battle';
 
 import { AbstractScenario } from '../AbstractScenario';
 import { descriptions } from '../LocationDescriptions';
+import { InvetoryUI } from './InventoryUI';
+
+const config = getConfig();
 
 const getGoldCount = (difficult: BattleDifficulty): number => {
   if (difficult === 'VERY_EASY') return 8;
@@ -48,6 +53,8 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
 
   protected npcManager: NPCManager = new NPCManager();
 
+  protected _inventoryUI!: InvetoryUI;
+
   protected _questManager: QuestManager | null = null;
 
   protected get questManager(): QuestManager {
@@ -59,6 +66,7 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
     return {
       additionalInfo: this._state.additionalInfo,
       player: this._state.player,
+      currentStatus: 'DEFAULT',
       battles: {},
       loadMerchantInfo: (merchantId: NPCId): void => {
         const npc = this.npcManager.get(merchantId);
@@ -88,20 +96,31 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
         await this._sendTemplateToUser(this.currentNode.text, this.context);
       }
 
-      if (this.currentNode instanceof BattleModel) {
-        const action = await interactWithBattle(
-          this._state.ui,
-          this._cursor,
-          this._state.player,
-          [new Rat()],
-          true,
+      const actions = await this._cursor.getActions();
+
+      if (this.context.currentStatus === 'BATTLE') {
+        const battleInfo = safeGet(
+          this.context.battles.__CURRENT__,
+          throwTextFnCarried('battleInfo is null'),
         );
-        if (action === null) {
+
+        const battleInteraction = new Battle({
+          ui: this._state.ui,
+          player: this._state.player,
+          enemies: [new Rat()],
+        });
+
+        const actionType = await battleInteraction.activate();
+        if (actionType === 'BATTLE_LEAVE') {
           this.currentSpot = this.previousSpot;
           return;
         }
-
-        this._state.player.inventory.collectGold(getGoldCount(this.currentNode.difficult));
+        const action = safeGet(
+          findActionBySubtype(actions, actionType),
+          throwTextFnCarried('Action type is wrong'),
+        );
+        this._state.player.inventory.collectGold(getGoldCount(battleInfo.difficult));
+        this.context.currentStatus = 'DEFAULT';
         await this._updateCurrentNode(action, this.context);
         return;
       }
@@ -114,21 +133,27 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
       }
 
       if (processedActions.system.length > 0) {
-        const onDealSuccessAction = findActionBySubtype(processedActions.system, 'DEAL_SUCCESS');
-        const onDealFailureAction = findActionBySubtype(processedActions.system, 'DEAL_FAILURE');
-        if (onDealSuccessAction !== null && onDealFailureAction !== null) {
-          const action = await buyOrLeaveInteract(
-            this.context, this._state.ui,
-            onDealSuccessAction, onDealFailureAction, processedActions.custom,
-          );
+        // @TODO: if (this.context.uiStatus === 'TRADE') {}
+        const actionType = await buyOrLeaveInteract(this.context, this._state.ui, processedActions.custom);
+        const action = findActionBySubtype(processedActions.system.concat(processedActions.custom), actionType);
 
-          await this._updateCurrentNode(action, this.context);
-          return;
-        }
-        throw new Error('Unprocessed system actions found');
+        if (action === null) throw new Error('Unprocessed system actions found');
+        await this._updateCurrentNode(action, this.context);
+        return;
       }
 
-      const choosedAction = await this._interactWithUser(processedActions.custom, this.context);
+      let choosedAction: ActionModel;
+      if (this.context.currentStatus === 'ON_MAP') {
+        processedActions.custom.forEach((action) => action.text.useContext(this.context));
+        const [actionType, selectedAction] = await this._onMapContextRunner(processedActions.custom);
+
+        if (selectedAction == null) {
+          choosedAction = safeGet(
+            processedActions.all.find((action) => action.subtype === actionType),
+            throwTextFnCarried('choosedAction is null'),
+          );
+        } else choosedAction = selectedAction;
+      } else choosedAction = await this._interactWithUser(processedActions.custom, this.context);
 
       if (choosedAction.subtype === 'MOVE_FORBIDDEN') return;
 
@@ -148,6 +173,72 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
       }
     } catch (error) {
       logger.error('ScenarioNo5Test::_runner', error);
+      if (error instanceof DropSessionError) throw error;
+    }
+  }
+
+  protected async _onMapContextRunner(customActions: ActionModel[]): Promise<[ActionModel['subtype'], ActionModel | null]> {
+    const actSelector = this._state.ui.getUserActSelector('ON_MAP');
+
+    const dynamicActions = customActions
+      .filter((action) => !action.subtype.startsWith('MOVE_'));
+
+    while (true) {
+      actSelector.reset();
+      actSelector.setDynamicLayout(dynamicActions);
+      const [choosedActionType, choosedAction, additionalData] = await actSelector.show();
+      switch (choosedActionType) {
+        case 'SHOW_HELP': {
+          await this._printFAQ();
+          break;
+        }
+        case 'SHOW_MAP': {
+          const spotsAround = (
+            await this._cursor.getSpotsAround(this.currentNode as MapSpotModel)
+          )
+            // eslint-disable-next-line no-nested-ternary
+            .sort((a, b) => (a.y > b.y ? 1 : (a.y < b.y ? -1 : (a.x > b.x ? 1 : (a.x < b.x ? -1 : 0)))));
+          await this._sendAroundSpots(this.currentNode as MapSpotModel, spotsAround);
+          break;
+        }
+        case 'INVENTORY_OPEN': {
+          await this._inventoryUI.showInventory();
+          break;
+        }
+        case 'TAKE_A_REST': {
+          await this._state.ui.sendToUser('Ты разводишь костер и ложишься рядом с ним.');
+          await this._state.ui.sendToUser('...');
+          await this._state.ui.sendToUser('Небольшого отдыха хватило, чтобы немного восстановить сил и заживить раны.');
+          this.context.player.heal(3);
+          await this._state.ui.sendToUser(`+3 ОЗ (❤️). Всего ${this.context.player.stats.healthPoints} из ${this.context.player.stats.maxHealthPoints}`);
+          break;
+        }
+        case 'OPEN_MAIN_MENU': {
+          const mainMenuActSelector = this._state.ui.getUserActSelector('MAIN_MENU');
+          // repeat ?
+          while (true) {
+            const [mainMenuActionType] = await mainMenuActSelector.show();
+
+            if (mainMenuActionType === 'FINSIH_SESSION') {
+              // @TODO:
+              // ???????????????
+              // I don't know how finish game from this
+              // and exit from all that code with clear all promises
+              // and etc
+              await this._state.finishSession();
+              throw new DropSessionError('EXIT!');
+            } else if (mainMenuActionType === 'BACK') {
+              break;
+            } else if (mainMenuActionType === 'DONATE_LINK') {
+              await this._state.ui.sendToUser(config.DONATE_LINK);
+            } else if (mainMenuActionType === 'MAIN_CONTACT') {
+              await this._state.ui.sendToUser(config.MAIN_CONTACT);
+            }
+          }
+          break;
+        }
+        default: return [choosedActionType, choosedAction];
+      }
     }
   }
 
@@ -163,7 +254,7 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
       await this._cursor.getSpotsAround(mapSpot)
     )
       // eslint-disable-next-line no-nested-ternary
-      .sort((a, b) => (a.y > b.y ? 1 : (a.y < b.y ? -1 : 0)));
+      .sort((a, b) => (a.y > b.y ? 1 : (a.y < b.y ? -1 : (a.x > b.x ? 1 : (a.x < b.x ? -1 : 0)))));
     await this._sendAroundSpots(mapSpot, spotsAround);
     await this._sendAroundAmbiences(spotsAround);
   }
@@ -186,6 +277,7 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
     ];
 
     for (const spot of spotsAround) {
+      console.log(spot)
       if (spot.y === mapSpot.y && spot.x === mapSpot.x) mapPiece[1 + spot.y - mapSpot.y] += '🔹';
       else {
         mapPiece[1 + spot.y - mapSpot.y] += subtypeIconMatcher[spot.subtype] ?? subtypeIconMatcher.default;
@@ -217,7 +309,6 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
       // eslint-disable-next-line no-param-reassign
       .on('ANY_NPC', (result) => { result.npc += 1; });
     for (const spot of spotsAround) {
-      // eslint-disable-next-line no-await-in-loop
       await mapSpotSubtypeMatcher.run(spot.subtype, ambiences);
     }
 
@@ -255,6 +346,8 @@ export class ScenarioNo5Test extends AbstractScenario<ScenarioContext> {
 
   public async init(): Promise<void> {
     this._questManager = new QuestManager({ player: this._state.player, npcManager: this.npcManager });
+
+    this._inventoryUI = new InvetoryUI({ ui: this._state.ui, player: this._state.player });
 
     await super.init();
   }

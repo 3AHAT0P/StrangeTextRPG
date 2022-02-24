@@ -2,10 +2,12 @@ import type { Player } from '@actors/Player';
 import type { AbstractNPC, AbstractMerchant, NPCId } from '@npcs';
 import type { AdditionalSessionInfo } from '@ui';
 import type { AbstractQuest, QuestState, QuestId } from '@quests';
+import type { BattleDifficulty } from '@db/entities/Battle';
 
 export interface BaseScenarioContext {
   additionalInfo: AdditionalSessionInfo;
   player: Player;
+  currentStatus: 'ON_MAP' | 'BATTLE' | 'DEFAULT' | 'DIALOG' | 'TRADING';
 }
 
 export interface ScenarioWithMerchantsContext {
@@ -25,8 +27,14 @@ export interface ScenarioWithQuestsContext {
   getQuest: (questId: QuestId) => AbstractQuest<QuestState>;
 }
 
+export interface BattleInfo {
+  id: string;
+  immune: number;
+  difficult: BattleDifficulty;
+}
+
 export interface ScenarioWithBattlesContext {
-  battles: Record<string, number>;
+  battles: Record<string, BattleInfo | null | void>;
 }
 
 export interface ScenarioContext extends

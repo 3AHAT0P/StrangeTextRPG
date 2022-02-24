@@ -1,5 +1,5 @@
 import { AbstractInteraction } from '_DEPRECATED_interactions/AbstractInteraction';
-import { AbstractUI } from '@ui/AbstractUI';
+import { AbstractUI } from '@ui/@types';
 import { SessionState } from '../../SessionState';
 
 import { LocationBuilder } from '../LocationBuilder';

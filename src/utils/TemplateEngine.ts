@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { AbstractActor, AttackResult } from '@actors/AbstractActor';
 import { AbstractItem } from '@actors/AbstractItem';
+import { BattleInfo } from '@scenarios/@types';
 import Handlebars from 'handlebars';
 
 export type TemplateDelegate<TContext> = Handlebars.TemplateDelegate<TContext>;
@@ -77,33 +79,49 @@ Handlebars.registerHelper(
 );
 
 Handlebars.registerHelper(
-  'updateBattleImmune',
+  'battle_updateImmune',
   (battleId: string, value: number, ctx: any) => {
-    const oldValue = Number(Reflect.get(ctx.data.root.battles, battleId));
-    const newValue = Number.isNaN(oldValue) ? value : oldValue + value;
-    Reflect.set(
-      ctx.data.root.battles,
-      battleId,
-      newValue > 0 ? newValue : 0,
-    );
+    const battleInfo: BattleInfo = Reflect.get(ctx.data.root.battles, battleId);
+    if (battleInfo == null) throw new Error('BattleInfo is not defined');
+
+    battleInfo.immune = battleInfo.immune + value > 0 ? battleInfo.immune + value : 0;
     return true;
   },
 );
 
 Handlebars.registerHelper(
-  'canBattleTrigger',
+  'battle_canTrigger',
   (battleId: string, chance: number, ctx: any) => {
-    const rawValue = Number(Reflect.get(ctx.data.root.battles, battleId));
-    const value = Number.isNaN(rawValue) ? 0 : rawValue;
-    if (value !== 0) {
-      Reflect.set(
-        ctx.data.root.battles,
-        battleId,
-        value - 1,
-      );
-      return false;
+    const battleInfo: BattleInfo | null = Reflect.get(ctx.data.root.battles, battleId);
+
+    if (battleInfo == null) return chance > Math.random();
+
+    if (battleInfo.immune === 0) return chance > Math.random();
+
+    battleInfo.immune -= 1;
+    return false;
+  },
+);
+
+Handlebars.registerHelper(
+  'battle_load',
+  (battleId: string, difficult: BattleInfo['difficult'], ctx: any) => {
+    let battleInfo: BattleInfo | null = Reflect.get(ctx.data.root.battles, battleId);
+    if (battleInfo == null) {
+      battleInfo = { id: battleId, immune: 0, difficult };
+      Reflect.set(ctx.data.root.battles, battleId, battleInfo);
     }
-    return chance > Math.random();
+
+    Reflect.set(ctx.data.root.battles, '__CURRENT__', battleInfo);
+    return true;
+  },
+);
+
+Handlebars.registerHelper(
+  'battle_unload',
+  (ctx: any) => {
+    Reflect.set(ctx.data.root.battles, '__CURRENT__', null);
+    return true;
   },
 );
 

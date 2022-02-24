@@ -7,6 +7,7 @@ import {
   MapSpotEntity,
   DataContainer,
   DataCollection,
+  buildBattleContainer,
 } from '@db/entities';
 import { isThroughable, MapSpotSubtype } from '@db/entities/MapSpot';
 import { parseBattleSubtype, isBattleSubtype } from '@db/entities/Battle';
@@ -104,7 +105,7 @@ export class MapParser {
   //     text: `💬 Поговорить с торговцем (#${this._sequences.npcId})`,
   //     operation: `{{loadMerchantInfo ${this._sequences.npcId}}}`,
   //     type: 'CUSTOM',
-  //     subtype: 'TALK_TO_NPC',
+  //     subtype: 'DIALOG_START',
   //   });
   //   this._sequences.npcId += 1;
   // }
@@ -126,24 +127,6 @@ export class MapParser {
 
     const [difficult, chanceOfTriggering] = parseBattleSubtype(subtype);
 
-    const battle = this._nodeCollection.addContainer<BattleEntity>(
-      'Battle',
-      {
-        ...this._mapInfo,
-        difficult,
-        chanceOfTriggering,
-      },
-    );
-
-    this._nodeCollection.addLink(currentSpot, {
-      ...this._mapInfo,
-      to: battle.entity.interactionId,
-      text: '',
-      condition: `{{canBattleTrigger "${battle.entity.interactionId}" ${chanceOfTriggering}}}`,
-      type: 'AUTO',
-      subtype: 'BATTLE_START',
-    });
-
     const onWinInteraction = this._nodeCollection.addContainer<InteractionEntity>(
       'Interaction',
       {
@@ -152,27 +135,21 @@ export class MapParser {
       },
     );
 
-    this._nodeCollection.addLink(battle, {
-      ...this._mapInfo,
-      to: onWinInteraction.entity.interactionId,
-      text: '',
-      type: 'SYSTEM',
-      subtype: 'BATTLE_WIN',
-    });
-
-    this._nodeCollection.addLink(battle, {
-      ...this._mapInfo,
-      to: this._customInteractions.onPlayerDiedId ?? currentSpot.entity.interactionId,
-      text: '',
-      type: 'SYSTEM',
-      subtype: 'BATTLE_LOSE',
-    });
+    buildBattleContainer(
+      this._nodeCollection,
+      this._mapInfo,
+      { difficult, chanceOfTriggering },
+      {
+        input: currentSpot,
+        win: onWinInteraction,
+        lose: this._customInteractions.onPlayerDiedId ?? currentSpot.entity.interactionId,
+      },
+    );
 
     this._nodeCollection.addLink(onWinInteraction, {
       ...this._mapInfo,
       to: currentSpot.entity.interactionId,
       text: '',
-      operation: `{{updateBattleImmune "${battle.entity.interactionId}" 10}}`,
       type: 'AUTO',
       subtype: 'OTHER',
     });

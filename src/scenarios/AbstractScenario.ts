@@ -1,14 +1,15 @@
 import { Cursor } from '@db/Cursor';
-import { OneOFNodeModel, InteractionModel, BattleModel } from '@db/entities';
+import { OneOFNodeModel, InteractionModel, BattleModel, MapSpotModel } from '@db/entities';
 import { ActionModel } from '@db/entities/Action';
-import { ActionsLayout } from '@ui';
 import { Template } from '@utils/Template';
 import logger from '@utils/Logger';
+import { safeGet, throwTextFnCarried } from '@utils';
 import { SessionState } from 'SessionState';
 
 import { BaseScenarioContext } from './@types';
-import { interactWithBattle } from './utils/interactWithBattle';
-import { processActions } from './utils/processActions';
+import { processActions, ProcessedActions } from './utils/processActions';
+import { Battle } from './utils/Battle';
+import { findActionBySubtype } from './utils/findActionBySubtype';
 
 export interface ScenarioCallbacks {
   onChangeScenario: (scenarioId: number) => void;
@@ -31,6 +32,12 @@ export abstract class AbstractScenario<TScenarioContext extends BaseScenarioCont
     return this._context;
   }
 
+  protected get processedActions(): Promise<ProcessedActions> {
+    return this._cursor.getActions().then((actions) => processActions(actions, this.context));
+  }
+
+  protected _userActSelectorId: string | null = null;
+
   protected currentNode: OneOFNodeModel | null = null;
 
   public get scenarioId(): number { return this._scenarioId; }
@@ -46,7 +53,43 @@ export abstract class AbstractScenario<TScenarioContext extends BaseScenarioCont
   protected async _updateCurrentNode(action: ActionModel, context: TScenarioContext): Promise<void> {
     if (action.isPrintable && action.text != null) await this._sendTemplateToUser(action.text, context);
     action.operation?.useContext(context)?.forceBuild();
+    switch (action.subtype) {
+      case 'BATTLE_START': {
+        this.context.currentStatus = 'BATTLE';
+        break;
+      }
+      case 'BATTLE_WIN':
+      case 'BATTLE_LOSE':
+      case 'BATTLE_LEAVE': {
+        this.context.currentStatus = 'DEFAULT';
+        break;
+      }
+      case 'DIALOG_START': {
+        this.context.currentStatus = 'DIALOG';
+        break;
+      }
+      case 'DIALOG_END': {
+        this.context.currentStatus = 'DEFAULT';
+        break;
+      }
+      case 'TRADE_START': {
+        this.context.currentStatus = 'TRADING';
+        break;
+      }
+      case 'TRADE_END': {
+        this.context.currentStatus = 'DEFAULT';
+        break;
+      }
+      default: {
+        break;
+      }
+    }
     this.currentNode = await this._cursor.getNextNode(action);
+
+    if (this.currentNode instanceof MapSpotModel && this.context.currentStatus !== 'ON_MAP') {
+      this.context.currentStatus = 'ON_MAP';
+      console.log('_updateCurrentNode', 'ON_MAP');
+    }
   }
 
   protected async _beforeRun(): Promise<boolean> {
@@ -60,19 +103,22 @@ export abstract class AbstractScenario<TScenarioContext extends BaseScenarioCont
   protected async _runner(): Promise<void> {
     if (this.currentNode instanceof InteractionModel) await this._sendTemplateToUser(this.currentNode.text);
 
-    if (this.currentNode instanceof BattleModel) {
-      const action = await interactWithBattle(
-        this._state.ui,
-        this._cursor,
-        this._state.player,
-        [],
-      );
-      if (action != null) {
-        await this._updateCurrentNode(action, this.context);
-        return;
-      }
+    const actions = await this._cursor.getActions();
 
-      throw new Error('Action is null');
+    if (this.currentNode instanceof BattleModel) {
+      const battleInteraction = new Battle({
+        ui: this._state.ui,
+        player: this._state.player,
+        enemies: [],
+      });
+
+      const actionType = await battleInteraction.activate();
+      const action = safeGet(
+        findActionBySubtype(actions, actionType),
+        throwTextFnCarried('Action type is wrong'),
+      );
+      await this._updateCurrentNode(action, this.context);
+      return;
     }
 
     const processedActions = processActions(await this._cursor.getActions(), this.context);
@@ -109,13 +155,17 @@ export abstract class AbstractScenario<TScenarioContext extends BaseScenarioCont
     actions: ActionModel[],
     context: TScenarioContext = this.context,
   ): Promise<ActionModel> {
-    const actionText = await this._state.ui.interactWithUser(
-      new ActionsLayout().addRow(...actions.map(({ text }) => text.useContext(context).value)),
-    );
+    const actSelector = this._state.ui.createUserActSelector('BASE');
 
-    const choosedAction = actions.find(({ text }) => text.isEqualTo(actionText));
+    let index: number = 0;
+    for (const action of actions) {
+      actSelector.addAction(action.text.useContext(context).value, action.subtype, Math.trunc(index / 3), action);
+      index += 1;
+    }
 
-    if (choosedAction == null) throw new Error('choosedAction is null');
+    const [, choosedAction] = await actSelector.show();
+
+    if (choosedAction === null) throw new Error('choosedAction is null');
 
     return choosedAction;
   }

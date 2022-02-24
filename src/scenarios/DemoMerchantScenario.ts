@@ -9,7 +9,6 @@ import { BaseScenarioContext, ScenarioWithMerchantsContext } from './@types';
 import { AbstractScenario } from './AbstractScenario';
 import { buyOrLeaveInteract } from './utils/buyOrLeaveInteract';
 import { findActionBySubtype } from './utils/findActionBySubtype';
-import { processActions } from './utils/processActions';
 
 export class Merchant1 extends AbstractMerchant {
   protected readonly _id: `Scenario:${number}|Location:1|NPC:1` = `Scenario:${902}|Location:${1}|NPC:${1}`;
@@ -53,6 +52,7 @@ export class DemoMerchantScenario extends AbstractScenario<DemoMerchantScenarioC
     return {
       additionalInfo: this._state.additionalInfo,
       player: new Player(),
+      currentStatus: 'DEFAULT',
       loadMerchantInfo: (): void => {
         this.context.currentMerchant = this._merchant;
       },
@@ -65,11 +65,9 @@ export class DemoMerchantScenario extends AbstractScenario<DemoMerchantScenarioC
 
   protected async _runner(): Promise<void> {
     try {
-      if (this.currentNode instanceof InteractionModel) {
-        await this._sendTemplateToUser(this.currentNode.text, this.context);
-      }
+      if (this.currentNode instanceof InteractionModel) await this._sendTemplateToUser(this.currentNode.text);
 
-      const processedActions = processActions(await this._cursor.getActions(), this.context);
+      const processedActions = await this.processedActions;
 
       if (processedActions.auto != null) {
         await this._updateCurrentNode(processedActions.auto, this.context);
@@ -77,18 +75,13 @@ export class DemoMerchantScenario extends AbstractScenario<DemoMerchantScenarioC
       }
 
       if (processedActions.system.length > 0) {
-        const onDealSuccessAction = findActionBySubtype(processedActions.system, 'DEAL_SUCCESS');
-        const onDealFailureAction = findActionBySubtype(processedActions.system, 'DEAL_FAILURE');
-        if (onDealSuccessAction !== null && onDealFailureAction !== null) {
-          const action = await buyOrLeaveInteract(
-            this.context, this._state.ui,
-            onDealSuccessAction, onDealFailureAction, processedActions.custom,
-          );
+        // @TODO: if (this.context.currentStatus === 'TRADING') {}
+        const actionType = await buyOrLeaveInteract(this.context, this._state.ui, processedActions.custom);
+        const action = findActionBySubtype(processedActions.system.concat(processedActions.custom), actionType);
 
-          await this._updateCurrentNode(action, this.context);
-          return;
-        }
-        throw new Error('Unprocessed system actions found');
+        if (action === null) throw new Error('Unprocessed system actions found');
+        await this._updateCurrentNode(action, this.context);
+        return;
       }
 
       const choosedAction = await this._interactWithUser(processedActions.custom, this.context);

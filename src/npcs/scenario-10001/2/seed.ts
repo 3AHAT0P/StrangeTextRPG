@@ -72,7 +72,7 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     to: i1.entity.interactionId,
     text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Привет, что случилось?',
     type: 'CUSTOM',
-    subtype: 'START_QUEST',
+    subtype: 'DIALOG_START',
   });
 
   options.dataCollection.addLink(i0, {
@@ -80,7 +80,7 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     to: spot.entity.interactionId,
     text: '💬 [{{actorType player declension="nominative" capitalised=true}}]: Отстань!',
     type: 'CUSTOM',
-    subtype: 'TALK_TO_NPC',
+    subtype: 'OTHER',
   });
 
   options.dataCollection.addLink(i1, {
@@ -89,7 +89,7 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     text: 'Хорошо, главное не умри пока я вернусь',
     operation: `{{updateQuestState "${quest2Id}" "${Quest2States.PHASE_1}"}} {{unloadCurrentNPCInfo}}`,
     type: 'CUSTOM',
-    subtype: 'OTHER',
+    subtype: 'DIALOG_END',
   });
 
   options.dataCollection.addLink(i1, {
@@ -98,7 +98,7 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     text: 'Не, я не альтруист, другим помогать. Каждый сам за себя!',
     operation: `{{updateQuestState "${quest2Id}" "${Quest2States.FINISHED_BAD}"}} {{unloadCurrentNPCInfo}}`,
     type: 'CUSTOM',
-    subtype: 'OTHER',
+    subtype: 'DIALOG_END',
   });
 
   dataCollection.addLink(spot, {
@@ -108,7 +108,7 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     condition: `{{questStateIsEQ "${quest2Id}" "${Quest2States.PHASE_1}"}}`,
     operation: `{{loadNPCInfo "${npc2Info.id}"}}`,
     type: 'CUSTOM',
-    subtype: 'OTHER',
+    subtype: 'DIALOG_START',
   });
 
   const i2 = options.dataCollection.addContainer<InteractionEntity>('Interaction', {
@@ -147,7 +147,7 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     text: '',
     operation: '{{unloadCurrentNPCInfo}}',
     type: 'AUTO',
-    subtype: 'OTHER',
+    subtype: 'DIALOG_END',
   });
 
   options.dataCollection.addLink(i2, {
@@ -156,7 +156,7 @@ export const npc2Seed = (options: NPCInteractBuilderOptions): void => {
     text: 'Нет еще',
     operation: '{{unloadCurrentNPCInfo}}',
     type: 'CUSTOM',
-    subtype: 'OTHER',
+    subtype: 'DIALOG_END',
     isPrintable: true,
   });
 };

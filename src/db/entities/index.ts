@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AbstractModel, AbstractEntity } from './Abstract';
 import { ActionModel, ActionEntity } from './Action';
-import { BattleEntity, BattleModel } from './Battle';
+import { BattleDifficulty, BattleEntity, BattleModel } from './Battle';
 import { InteractionEntity, InteractionModel } from './Interaction';
 import { MapSpotEntity, MapSpotModel } from './MapSpot';
 import { NPCEntity, NPCModel } from './NPC';
@@ -76,4 +76,66 @@ export const createDataCollection = (): DataCollection => {
   };
 
   return { data, addContainer, addLink };
+};
+
+export const buildBattleContainer = (
+  dataCollection: DataCollection,
+  baseInfo: {
+    scenarioId: number;
+    locationId: number;
+  },
+  info: {
+    difficult: BattleDifficulty;
+    chanceOfTriggering: number;
+  },
+  ioNodes: {
+    input: DataContainer<AbstractEntity>;
+    win: DataContainer<AbstractEntity> | string;
+    lose: DataContainer<AbstractEntity> | string;
+    leave?: DataContainer<AbstractEntity> | string;
+  },
+): void => {
+  const battle = dataCollection.addContainer<BattleEntity>('Battle', {
+    ...baseInfo,
+    ...info,
+  });
+
+  dataCollection.addLink(ioNodes.input, {
+    ...baseInfo,
+    to: battle.entity.interactionId,
+    text: '',
+    condition: `{{battle_canTrigger "${battle.entity.interactionId}" ${battle.entity.chanceOfTriggering}}}`,
+    operation: `{{battle_load "${battle.entity.interactionId}" "${battle.entity.difficult}"}}`,
+    type: 'AUTO',
+    subtype: 'BATTLE_START',
+  });
+
+  dataCollection.addLink(battle, {
+    ...baseInfo,
+    to: typeof ioNodes.win === 'string' ? ioNodes.win : ioNodes.win.entity.interactionId,
+    text: '',
+    type: 'AUTO',
+    operation: `{{battle_updateImmune "${battle.entity.interactionId}" 10}} {{battle_unload}}`,
+    subtype: 'BATTLE_WIN',
+  });
+
+  dataCollection.addLink(battle, {
+    ...baseInfo,
+    to: typeof ioNodes.lose === 'string' ? ioNodes.lose : ioNodes.lose.entity.interactionId,
+    text: '',
+    type: 'AUTO',
+    operation: '{{battle_unload}}',
+    subtype: 'BATTLE_LOSE',
+  });
+
+  if (ioNodes.leave != null) {
+    dataCollection.addLink(battle, {
+      ...baseInfo,
+      to: typeof ioNodes.leave === 'string' ? ioNodes.leave : ioNodes.leave.entity.interactionId,
+      text: '',
+      type: 'AUTO',
+      operation: '{{battle_unload}}',
+      subtype: 'BATTLE_LEAVE',
+    });
+  }
 };

@@ -26,7 +26,7 @@ export const npc4Seed = (options: NPCInteractBuilderOptions): void => {
     text: `💬 Поговорить с торговцем (${npc4Info.name})`,
     operation: `{{loadMerchantInfo "${npc4Info.id}"}}`,
     type: 'CUSTOM',
-    subtype: 'TALK_TO_NPC',
+    subtype: 'DIALOG_START',
   });
 
   const i0 = dataCollection.addContainer<InteractionEntity>('Interaction', {
@@ -194,6 +194,6 @@ export const npc4Seed = (options: NPCInteractBuilderOptions): void => {
     text: '',
     operation: '{{unloadCurrentMerchant}}',
     type: 'AUTO',
-    subtype: 'OTHER',
+    subtype: 'DIALOG_END',
   });
 };

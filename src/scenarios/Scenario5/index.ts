@@ -12,13 +12,15 @@ import { getRandomIntInclusive } from '@utils/getRandomIntInclusive';
 import { ScenarioContext } from '@scenarios/@types';
 import { buyOrLeaveInteract } from '@scenarios/utils/buyOrLeaveInteract';
 import { findActionBySubtype } from '@scenarios/utils/findActionBySubtype';
-import { interactWithBattle } from '@scenarios/utils/interactWithBattle';
 import { processActions } from '@scenarios/utils/processActions';
 
 import { AbstractQuest, QuestId, QuestState } from '@quests';
 import { QuestManager } from '@quests/scenario-5/QuestManager';
 import { NPCId, AbstractMerchant } from '@npcs';
 import { NPCManager } from '@npcs/scenario-5/NPCManager';
+
+import { Battle } from '@scenarios/utils/Battle';
+import { safeGet, throwTextFnCarried } from '@utils';
 
 import { AbstractScenario } from '../AbstractScenario';
 import { descriptions } from '../LocationDescriptions';
@@ -75,6 +77,7 @@ export class ScenarioNo5 extends AbstractScenario<ScenarioContext> {
     return {
       additionalInfo: this._state.additionalInfo,
       player: this._state.player,
+      currentStatus: 'DEFAULT',
       battles: {},
       loadMerchantInfo: (merchantId: NPCId): void => {
         const npc = this.npcManager.get(merchantId);
@@ -104,19 +107,24 @@ export class ScenarioNo5 extends AbstractScenario<ScenarioContext> {
         await this._sendTemplateToUser(this.currentNode.text, this.context);
       }
 
+      const actions = await this._cursor.getActions();
+
       if (this.currentNode instanceof BattleModel) {
-        const action = await interactWithBattle(
-          this._state.ui,
-          this._cursor,
-          this._state.player,
-          getEnemies(this.currentNode.difficult),
-          true,
-        );
-        if (action === null) {
+        const battleInteraction = new Battle({
+          ui: this._state.ui,
+          player: this._state.player,
+          enemies: getEnemies(this.currentNode.difficult),
+        });
+
+        const actionType = await battleInteraction.activate();
+        if (actionType === 'BATTLE_LEAVE') {
           this.currentSpot = this.previousSpot;
           return;
         }
-
+        const action = safeGet(
+          findActionBySubtype(actions, actionType),
+          throwTextFnCarried('Action type is wrong'),
+        );
         await this._updateCurrentNode(action, this.context);
         return;
       }
@@ -129,18 +137,13 @@ export class ScenarioNo5 extends AbstractScenario<ScenarioContext> {
       }
 
       if (processedActions.system.length > 0) {
-        const onDealSuccessAction = findActionBySubtype(processedActions.system, 'DEAL_SUCCESS');
-        const onDealFailureAction = findActionBySubtype(processedActions.system, 'DEAL_FAILURE');
-        if (onDealSuccessAction !== null && onDealFailureAction !== null) {
-          const action = await buyOrLeaveInteract(
-            this.context, this._state.ui,
-            onDealSuccessAction, onDealFailureAction, processedActions.custom,
-          );
+        // @TODO: if (this.context.uiStatus === 'TRADE') {}
+        const actionType = await buyOrLeaveInteract(this.context, this._state.ui, processedActions.custom);
+        const action = findActionBySubtype(processedActions.system.concat(processedActions.custom), actionType);
 
-          await this._updateCurrentNode(action, this.context);
-          return;
-        }
-        throw new Error('Unprocessed system actions found');
+        if (action === null) throw new Error('Unprocessed system actions found');
+        await this._updateCurrentNode(action, this.context);
+        return;
       }
 
       const choosedAction = await this._interactWithUser(processedActions.custom, this.context);
@@ -232,7 +235,6 @@ export class ScenarioNo5 extends AbstractScenario<ScenarioContext> {
       // eslint-disable-next-line no-param-reassign
       .on('ANY_NPC', (result) => { result.npc += 1; });
     for (const spot of spotsAround) {
-      // eslint-disable-next-line no-await-in-loop
       await mapSpotSubtypeMatcher.run(spot.subtype, ambiences);
     }
 

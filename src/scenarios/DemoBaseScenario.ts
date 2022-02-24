@@ -8,6 +8,7 @@ export class DemoBaseScenario extends AbstractScenario<BaseScenarioContext> {
     return {
       additionalInfo: this._state.additionalInfo,
       player: this._state.player,
+      currentStatus: 'DEFAULT',
     };
   }
 }

@@ -42,7 +42,7 @@ export const demoMerchantSeedRun = (): DemoMerchantConnectors => {
     text: '💬 Поговорить с торговцем (#1)',
     operation: `{{loadMerchantInfo "${npcId}"}}`,
     type: 'CUSTOM',
-    subtype: 'TALK_TO_NPC',
+    subtype: 'DIALOG_START',
   });
 
   const i0 = dataCollection.addContainer<InteractionEntity>('Interaction', {
@@ -167,7 +167,7 @@ export const demoMerchantSeedRun = (): DemoMerchantConnectors => {
         to: returnInteraction.entity.interactionId,
         text: '',
         type: 'AUTO',
-        subtype: 'OTHER',
+        subtype: 'DIALOG_END',
       });
     },
   };

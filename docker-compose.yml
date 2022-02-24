@@ -16,6 +16,8 @@ services:
     restart: on-failure
     environment:
       NODE_ENV: development
+    ports:
+      - 8888:8888
     secrets:
       - main_secret
     networks:

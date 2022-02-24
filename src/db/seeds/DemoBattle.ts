@@ -3,7 +3,7 @@ import {
   InteractionEntity,
   DataContainer,
   createDataCollection,
-  BattleEntity,
+  buildBattleContainer,
 } from '@db/entities';
 
 import { ConnectorTo, ConnectorFrom } from './Connector';
@@ -25,13 +25,7 @@ export const demoBattleSeedRun = (): DemoBattleConnectors => {
   const i0 = dataCollection.addContainer<InteractionEntity>('Interaction', {
     ...baseInfo,
     isStart: true,
-    text: 'На тебя напали.',
-  });
-
-  const b1 = dataCollection.addContainer<BattleEntity>('Battle', {
-    ...baseInfo,
-    difficult: 'EASY',
-    chanceOfTriggering: 1,
+    text: 'Загружаю тренировочный бой...',
   });
 
   const i1 = dataCollection.addContainer<InteractionEntity>('Interaction', {
@@ -54,37 +48,20 @@ export const demoBattleSeedRun = (): DemoBattleConnectors => {
     text: 'Ты начинаешь пятиться, но спотыкаешься о камень. Падая, ты замечаешь как твои враги набросились на тебя. Страх и адская боль от того что тебя разрывают на части - это последнее, что ты успел ощутить...',
   });
 
-  dataCollection.addLink(i0, {
-    ...baseInfo,
-    to: b1.entity.interactionId,
-    text: '',
-    type: 'AUTO',
-    subtype: 'BATTLE_START',
-  });
-
-  dataCollection.addLink(b1, {
-    ...baseInfo,
-    to: i1.entity.interactionId,
-    text: '',
-    type: 'AUTO',
-    subtype: 'BATTLE_WIN',
-  });
-
-  dataCollection.addLink(b1, {
-    ...baseInfo,
-    to: i2.entity.interactionId,
-    text: '',
-    type: 'AUTO',
-    subtype: 'BATTLE_LOSE',
-  });
-
-  dataCollection.addLink(b1, {
-    ...baseInfo,
-    to: i4.entity.interactionId,
-    text: '',
-    type: 'AUTO',
-    subtype: 'BATTLE_LEAVE',
-  });
+  buildBattleContainer(
+    dataCollection,
+    baseInfo,
+    {
+      difficult: 'EASY',
+      chanceOfTriggering: 1,
+    },
+    {
+      input: i0,
+      win: i1,
+      lose: i2,
+      leave: i4,
+    },
+  );
 
   dataCollection.addLink(i1, {
     ...baseInfo,

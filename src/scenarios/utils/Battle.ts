@@ -1,7 +1,8 @@
 /* eslint-disable no-await-in-loop */
 import { AbstractActor, AttackResult } from '@actors/AbstractActor';
-import { AbstractUI } from '@ui';
-import { ActionsLayout } from '@ui/ActionsLayout';
+import { ActionBattleSubtypes } from '@db/entities/Action';
+import { AbstractUI } from '@ui/@types';
+import { BattleAtcWithEnemy, BattleUserActSelector } from '@ui/UserActSelectors/BattleUserActSelector';
 import { Template } from '@utils/Template';
 
 export interface BattleOptions {
@@ -9,23 +10,6 @@ export interface BattleOptions {
   player: AbstractActor;
   enemies: AbstractActor[];
 }
-
-const ACTIONS = {
-  attack: 'Атаковать 🗡',
-  examine: 'Осмотреть 👀',
-  back: 'Назад',
-  leave: 'Убежать из боя',
-} as const;
-
-type ACTION_VALUES = typeof ACTIONS[keyof typeof ACTIONS];
-
-export const BATTLE_FINAL_ACTIONS = {
-  PLAYER_DIED: 'onDied',
-  PLAYER_WIN: 'onWin',
-  LEAVE: 'onLeave',
-} as const;
-
-export type BATTLE_FINAL_ACTIONS_VALUES = typeof BATTLE_FINAL_ACTIONS[keyof typeof BATTLE_FINAL_ACTIONS];
 
 const TEMPLATES = <const>{
   firstMessage: new Template<{ attacker: AbstractActor; attacked: AbstractActor[] }>(
@@ -70,59 +54,56 @@ const TEMPLATES = <const>{
   ),
 };
 
-const interactWithUser = async (
-  ui: AbstractUI, aliveEnemies: AbstractActor[], template: Template<{ enemy: AbstractActor }>,
-): Promise<AbstractActor | null> => {
-  const actions = aliveEnemies.map(
-    (enemy) => template.clone({ enemy }).value,
+const attack = async (
+  ui: AbstractUI, userActSelector: BattleUserActSelector,
+  player: AbstractActor, aliveEnemies: AbstractActor[],
+): Promise<'ATTACK' | 'BACK'> => {
+  const actions: BattleAtcWithEnemy[] = aliveEnemies.map(
+    (enemy, index) => ({
+      text: TEMPLATES.attackEnemyAction.clone({ enemy }).value,
+      type: `ATTACK_${index}`,
+    }),
   );
-  const choosedAction = await ui.interactWithUser(
-    new ActionsLayout().addRow(...actions.concat([ACTIONS.back])),
-  );
+  const [currentActionType] = await userActSelector.show(actions);
 
-  if (choosedAction === ACTIONS.back) return null;
+  if (currentActionType === 'BACK') return 'BACK';
 
-  const actionId = actions.indexOf(choosedAction);
+  const enemy = aliveEnemies[Number(currentActionType.split('_')[1])];
 
-  return aliveEnemies[actionId];
+  const attackResult = player.doAttack(enemy);
+
+  await ui.sendToUser(TEMPLATES.attackMessage.clone({ attacker: player, attacked: enemy, attackResult }).value);
+
+  for (const aliveEnemy of aliveEnemies) {
+    if (!aliveEnemy.isAlive) await ui.sendToUser(`${aliveEnemy.getDeathMessage()}.`);
+    return 'ATTACK';
+  }
+
+  return 'ATTACK';
 };
 
-type ActionHandler = (
-  ui: AbstractUI, player: AbstractActor, aliveEnemies: AbstractActor[],
-) => Promise<ACTION_VALUES | null>;
+const examine = async (
+  ui: AbstractUI, userActSelector: BattleUserActSelector,
+  player: AbstractActor, aliveEnemies: AbstractActor[],
+): Promise<'EXAMINE' | 'BACK'> => {
+  const actions: BattleAtcWithEnemy[] = aliveEnemies.map(
+    (enemy, index) => ({
+      text: TEMPLATES.examineEnemyAction.clone({ enemy }).value,
+      type: `EXAMINE_${index}`,
+    }),
+  );
+  const [currentActionType] = await userActSelector.show(actions);
 
-const ACTION_HANDLERS = <const>{
-  [ACTIONS.examine]: async (
-    ui: AbstractUI, player: AbstractActor, aliveEnemies: AbstractActor[],
-  ): Promise<typeof ACTIONS['examine'] | null> => {
-    const enemy = await interactWithUser(ui, aliveEnemies, TEMPLATES.examineEnemyAction);
+  if (currentActionType === 'BACK') return 'BACK';
 
-    if (enemy === null) return null;
+  const enemy = aliveEnemies[Number(currentActionType.split('_')[1])];
 
-    const enemyStats = enemy.stats;
-    await ui.sendToUser(TEMPLATES.examineEnemyFirstMessage.clone({ player, enemy }).value);
-    await ui.sendToUser(TEMPLATES.examineEnemyCharacteristicsMessage.clone({ stats: enemyStats }).value);
+  const enemyStats = enemy.stats;
 
-    return ACTIONS.examine;
-  },
-  [ACTIONS.attack]: async (
-    ui: AbstractUI, player: AbstractActor, aliveEnemies: AbstractActor[],
-  ): Promise<typeof ACTIONS['attack'] | null> => {
-    const enemy = await interactWithUser(ui, aliveEnemies, TEMPLATES.attackEnemyAction);
+  await ui.sendToUser(TEMPLATES.examineEnemyFirstMessage.clone({ player, enemy }).value);
+  await ui.sendToUser(TEMPLATES.examineEnemyCharacteristicsMessage.clone({ stats: enemyStats }).value);
 
-    if (enemy === null) return null;
-
-    const attackResult = player.doAttack(enemy);
-
-    await ui.sendToUser(TEMPLATES.attackMessage.clone({ attacker: player, attacked: enemy, attackResult }).value);
-
-    for (const aliveEnemy of aliveEnemies) {
-      if (!aliveEnemy.isAlive) await ui.sendToUser(`${aliveEnemy.getDeathMessage()}.`);
-    }
-
-    return ACTIONS.attack;
-  },
-  [ACTIONS.back]: () => Promise.resolve(null),
+  return 'EXAMINE';
 };
 
 const enemiesAttack = async (ui: AbstractUI, player: AbstractActor, aliveEnemies: AbstractActor[]): Promise<void> => {
@@ -156,6 +137,8 @@ export class Battle {
 
   private _aliveEnemies: AbstractActor[];
 
+  private _actSelector: BattleUserActSelector;
+
   private get battleFinished(): boolean {
     return this._aliveEnemies.length === 0 || !this._player.isAlive;
   }
@@ -165,31 +148,43 @@ export class Battle {
     this._player = options.player;
     this._enemies = options.enemies;
     this._aliveEnemies = this._enemies.filter((enemy) => enemy.isAlive);
+    const actSelector = this._ui.getUserActSelector('BATTLE');
+    if (actSelector instanceof BattleUserActSelector) this._actSelector = actSelector;
+    else throw new Error('Invalid userActSelector');
   }
 
-  public async activate(): Promise<BATTLE_FINAL_ACTIONS_VALUES> {
+  public async activate(): Promise<'BATTLE_WIN' | 'BATTLE_LOSE' | 'BATTLE_LEAVE'> {
     if (!this.battleFinished) {
       await this._ui.sendToUser(
         TEMPLATES.firstMessage.clone({ attacker: this._player, attacked: this._enemies }).value,
       );
     }
 
-    let choosedAction: ACTION_VALUES | null = null;
+    let currentActionType: ActionBattleSubtypes = 'BATTLE_START';
 
     while (!this.battleFinished) {
-      const actions: Set<ACTION_VALUES> = new Set([ACTIONS.attack, ACTIONS.examine, ACTIONS.leave]);
-
-      if (choosedAction === null) {
-        choosedAction = await this._ui.interactWithUser(new ActionsLayout<ACTION_VALUES>().addRow(...actions));
+      if (currentActionType === 'BATTLE_START') {
+        [currentActionType] = await this._actSelector.show();
       }
 
-      if (choosedAction === ACTIONS.leave) return BATTLE_FINAL_ACTIONS.LEAVE;
-
-      const handler: ActionHandler = ACTION_HANDLERS[choosedAction];
-
-      choosedAction = await handler(this._ui, this._player, this._aliveEnemies);
-
-      if (choosedAction === null) continue; // null returned only when <back> pressed
+      switch (currentActionType) {
+        case 'BATTLE_LEAVE': return 'BATTLE_LEAVE';
+        case 'BATTLE_LOSE': return 'BATTLE_LOSE';
+        case 'ATTACK': {
+          currentActionType = await attack(this._ui, this._actSelector, this._player, this._aliveEnemies);
+          break;
+        }
+        case 'EXAMINE': {
+          currentActionType = await examine(this._ui, this._actSelector, this._player, this._aliveEnemies);
+          break;
+        }
+        case 'BACK': {
+          continue;
+        }
+        default: {
+          throw new Error('Incorrect ACTION_TYPE');
+        }
+      }
 
       this._aliveEnemies = this._enemies.filter((enemy) => enemy.isAlive);
 
@@ -199,11 +194,11 @@ export class Battle {
         TEMPLATES.roundResultMessage.clone({ player: this._player, aliveEnemies: this._aliveEnemies }).value,
       );
 
-      if (!this._player.isAlive) return BATTLE_FINAL_ACTIONS.PLAYER_DIED;
+      if (!this._player.isAlive) return 'BATTLE_LOSE';
     }
 
     await lootRewards(this._ui, this._player, this._enemies);
 
-    return BATTLE_FINAL_ACTIONS.PLAYER_WIN;
+    return 'BATTLE_WIN';
   }
 }
