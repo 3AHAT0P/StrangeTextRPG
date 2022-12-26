@@ -69,7 +69,7 @@
     "pm2": "^5.1.0",
     "socket.io": "^4.4.0",
     "telegraf": "^4.3.0",
-    "tsconfig-paths": "^3.9.0",
+    "tsconfig-paths": "^3.10.0",
     "utf-8-validate": "^5.0.7",
     "uuid": "^8.3.2",
     "uuidv4": "^6.2.12"
