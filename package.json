@@ -63,7 +63,7 @@
     "@types/uuid": "^8.3.1",
     "bufferutil": "^4.0.5",
     "handlebars": "^4.7.7",
-    "neo4j-driver": "^4.3.0",
+    "neo4j-driver": "^5.4.1",
     "neo4j-driver-core": "^4.3.0",
     "node-canvas": "^2.7.0",
     "pm2": "^5.1.0",
